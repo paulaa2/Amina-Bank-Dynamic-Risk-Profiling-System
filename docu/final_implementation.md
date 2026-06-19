@@ -6,17 +6,27 @@
 
 ---
 
-## 1. INTRODUCCIÓN Y FILOSOFÍA DE DISEÑO
+## 1. INTRODUCCIÓN Y CONCEPTO FORMAL DE "KYC DRIFT"
 
 Los sistemas tradicionales de cumplimiento bancario ejecutan revisiones manuales de KYC de forma estática y calendarizada (por ejemplo, cada tres años para clientes corporativos de riesgo bajo). Esta latencia deja al banco expuesto ante cambios drásticos de modelo de negocio, reestructuraciones societarias opacas y actividades de blanqueo de capitales (layering) que ocurren en el dominio público meses antes de que salte una alerta transaccional de AML tradicional.
 
-Este sistema implementa un motor de **Perpetual KYC (pKYC)** continuo. Procesa flujos de información en tiempo real (Layer 1) y los contextualiza con la información histórica interna del banco (Layer 2) mediante un pipeline de tres etapas diseñado bajo los principios de eficiencia de costes, explicabilidad matemática y seguridad reguladora.
+Este sistema implementa un motor de **Perpetual KYC (pKYC)** continuo. Procesa flujos de información en tiempo real (Layer 1) y los contextualiza con la información histórica interna del banco (Layer 2) mediante un pipeline diseñado bajo los principios de eficiencia de costes, explicabilidad matemática y seguridad reguladora.
 
-### Justificación de las Decisiones de Diseño frente al Jurado
+### 1.1. ¿Qué es exactamente el "KYC Drift"?
 
-* **Eficiencia de Costes (20% de la nota):** El 95% de los eventos entrantes se procesan usando álgebra vectorial local (Distancia del Coseno) y estadísticas continuas deterministas. Bypasamos por completo los LLMs de alto coste para el procesamiento ordinario, reservando las llamadas complejas únicamente para resolver entidades ambiguas o redactar el informe de cumplimiento final cuando se cruza el umbral de alarma.
-* **Explicabilidad y Cumplimiento (40% de la nota):** Se rechaza el uso de redes neuronales de grafos (GNN) o embeddings de grafos de conocimiento (KGE) como TransH en el motor de decisiones primario. Un oficial de cumplimiento de un banco suizo regulado por la FINMA no puede bloquear activos bancarios basándose en una probabilidad opaca generada en un espacio latente multidimensional. Cada alerta en este motor es reproducible, auditable matemáticamente y explicable paso a paso.
-* **Calidad de la IA (25% de la nota):** Sustituimos los umbrales estáticos e intuitivos (como "alerta si el drift semántico es mayor a 0.4") por pruebas estadísticas formales de detección de cambio de punto (Page-Hinkley), aislando de forma matemática las desviaciones operacionales reales del ruido habitual de la prensa de relaciones públicas corporativa.
+El KYC Drift (Deriva de KYC) se define formalmente como la desviación acumulada, progresiva o abrupta del perfil operativo y estructural de un cliente respecto a las asunciones declaradas y aprobadas durante su onboarding inicial (debida diligencia de Layer 2).
+
+En esta arquitectura, el KYC Drift no es un indicador cualitativo subjetivo, sino un vector de estado tridimensional $\mathbf{D}_t$ medido de forma continua:
+
+$$\mathbf{D}_t = [D_{\text{semántico}}, D_{\text{topológico}}, D_{\text{transaccional}}]$$
+
+Donde cada dimensión captura una anomalía específica de la actividad real del cliente:
+
+* **Deriva Semántica** ($D_{\text{semántico}}$ — Business Model Drift): Mide la distancia geométrica entre el modelo de negocio original (ej. Desarrollo de Software B2B) y las actividades reportadas en medios públicos o cambios de su sitio web (ej. Intercambio de Criptoactivos, Operaciones de Casino Online).
+* **Deriva Topológica** ($D_{\text{topológico}}$ — Relationship/Structural Drift): Mide el impacto acumulado en la red de relaciones del cliente. Captura la entrada de accionistas o directores no declarados, su cercanía a listas de sanciones, o la formación de estructuras corporativas complejas (como bucles de propiedad circular).
+* **Deriva Transaccional** ($D_{\text{transaccional}}$ — Behavioral Drift): Mide la desviación cuantitativa de los movimientos financieros actuales frente a la media móvil histórica del cliente (ej. la reactivación abrupta de una empresa inactiva o transferencias masivas incompatibles con el volumen esperado).
+
+El motor unifica estas tres corrientes y dispara una alerta de cumplimiento solo cuando el análisis conjunto demuestra una desviación estadísticamente significativa de la normalidad operativa.
 
 ---
 
@@ -24,11 +34,11 @@ Este sistema implementa un motor de **Perpetual KYC (pKYC)** continuo. Procesa f
 
 ### 2.1. Distancia Semántica de Eventos (Layer 2 vs Layer 1)
 
-En el onboarding del cliente se genera un perfil base inmutable $P_{base}$ con datos internos. Este perfil se convierte en un vector de referencia estático $m_0$:
+En el onboarding del cliente se genera un perfil base inmutable $P_{\text{base}}$ con datos internos. Este perfil se convierte en un vector de referencia estático $m_0$:
 
-$$m_0 = \text{Embed}(P_{base}) \in \mathbb{R}^{d}$$
+$$m_0 = \text{Embed}(P_{\text{base}}) \in \mathbb{R}^{d}$$
 
-Cada evento público entrante $E_t$ es filtrado de ruido y convertido en un vector temporal $e_t \in \mathbb{R}^{d}$ mediante el mismo modelo de embeddings (ej. `text-embedding-3-small` de OpenAI o un modelo local de SentenceTransformers). La distancia semántica bruta se calcula mediante la Distancia del Coseno:
+Cada evento público entrante $E_t$ es filtrado de ruido y convertido en un vector temporal $e_t \in \mathbb{R}^{d}$ mediante el mismo modelo de embeddings. La distancia semántica bruta se calcula mediante la Distancia del Coseno:
 
 $$D_C(m_0, e_t) = 1 - \frac{m_0 \cdot e_t}{\|m_0\| \|e_t\|}$$
 
@@ -53,8 +63,6 @@ El stream de distancias semánticas se introduce en el test de Page-Hinkley. Par
 
 ### 2.3. Contagio de Riesgo Topológico Dirigido y Ponderado
 
-Los esquemas de lavado de dinero utilizan testaferros, directores cruzados y empresas fachada. Si un nodo $v$ (Persona, Empresa o Dirección Física) sufre un incremento de su riesgo intrínseco debido a una sanción directa o noticia adversa grave, este riesgo viaja por las aristas de control de la red corporativa.
-
 Definimos la propagación de riesgo de forma asimétrica dirigida. La exposición al riesgo de un nodo limpio $u$ se actualiza como:
 
 $$\text{Exposición}_{u} = \min \left(1.0, \text{Exposición}_{u} + \sum_{v \in \mathcal{N}(u)} (\text{Riesgo}_{v} \cdot \beta \cdot W_{vu})\right)$$
@@ -73,15 +81,13 @@ El sistema procesa $k$ corrientes estadísticas paralelas de riesgo para un mism
 * **Corriente Topológica** ($T_{\text{topology}}$): Elevación de la exposición por contagio estructural y centralidad de conexiones.
 * **Corriente Transaccional** ($T_{\text{transaction}}$): Anomalías cuantitativas en los flujos de fondos (Z-Score sobre importes y frecuencias de transferencias).
 
-Al evaluar múltiples pruebas de hipótesis al mismo tiempo, la probabilidad de falsas alarmas del sistema conjunto se incrementa exponencialmente. Para garantizar un objetivo de tasa de error familiar conjunto (FWER) controlado (ej. $\alpha = 0.05$), corregimos dinámicamente los umbrales individuales de Page-Hinkley mediante una aproximación logarítmica de Bonferroni:
+Para garantizar un objetivo de tasa de error familiar conjunto (FWER) controlado (ej. $\alpha = 0.05$), corregimos dinámicamente los umbrales individuales de Page-Hinkley mediante una aproximación logarítmica de Bonferroni:
 
 $$\lambda_{\text{adjusted}, i} = \lambda_{\text{base}, i} \cdot (1 + \ln(k))$$
 
 Para unificar estas tres corrientes en una única métrica continua para la bandeja del analista, aplicamos una fusión probabilística basada en la teoría de fallo de componentes independientes:
 
 $$R_{\text{combined}} = 1 - \prod_{i=1}^{k} \left(1 - \min\left(1.0, \frac{T_{i, t}}{\lambda_{\text{adjusted}, i}}\right)\right)$$
-
-Esto garantiza que la coincidencia temporal de dos alarmas moderadas (ej. un ligero cambio semántico de negocio en la web sumado a una transferencia financiera atípica) escale el riesgo global de forma acelerada, simulando el comportamiento de un investigador de cumplimiento humano.
 
 ---
 
@@ -90,8 +96,6 @@ Esto garantiza que la coincidencia temporal de dos alarmas moderadas (ej. un lig
 Para asegurar la reproducibilidad de la demo, se definen los formatos JSON de las capas del sistema.
 
 ### 3.1. Layer 2: Onboarding de Perfil Interno de Referencia (`baseline_kyc.json`)
-
-Este archivo almacena la verdad interna del banco del cliente corporativo que se utilizará como ancla inmutable.
 
 ```json
 {
@@ -120,8 +124,6 @@ Este archivo almacena la verdad interna del banco del cliente corporativo que se
 
 ### 3.2. Layer 1: Estructura del Payload del Evento de Entrada Semántico
 
-Las noticias procesadas por el agente extractor se envían al motor matemático utilizando la siguiente interfaz de mensajería:
-
 ```json
 {
   "event_id": "EVT_2026_099",
@@ -140,19 +142,122 @@ Las noticias procesadas por el agente extractor se envían al motor matemático 
 
 ---
 
-## 4. INTEGRACIÓN DE APIs DE ENTORNO PÚBLICO (LAYER 1)
+## 4. LA PIPELINE DE AGENTES DE IA (ARQUITECTURA DE PROMPTS Y ROLES)
 
-El motor está diseñado para desacoplar las fuentes de datos externas mediante interfaces de servicios limpios.
+La pipeline utiliza tres agentes especializados para procesar, filtrar y resumir la información de manera estructurada y determinista.
 
-### 4.1. Monitoreo de Medios e Información Incoherente
+```
+[Noticia en Bruto / Registro]
+              |
+              v
+     +-----------------+
+     |  AGENTE 1:      |  -> Extrae hechos atómicos sin ruido publicitario.
+     |  Sentinel       |     Genera entrada limpia para el vector semántico.
+     +-----------------+
+              |
+              v
+     +-----------------+
+     |  AGENTE 2:      |  -> Resuelve ambigüedades contra la lista cerrada
+     |  EntityResolver |     de IDs del grafo. Evita nodos duplicados.
+     +-----------------+
+              |
+              v
+     [Filtros Estadísticos / Contagio de Grafo local] (Sin coste de LLM)
+              |
+         (Brecha de Umbral)
+              |
+              v
+     +-----------------+
+     |  AGENTE 3:      |  -> Compila el informe final con los datos de-anonimizados.
+     |  AML-Synthesizer|     Genera el reporte de doble autorización.
+     +-----------------+
+```
 
-* **GDELT Project API:** Consultada periódicamente mediante llamadas HTTP locales para rastrear picos de volumen de menciones de los clientes y cambios bruscos en el índice de tono semántico (Tone Score), que actúa como métrica de sentimiento negativa inicial.
-* **NewsAPI / RSS Feeds:** Sindicación automática de titulares de prensa financiera y de registros mercantiles locales. El texto bruto se limpia de marcas HTML y metadatos de maquetación antes de ser inyectado en el resolver de entidades.
+### Agente 1: Sentinel Fact-Extractor (Limpieza Semántica)
 
-### 4.2. Vigilancia de Listas de Sanciones y Registros Oficiales
+**Objetivo:** Eliminar el ruido periodístico y publicitario de las noticias brutas de Layer 1. Generar un resumen fáctico atómico para que el vector de embedding represente el cambio de negocio real y no la prosa del periodista.
 
-* **OpenSanctions API:** Cada persona o entidad extraída de cambios societarios o regulatorios es enviada al endpoint unificado de OpenSanctions para comprobar coincidencias con listas OFAC, de la Unión Europea y de la ONU. Una coincidencia exacta detiene el cálculo de drift y fuerza la elevación del nodo a riesgo máximo en el grafo.
-* **OpenCorporates y UK Companies House APIs:** Utilizados para validar cambios de accionistas o denominaciones legales. Los payloads estructurados de estas APIs actualizan la red del grafo de NetworkX asegurando veracidad oficial.
+**System Prompt:**
+
+```text
+Eres el Agente Sentinel de AMINA Bank, un extractor de hechos corporativos de alta precisión para cumplimiento de delitos financieros.
+Tu única tarea es recibir un texto periodístico o actualización de registro y extraer EXCLUSIVAMENTE el hecho principal relacionado con la actividad de negocio o estructura corporativa de la empresa objetivo.
+
+REGLAS DE ORO:
+1. Elimina todo el ruido publicitario, opiniones, caídas de bolsa o menciones a competidores ajenos.
+2. Reduce la información a una frase atómica e informativa (ej: "La empresa opera una casa de cambio criptográfica en el extranjero" en lugar de redactar un ensayo).
+3. Responde estrictamente con la estructura JSON definida. No añadas introducciones, explicaciones ni bloques de código formateados.
+
+Estructura de salida requerida:
+{
+  "target_entity": "<Nombre normalizado de la empresa objetivo>",
+  "core_action_description": "<Hecho atómico extraído en una única frase clara>",
+  "entities_involved": [{"name": "<Nombre>", "type": "<PERSON | COMPANY | JURISDICTION | ASSET_CLASS>"}]
+}
+```
+
+### Agente 2: EntityResolver (Resolución de Entidades en Zona Ambigua)
+
+**Objetivo:** Resolver nombres de directores, accionistas o subsidiarias complejos que caen en la zona gris (coincidencia parcial). Fuerza al LLM a elegir sobre una lista cerrada de IDs existentes en el grafo, evitando la duplicación de nodos y alucinaciones.
+
+**System Prompt:**
+
+```text
+Eres el Agente de Resolución de Entidades de AMINA Bank. Tu misión es mapear menciones de nombres de personas u organizaciones extraídas del texto a nodos ya existentes dentro de nuestra base de datos relacional de cumplimiento.
+
+Se te proporcionará:
+1. Una mención que resolver (ej: "Michael Saylor").
+2. El contexto de la noticia.
+3. Una LISTA CERRADA de entidades ya conocidas en el grafo con sus IDs correspondientes.
+
+REGLAS DE ORO:
+1. Compara semántica y contextualmente si la mención se refiere de manera inequívoca a alguno de los IDs conocidos de la lista.
+2. Si existe un nivel de sospecha o certeza de que se trata de la misma entidad física, devuelve el ID exacto.
+3. Si la entidad no tiene ninguna relación lógica con los elementos de la lista, debes considerarla como una entidad nueva devolviendo "matched_node_id": null.
+4. Responde ÚNICAMENTE con un objeto JSON sin formateadores externos ni explicaciones.
+
+Formato de salida requerido:
+{
+  "matched_node_id": "<ID exacto de la lista proporcionada o null si es una nueva entidad>",
+  "confidence": <float entre 0.0 y 1.0 indicando tu nivel de certeza lógica>,
+  "proposed_name": "<Sugerencia de nombre de visualización solo si matched_node_id es null>"
+}
+```
+
+### Agente 3: AML-Synthesizer (Redacción de Informes de Cumplimiento)
+
+**Objetivo:** Generar la justificación de alarma para el flujo de doble autorización. Recibe la traza de anomalías (métrica de drift y saltos topológicos) tras haber sido desenmascarada por el proxy local (sustituyendo los tokens por los nombres reales) y redacta la recomendación del analista.
+
+**System Prompt:**
+
+```text
+Eres un Oficial de Cumplimiento AML Senior de AMINA Bank. Tu tarea es compilar el reporte final de debida diligencia intensificada (EDD) para que el Oficial Principal autorice o rechace la mitigación propuesta.
+
+Recibirás un JSON estructurado que contiene:
+1. El perfil base de la empresa cliente registrado en su onboarding (Layer 2).
+2. El hecho atómico (Noticia o Cambio) que ha disparado la alarma (Fase 1).
+3. Las métricas matemáticas que han violado la barrera de normalidad (Page-Hinkley, Contagio de Grafo y Anomalía Transaccional).
+4. El plan de acción preventivo sugerido por el analista de nivel 1.
+
+REGLAS DE ORO:
+1. Escribe en un tono formal, pericial y extremadamente estructurado.
+2. Justifica detalladamente por qué la desviación detectada (Drift de KYC) invalida las asunciones del onboarding de la empresa.
+3. Cita explícitamente las métricas matemáticas (ej: "Exposición al riesgo de la firma ascendió a 0.60 por contagio directo del director sancionado").
+4. Genera una conclusión auditable para el Oficial de Cumplimiento suizo (FINMA).
+
+Escribe el reporte en español técnico con la siguiente estructura:
+# REPORTE DE CUMPLIMIENTO AML - REGISTRO DE ALERTA [ID_ALERTA]
+## 1. RESUMEN EJECUTIVO
+## 2. ANÁLISIS DE DERIVA DE KYC (KYC DRIFT ANALYSIS)
+- Desviación Semántica: [Detalle del cambio de modelo de negocio]
+- Impacto en Red Corporativa: [Detalle del contagio topológico por directores o dueños]
+- Comportamiento Transaccional: [Desviación cuantitativa observada]
+## 3. TRAZA DE MÉTRICAS AUDITABLES
+- Concept Drift (Page-Hinkley): [Estadístico actual vs Umbral]
+- Contagio Topológico Dirigido: [Grado de exposición]
+- Z-Score de Fondos: [Z-Score transaccional]
+## 4. PLAN DE ACCIÓN RECOMENDADO
+```
 
 ---
 
@@ -197,40 +302,14 @@ El pipeline de ejecución se divide en seis fases modulares:
 
 **Normalización difusa y emparejamiento:** Los sufijos legales corporativos (GmbH, AG, Ltd., LLC) se eliminan mediante regex. La cadena normalizada se evalúa contra el `EntityRegistry` usando `rapidfuzz.fuzz.ratio`.
 
-**Guardrail de diseño:** Se prohíbe explícitamente `fuzz.WRatio`. WRatio devuelve 90/100 al comparar "Wirecard" con "Wirecard Asia Pacific Pte Ltd" por contención de subcadenas. Resolver esto automáticamente fusionaría una filial offshore con su matriz, destruyendo la separación arquitectónica necesaria para detectar fraudes de layering.
+**Guardrail de diseño:** Se prohíbe explícitamente `fuzz.WRatio`. WRatio devuelve 90/100 al comparar "Wirecard" con "Wirecard Asia Pacific Pte Ltd" por contención de subcadenas. Auto-resolver esto fusionaría una filial offshore con su matriz, destruyendo la separación arquitectónica necesaria para detectar fraudes de layering.
 
 * Si `fuzz.ratio > 90`, la mención se mapea automáticamente al `Node_ID` existente.
-* **Selección LLM con lista cerrada:** Si la puntuación cae por debajo de 90, el sistema dispara una llamada LLM ligera. El modelo recibe el contexto del texto bruto y una lista estricta y acotada de IDs de entidades existentes. Se fuerza mediante restricciones de JSON schema a devolver un elemento de esa lista o declarar null. Esto evita la alucinación abierta de nodos de entidad.
-
-### Fase 3.2: Mantenimiento del Grafo Topológico (NetworkX)
-
-Los cambios estructurales factuales descubiertos en registros regulatorios actualizan el estado del grafo.
-
-* **Nodos:** Company, Person, Address, Risk_Entity (Sancionado/PEP).
-* **Aristas:** OWNS (peso=%), DIRECTS, LOCATED_AT.
-
-**Comprobación de invariantes topológicos:** Cada arista recién insertada dispara un análisis estructural instantáneo:
-
-* **Extracción de bucles:** `networkx.simple_cycles(G)` aísla bucles cerrados de propiedad de hasta longitud 5. Las redes de propiedad circular donde la Empresa A posee B, B posee C y C posee A son indicadores primarios de ocultación de beneficiario final. Si se encuentra un ciclo, el estado de riesgo del nodo se satura inmediatamente.
-* **Cálculo de contagio:** Cuando el score de riesgo intrínseco de un nodo se dispara por alertas externas, `propagate_directed_contagion()` recorre su vecindario dirigido de 1 salto. Las entidades limpias vinculadas a directores o propietarios marcados absorben una fracción de su riesgo vía la ruta de atenuación $\beta$.
+* **Selección LLM con lista cerrada:** Si la puntuación cae por debajo de 90, interviene el Agente 2 (EntityResolver).
 
 ### Calibración Cold-Start en Onboarding (Burn-In Sintético)
 
-La estabilidad estadística de Page-Hinkley depende de conocer la varianza normal de una empresa. En una demo de hackathon no disponemos de un archivo de streaming de 3 años de noticias. Esto crea un cuello de botella estructural: los primeros eventos provocan inestabilidad de varianza matemática y falsos positivos inmediatos.
-
-**Estrategia de mitigación:** Durante el onboarding de Layer 2, el sistema toma el perfil $P_{base}$ y llama al LLM una sola vez para generar 20 titulares mundanos y plausibles que representen actualizaciones operativas rutinarias esperadas para ese sector empresarial.
-
-**Ejecución:** Estos 20 puntos base se embedden al instante y se calculan sus distancias de coseno. El array resultante se pasa al método `.seed()` del detector. Esto inicializa $\mu_0$ y escala los parámetros iniciales $\delta$ y $\lambda$ según la varianza semántica natural del dominio de la empresa.
-
-**Amortiguamiento bayesiano:** El contador de observaciones $n$ queda bloqueado en 20 tras la calibración. Cuando llega el primer evento real en streaming, su influencia sobre la media running se pondera como $1/21$ en lugar de $1/1$, aportando estabilidad inmediata frente al ruido.
-
-### Fases 5–6: Informe de Cumplimiento y Flujo Human-in-the-Loop
-
-Cuando el motor de fusión estructural o semántica supera el umbral ajustado por FWER, el pipeline detiene el procesamiento automatizado para esa entidad y entra en un procedimiento de auditoría estricto:
-
-1. La matriz de estado completa se serializa en una estructura JSON limpia que contiene el perfil base, el segmento de texto infractor, los valores exactos de drift matemático y una lista de aristas de la red de grafo adyacente.
-2. Se invoca un modelo generativo avanzado (GPT-4o o Claude 3.5 Sonnet) con un system prompt estricto: actuar exclusivamente como compilador AML automatizado. Está prohibido inventar conclusiones o extrapolar suposiciones externas; debe convertir la traza JSON de anomalía matemática en una narrativa legible, incrustando citas directas de URL a los datos públicos originales de Layer 1.
-3. Tras el desenmascarado local (Fase 5), el informe entra en el flujo de doble autorización (Fase 6): asignación a analista, propuesta de mitigación y aprobación del oficial de cumplimiento con audit trail completo.
+Durante el onboarding de Layer 2, el sistema genera 20 titulares sintéticos rutinarios vía LLM, calcula sus distancias de coseno respecto a $m_0$ y pasa el array al método `.seed()` del detector Page-Hinkley. El contador $n$ queda bloqueado en 20 para amortiguar el primer evento real ($1/21$ en lugar de $1/1$).
 
 ---
 
@@ -496,28 +575,21 @@ def normalize_name(name: str) -> str:
 @dataclass
 class EntityRegistry:
     canonical: Dict[str, Dict] = field(default_factory=dict)
-
     def add_entity(self, node_id: str, aliases: List[str], entity_type: str = "company") -> None:
-        self.canonical[node_id] = {
-            "aliases": [normalize_name(a) for a in aliases],
-            "display_name": aliases[0],
-            "type": entity_type,
-        }
+        self.canonical[node_id] = {"aliases": [normalize_name(a) for a in aliases], "display_name": aliases[0], "type": entity_type}
 
 class EntityResolver:
     """Resuelve menciones de entidades con fuzz.ratio; prohíbe WRatio por guardrail de layering."""
     def __init__(self, registry: EntityRegistry, fuzzy_high: float = 90.0):
         self.registry = registry
         self.fuzzy_high = fuzzy_high
-
     def resolve(self, mention: str) -> Dict[str, object]:
         aliases, node_ids = [], []
         for nid, data in self.registry.canonical.items():
             for alias in data["aliases"]:
                 aliases.append(alias)
                 node_ids.append(nid)
-        if not aliases:
-            return {"node_id": None, "is_new": True}
+        if not aliases: return {"node_id": None, "is_new": True}
         result = process.extractOne(normalize_name(mention), aliases, scorer=fuzz.ratio)
         if result and result[1] >= self.fuzzy_high:
             return {"node_id": node_ids[result[2]], "method": "fuzzy", "is_new": False}
@@ -558,7 +630,7 @@ class ComplianceAlert:
 if __name__ == "__main__":
     print("=== INICIANDO EXECUCIÓN DE VERIFICACIÓN DE CUMPLIMIENTO ===")
 
-    # 1. Inicialización del motor de anonimización GDPR / Ley de Bancos Suiza
+    # 1. Inicialización del motor de enmascaramiento GDPR / Ley de Bancos Suiza
     anonymizer = DataAnonymizer()
     real_client_name = "MicroStrategy Inc"
     real_director_name = "Michael J. Saylor"
