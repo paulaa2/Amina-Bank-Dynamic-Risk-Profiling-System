@@ -97,7 +97,5 @@
     "threshold": 0.5,
     "triggering_event": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin"
   },
-  "warnings": [
-    "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99685, Requested 1649. Please try again in 19m12.576s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
-  ]
+  "warnings": []
 }

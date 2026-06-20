@@ -3,8 +3,9 @@
 The scenario JSON only curates dated public facts. Semantic, topology and
 behavioural signals are always computed by the same pipeline as ``run_demo``.
 
-Stream events are always processed **oldest-first** by ``date`` (same rule as
-live news ingestion). JSON array order is ignored for processing.
+Stream events are processed **oldest-first** by ``date`` by default (same rule as
+live news ingestion). A scenario may set ``"replay_order": "json"`` to preserve
+curated narrative order when dates alone would mis-order causally related hits.
 """
 
 from __future__ import annotations
@@ -65,11 +66,24 @@ def _chronological_scenario_events(events: list[dict[str, Any]]) -> list[dict[st
     return sorted(events, key=lambda event: str(event.get("date") or ""))
 
 
+def _order_events(events: list[NewsEvent], replay_order: str) -> list[NewsEvent]:
+    if replay_order == "json":
+        return list(events)
+    return _chronological(events)
+
+
+def _order_scenario_events(events: list[dict[str, Any]], replay_order: str) -> list[dict[str, Any]]:
+    if replay_order == "json":
+        return list(events)
+    return _chronological_scenario_events(events)
+
+
 def replay_scenario(path: Path) -> dict[str, Any]:
     scenario = json.loads(path.read_text(encoding="utf-8"))
+    replay_order = str(scenario.get("replay_order") or "chronological")
     news = _scenario_events_as_news(scenario)
-    burn_in = _chronological([event for event in news if event.burn_in])
-    stream = _chronological([event for event in news if not event.burn_in])
+    burn_in = _order_events([event for event in news if event.burn_in], replay_order)
+    stream = _order_events([event for event in news if not event.burn_in], replay_order)
     pipeline = PerpetualKYCPipeline(load_config())
     report = pipeline.run(
         name_substring=scenario["client"],
@@ -82,8 +96,9 @@ def replay_scenario(path: Path) -> dict[str, Any]:
     threshold = float(report.decision["threshold"])
     rows: list[dict[str, Any]] = []
     alarm_row: dict[str, Any] | None = None
-    scenario_events = _chronological_scenario_events(
-        [event for event in scenario["events"] if not event.get("burn_in")]
+    scenario_events = _order_scenario_events(
+        [event for event in scenario["events"] if not event.get("burn_in")],
+        replay_order,
     )
     for index, (event, outcome) in enumerate(zip(scenario_events, report.events), start=1):
         trigger = outcome.combined_risk > threshold
@@ -260,11 +275,11 @@ def main() -> None:
     parser.add_argument("--json", action="store_true", help="Print JSON result.")
     parser.add_argument(
         "--output-json",
-        default=(DATA_DIR / "scenario_microstrategy_computed_result.json").as_posix(),
+        default=(DATA_DIR / "scenario_microstrategy_result.json").as_posix(),
     )
     parser.add_argument(
         "--output-csv",
-        default=(DATA_DIR / "scenario_microstrategy_computed_result.csv").as_posix(),
+        default=(DATA_DIR / "scenario_microstrategy_result.csv").as_posix(),
     )
     parser.add_argument(
         "--all",

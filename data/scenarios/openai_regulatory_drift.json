@@ -1,23 +1,39 @@
 {
   "scenario_id": "openai_regulatory_drift",
   "client": "OpenAI",
-  "description": "Governance and regulatory-risk drift replay for a high-growth AI client.",
+  "description": "Chronological watchlist example: heavy commercial burn-in absorbs early regulatory hits so risk rises gradually without crossing the alarm threshold in this curated window. For Sequoia/FTX investor contagion use run_global_demo --companies FTX OpenAI.",
   "reference_model": "AI research lab monetising via API and subscriptions.",
   "events": [
     {
-      "date": "2023-03-01",
-      "title": "OpenAI launches ChatGPT API for enterprise developers",
-      "source": "OpenAI product announcement",
-      "url": "https://openai.com/index/introducing-chatgpt-and-whisper-apis/",
-      "evidence": "OpenAI opens its ChatGPT and Whisper APIs to businesses, expanding its core software subscription model.",
+      "date": "2022-11-30",
+      "title": "OpenAI launches ChatGPT to the public as a research preview",
+      "source": "OpenAI",
+      "url": "https://openai.com/blog/chatgpt/",
+      "evidence": "OpenAI releases ChatGPT for broad public use, beginning rapid consumer adoption.",
       "burn_in": true
     },
     {
-      "date": "2023-05-18",
-      "title": "OpenAI expands ChatGPT availability and enterprise partnerships",
-      "source": "OpenAI product update",
-      "url": "https://openai.com/chatgpt/overview/",
-      "evidence": "Company broadens commercial API access and enterprise integrations for its AI software platform.",
+      "date": "2023-01-23",
+      "title": "Microsoft announces multiyear multibillion dollar investment in OpenAI",
+      "source": "Microsoft",
+      "url": "https://blogs.microsoft.com/blog/2023/01/23/microsoftandopenaiextendpartnership/",
+      "evidence": "Microsoft extends its OpenAI partnership and commercial integration across Azure and product lines.",
+      "burn_in": true
+    },
+    {
+      "date": "2023-02-01",
+      "title": "OpenAI launches ChatGPT Plus subscription at $20 per month",
+      "source": "OpenAI",
+      "url": "https://openai.com/blog/chatgpt-plus/",
+      "evidence": "OpenAI introduces a paid subscription tier for ChatGPT.",
+      "burn_in": true
+    },
+    {
+      "date": "2023-03-01",
+      "title": "OpenAI launches ChatGPT API for enterprise developers",
+      "source": "OpenAI",
+      "url": "https://openai.com/index/introducing-chatgpt-and-whisper-apis/",
+      "evidence": "OpenAI opens its ChatGPT and Whisper APIs to businesses.",
       "burn_in": true
     },
     {
@@ -26,6 +42,13 @@
       "source": "Reuters",
       "url": "https://www.reuters.com/technology/italy-data-protection-agency-opens-chatgpt-probe-privacy-concerns-2023-03-31/",
       "evidence": "Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection."
+    },
+    {
+      "date": "2023-04-28",
+      "title": "ChatGPT returns to Italy after OpenAI implements privacy safeguards requested by regulator",
+      "source": "The Verge",
+      "url": "https://www.theverge.com/2023/4/28/23702883/chatgpt-italy-ban-lifted-gpdp-data-protection-age-verification",
+      "evidence": "OpenAI restores ChatGPT access in Italy after meeting regulator demands on transparency and age controls."
     },
     {
       "date": "2023-07-13",
@@ -63,11 +86,18 @@
       "evidence": "Former board members publicly question governance and safety oversight."
     },
     {
+      "date": "2024-06-06",
+      "title": "US regulators clear antitrust probes into Microsoft OpenAI and Nvidia",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/technology/us-regulators-open-antitrust-inquiries-microsoft-openai-nvidia-nyt-reports-2024-06-06/",
+      "evidence": "DOJ and FTC divide antitrust work; FTC leads the Microsoft-OpenAI conduct review."
+    },
+    {
       "date": "2024-12-20",
       "title": "Italian privacy regulator fines OpenAI €15M over EU data privacy breaches",
-      "source": "AI Fray 2024 governance/litigation review",
-      "url": "https://aifray.com/openai-under-fire-looming-deepfake-dangers-and-flurry-of-safety-standard-setting-the-top-ai-governance-and-litigation-developments-of-2024/",
-      "evidence": "Regulatory action confirms privacy and governance pressure has become material."
+      "source": "Reuters",
+      "url": "https://www.reuters.com/technology/italy-fines-openai-15-million-euros-over-data-privacy-2024-12-20/",
+      "evidence": "Garante Privacy confirms material privacy enforcement with a €15M fine."
     }
   ]
 }

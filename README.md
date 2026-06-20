@@ -57,7 +57,8 @@ Ambas se comunican únicamente a través de la base de datos SQLite.
 ├── README.md
 ├── requirements.txt
 ├── data/
-│   └── risk_profiling.db          # base de datos generada por la capa de datos
+│   ├── risk_profiling.db          # base de datos generada por la capa de datos
+│   └── scenarios/                 # timelines históricos curados (replay)
 ├── docu/
 │   ├── final_implementation.md    # especificación técnica completa
 │   └── info_challenge.md          # descripción oficial del reto
@@ -236,26 +237,32 @@ públicos reales con fecha y URL (SEC/Strategy/CNBC):
 | E5 | 2022-03-29 | Préstamo colateralizado con Bitcoin |
 | E6 | 2022-08-02 | Impairment $917.8M y cambio CEO/Chairman |
 
-Salida esperada:
+Salida esperada (señales calculadas por el pipeline, no hardcoded en el JSON):
 
 ```text
 idx | date       | semantic | topology | tx     | combined | trigger
   1 | 2020-07-28 | 0.439    | 0.000    | 0.000  | 0.1350   | FALSE
-  2 | 2020-08-11 | 0.548    | 0.000    | 0.000  | 0.3533   | FALSE
-  3 | 2020-12-11 | 0.529    | 0.000    | 0.000  | 0.4977   | FALSE
-  4 | 2021-02-24 | 0.503    | 0.000    | 0.000  | 0.5725   | TRUE
+  2 | 2020-08-11 | 0.563    | 0.000    | 0.000  | 0.3713   | FALSE
+  3 | 2020-12-11 | 0.529    | 0.000    | 0.000  | 0.5132   | TRUE
 ```
 
-**Mensaje clave para jurado técnico:** los eventos son curados como timeline
-histórico verificable, pero la decisión la calcula el mismo pipeline que
-`run_demo`. El replay histórico parte del KYC de onboarding, no del OSINT
-enriquecido de hoy.
+**Mensaje clave para jurado técnico:** los eventos son hechos públicos curados
+(titular, fecha, URL, fuente). El JSON **no** incluye señales de riesgo: las
+calcula el mismo pipeline que `run_demo`. El replay:
+
+- procesa eventos **en orden cronológico** por `date` (igual que la BD live);
+- parte del **KYC de onboarding** (`at_onboarding_risk`), no del OSINT enriquecido de hoy;
+- calibra los detectores Page-Hinkley desde ese baseline (sin inyectar riesgo a mano).
+
+Los escenarios pueden marcar algunos hitos con `"burn_in": true` (p. ej. lanzamientos
+de producto benignos en OpenAI): solo calibran el detector semántico **antes** del
+stream; no cuentan como evento de alarma en la curva.
 
 El runner escribe:
 
 ```text
-data/scenario_microstrategy_drift_result.json
-data/scenario_microstrategy_drift_result.csv
+data/scenario_microstrategy_result.json
+data/scenario_microstrategy_result.csv
 ```
 
 El notebook `notebooks/retro_lead_time_evaluation.ipynb` incluye dos gráficas
@@ -291,11 +298,40 @@ Escenarios incluidos:
 | `gazprombank_sanctions_escalation` | Gazprombank | Exposición energía/sanciones |
 | `surgutneftegas_sanctions_escalation` | Surgutneftegas | Escalada sectorial petróleo/sanciones |
 
-Resultado esperado tras `--all`: el pipeline real decide caso a
-caso. MicroStrategy muestra acumulación gradual; los casos con sanciones,
-fraude o topología inicial de alto riesgo pueden congelar en evento 1. Eso es
-útil para explicar la diferencia entre **detección honesta con el motor** y una
-curva calibrada para enseñar solo la matemática.
+Resultado esperado tras `--all` (última batería con Ollama activo):
+
+| Cliente | Alarma | Pre-alarm | Riesgo al disparar |
+|---------|--------|-----------|-------------------|
+| MicroStrategy | E3 | 2 | 0.51 |
+| FTX | E4 | 3 | 0.53 |
+| Gazprombank | E4 | 3 | 0.60 |
+| OpenAI | — | 9 | 0.29 (peak E1) |
+| VTB | E5 | 4 | 0.55 |
+| Surgutneftegas | E5 | 4 | 0.52 |
+| Wirecard | E6 | 5 | 0.56 |
+
+La mayoría muestran **acumulación gradual** (2–5 eventos por debajo del umbral).
+OpenAI es el **ejemplo watchlist** (sin alarma en esta ventana): orden
+cronológico estricto, 4 hitos comerciales en `burn_in`, Italia en E1 sube a ~0.29
+pero no cruza 0.5. Sirve para mostrar drift absorbido por baseline comercial.
+**Sequoia/FTX no entra aquí** — es solo en la demo global:
+`run_global_demo --companies FTX OpenAI` (contagio cruzado vía inversor compartido
+en el grafo KYC).
+Las transacciones del stream comportamental siguen siendo **simuladas**.
+
+**Umbral `COMBINED_RISK_THRESHOLD=0.5`:** las alarmas caen en la banda 0.51–0.60.
+Subir a 0.55 haría fallar FTX, MicroStrategy y Surgut en esta batería curada;
+0.5 es adecuado para la demo de lead time. En producción se subiría tras backtesting
+con el feed completo (p. ej. 0.55–0.65).
+
+**Qué es real vs. ingeniería del motor:**
+
+| Real | Ingeniería / simulación |
+|------|-------------------------|
+| Titulares, fechas, URLs de escenarios | Subconjunto curado de hitos (no feed completo) |
+| Señales semántica / topología / fusión | Transacciones simuladas |
+| Mismo pipeline que `run_demo` | Grafo que muta según extracción LLM del titular |
+| Orden cronológico por `date` | Estado inicial = onboarding, no “as-of” histórico exacto |
 
 ### Demo global — orquestador multi-cliente
 
