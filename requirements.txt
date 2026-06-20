@@ -13,6 +13,11 @@ rapidfuzz>=3.0
 ollama>=0.3        # local inference: extraction + embeddings
 groq>=0.11         # cloud inference: final AML report (Stage 4)
 
+# --- HTTP API server (src/api.py) ------------------------------------------
+fastapi>=0.111
+uvicorn[standard]>=0.29
+apscheduler>=3.10,<4   # biweekly scheduled entity re-analysis
+
 # --- Analysis notebooks / PowerPoint figures -------------------------------
 pandas>=3.0
 matplotlib>=3.11
