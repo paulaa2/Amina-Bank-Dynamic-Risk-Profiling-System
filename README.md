@@ -115,12 +115,25 @@ OLLAMA_EMBEDDING_MODEL="nomic-embed-text"
 GROQ_REPORT_MODEL="llama-3.3-70b-versatile"
 TARGET_FWER=0.05
 COMBINED_RISK_THRESHOLD=0.5
+MAX_EVENTS_PER_RUN=6      # eventos máximos analizados por ejecución
+USE_LLM_BURN_IN=false     # calibración semántica determinista por defecto
 ```
 
 > Stack de inferencia local: `qwen3:8b` (extracción de hechos, conforme a la
 > especificación) y `nomic-embed-text` (embeddings semánticos). El motor
-> desactiva el modo "thinking" de qwen3 para obtener JSON determinista y baja
-> latencia; cualquier modelo de Ollama es configurable vía `.env`.
+> desactiva el modo "thinking" de qwen3 (`think=False`) para obtener JSON
+> determinista y baja latencia, agrupa todas las llamadas por modelo para que
+> cada uno se cargue una sola vez, y los mantiene residentes (`keep_alive`).
+> Cualquier modelo de Ollama es configurable vía `.env`.
+>
+> **Calibración semántica.** El cold-start del detector Page-Hinkley se
+> construye de forma determinista a partir del perfil de onboarding (solo
+> embeddings, sin coste de chat). Como las distancias coseno viven en una
+> escala comprimida, la corriente semántica usa multiplicadores más sensibles
+> (`PH_SEMANTIC_DELTA_STD`, `PH_SEMANTIC_THRESHOLD_STD`) que las corrientes
+> topológica y transaccional. Para usar titulares sintéticos generados por el
+> LLM (mayor fidelidad a la especificación, una llamada extra), exporta
+> `USE_LLM_BURN_IN=true`.
 
 ---
 

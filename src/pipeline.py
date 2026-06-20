@@ -156,7 +156,7 @@ class PerpetualKYCPipeline:
         # loaded into memory only once (avoids costly model swapping with the
         # embedding model on every event).
         profile_text = profile.profile_text()
-        headlines = self._gen_synthetic_headlines(profile_text, local_ok)
+        headlines = self._gen_synthetic_headlines(profile, local_ok)
         facts = [self._extract_fact(mt, local_ok) for (_, mt) in relevant]
 
         # Stage 3a: run ALL embeddings together so the embedding model is
@@ -169,8 +169,8 @@ class PerpetualKYCPipeline:
         sem_det = PageHinkleyDetector()
         sem_det.seed(
             sem_baseline,
-            k_std_delta=self.config.ph_delta_std,
-            k_std_threshold=self.config.ph_threshold_std,
+            k_std_delta=self.config.ph_semantic_delta_std,
+            k_std_threshold=self.config.ph_semantic_threshold_std,
         )
         topo_det = PageHinkleyDetector()
         topo_det.seed([0.01, 0.02, 0.01, 0.02, 0.015])
@@ -294,22 +294,47 @@ class PerpetualKYCPipeline:
             )
         return graph
 
-    def _gen_synthetic_headlines(self, profile_text: str, local_ok: bool) -> list[str]:
-        """Stage 2 cold-start: generate in-profile routine statements (chat model)."""
-        if not local_ok:
-            return []
-        try:
-            headlines = self.sentinel.synthetic_headlines(
-                profile_text, self.config.burn_in_size
-            )
-            self.cost.add_local(
-                self.ollama.last_usage.prompt_tokens,
-                self.ollama.last_usage.completion_tokens,
-                "synthetic_headlines",
-            )
-            return headlines
-        except Exception:
-            return []
+    def _gen_synthetic_headlines(self, profile: ClientProfile, local_ok: bool) -> list[str]:
+        """Cold-start burn-in texts for the semantic baseline.
+
+        Deterministic in-profile variants by default (no chat-model cost); the
+        LLM-generated burn-in is used only when explicitly enabled.
+        """
+        if self.config.use_llm_burn_in and local_ok:
+            try:
+                headlines = self.sentinel.synthetic_headlines(
+                    profile.profile_text(), self.config.burn_in_size
+                )
+                self.cost.add_local(
+                    self.ollama.last_usage.prompt_tokens,
+                    self.ollama.last_usage.completion_tokens,
+                    "synthetic_headlines",
+                )
+                if headlines:
+                    return headlines
+            except Exception:
+                pass
+        return self._deterministic_burn_in(profile)
+
+    @staticmethod
+    def _deterministic_burn_in(profile: ClientProfile) -> list[str]:
+        """Tight set of on-topic statements describing the onboarding model.
+
+        These are kept close in meaning (low embedding variance) so the
+        baseline captures the client's "normal" semantic neighbourhood; genuine
+        business-model drift then reads as a clear excursion away from it.
+        """
+        model = profile.expected_business_model or profile.legal_name
+        activity = profile.expected_activity or model
+        name = profile.legal_name
+        variants = [
+            model,
+            activity,
+            f"{name}: {model}",
+            f"{name} core business activity",
+            f"{name} provides {model}",
+        ]
+        return [v for v in variants if v]
 
     def _extract_fact(self, masked_title: str, local_ok: bool):
         """Stage 2: atomic fact extraction on masked text (chat model)."""

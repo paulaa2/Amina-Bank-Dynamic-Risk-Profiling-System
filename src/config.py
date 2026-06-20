@@ -84,17 +84,35 @@ class EngineConfig:
     )
 
     # Page-Hinkley calibration multipliers (delta and alarm threshold in std).
+    # The semantic stream uses a more sensitive setting because embedding-based
+    # cosine distances live on a compressed scale (most texts fall in 0.2-0.6),
+    # so the conservative spec defaults would never react within a short event
+    # window. Topology and transaction streams keep the conservative defaults.
     ph_delta_std: float = field(default_factory=lambda: _env_float("PH_DELTA_STD", 3.0))
     ph_threshold_std: float = field(default_factory=lambda: _env_float("PH_THRESHOLD_STD", 6.0))
+    ph_semantic_delta_std: float = field(
+        default_factory=lambda: _env_float("PH_SEMANTIC_DELTA_STD", 1.0)
+    )
+    ph_semantic_threshold_std: float = field(
+        default_factory=lambda: _env_float("PH_SEMANTIC_THRESHOLD_STD", 2.5)
+    )
 
-    # Synthetic burn-in headlines generated at onboarding for cold-start.
+    # Synthetic burn-in for the semantic cold-start. By default the baseline is
+    # built deterministically from the onboarding profile (embeddings only, no
+    # chat model), which is fast and reproducible. Enable LLM-generated burn-in
+    # headlines for full fidelity to the specification at the cost of one extra
+    # (potentially slow) local generation call.
     burn_in_size: int = field(default_factory=lambda: _env_int("BURN_IN_SIZE", 12))
+    use_llm_burn_in: bool = field(
+        default_factory=lambda: os.getenv("USE_LLM_BURN_IN", "false").lower()
+        in {"1", "true", "yes"}
+    )
 
     # --- Demo / throughput limits -----------------------------------------
     # Cap the number of Layer-1 events processed per run to keep the local
     # inference loop responsive during a live demo.
     max_events_per_run: int = field(
-        default_factory=lambda: _env_int("MAX_EVENTS_PER_RUN", 12)
+        default_factory=lambda: _env_int("MAX_EVENTS_PER_RUN", 6)
     )
     request_timeout: int = field(default_factory=lambda: _env_int("REQUEST_TIMEOUT", 120))
 
