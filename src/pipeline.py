@@ -17,7 +17,9 @@ configured threshold.
 
 from __future__ import annotations
 
+import datetime as dt
 import random
+import sys
 from dataclasses import dataclass, field
 
 from .config import EngineConfig, load_config
@@ -29,7 +31,6 @@ from .detectors import (
     StreamSignal,
     cosine_distance,
 )
-from .detectors.page_hinkley import generate_synthetic_baseline
 from .entities import EntityRegistry, EntityResolver
 from .governance import AlertStatus, ComplianceAlert, FourEyesWorkflow
 from .graph import ComplianceDirectedGraph
@@ -54,9 +55,10 @@ class EventOutcome:
     extracted_fact: str
     semantic_distance: float
     combined_risk: float
-    alarms: dict
+    alarms: dict[str, bool]
     triaged_in: bool
     used_fallback: bool
+    new_graph_nodes: list[dict[str, object]] = field(default_factory=list)
 
 
 @dataclass
@@ -102,6 +104,10 @@ class PerpetualKYCPipeline:
         max_events: int | None = None,
         simulate_tx_anomaly: bool | None = None,
     ) -> EngineReport:
+        self.cost = CostTracker(
+            groq_input_usd_per_mtok=self.config.groq_input_usd_per_mtok,
+            groq_output_usd_per_mtok=self.config.groq_output_usd_per_mtok,
+        )
         warnings: list[str] = []
         if simulate_tx_anomaly is None:
             simulate_tx_anomaly = self.config.simulate_tx_anomaly
@@ -112,8 +118,9 @@ class PerpetualKYCPipeline:
             )
 
         profile = self.repository.load_profile(name_substring, company_id)
-        news = self.repository.load_news(
-            profile.id, limit=max(self.config.max_events_per_run * 3, 30)
+        limit = max_events or self.config.max_events_per_run
+        news = self._chronological_events(
+            self.repository.load_news(profile.id, limit=max(limit * 3, 30))
         )
 
         # Phase 1: masking proxy ------------------------------------------
@@ -126,46 +133,10 @@ class PerpetualKYCPipeline:
         registry = self._build_registry(profile)
         resolver = EntityResolver(registry)
         graph = self._build_graph(profile)
-        contagion = graph.propagate_directed_contagion(beta=self.config.contagion_beta)
-        company_exposure = contagion.get(profile.company_node_id, 0.0)
-        contributors = graph.top_risk_contributors(
-            profile.company_node_id, beta=self.config.contagion_beta
-        )
-        has_cycle = graph.check_ownership_cycles(profile.company_node_id)
 
-        # Stage 1: triage every candidate event up front (cheap, local) ---
-        triage = RelevanceTriage(profile.all_aliases())
-        limit = max_events or self.config.max_events_per_run
-        outcomes: list[EventOutcome] = []
-        relevant: list[tuple[NewsEvent, str]] = []  # (event, masked_title)
-
-        for event in news:
-            if len(relevant) >= limit:
-                break
-            self.cost.events_seen += 1
-            verdict = triage.is_relevant(f"{event.title} {event.summary}")
-            if not verdict.is_relevant:
-                outcomes.append(
-                    EventOutcome(event.title, "", "", 0.0, 0.0, {}, False, False)
-                )
-                continue
-            self.cost.events_passed_triage += 1
-            relevant.append((event, anonymizer.mask_text(event.title)))
-
-        # Stage 2: run ALL local extractions together so the chat model is
-        # loaded into memory only once (avoids costly model swapping with the
-        # embedding model on every event).
+        # Semantic cold-start is calibrated once; Layer-1 events stay lazy.
         profile_text = profile.profile_text()
-        headlines = self._gen_synthetic_headlines(profile, local_ok)
-        facts = [self._extract_fact(mt, local_ok) for (_, mt) in relevant]
-
-        # Stage 3a: run ALL embeddings together so the embedding model is
-        # loaded only once, immediately after the chat model is released.
-        m0, sem_baseline, event_distances = self._embed_all(
-            profile_text, headlines, [f for f, _ in facts], relevant, local_ok
-        )
-
-        # Stage 3b/3c: calibrate the statistical detectors ----------------
+        m0, sem_baseline = self._initialise_semantic_baseline(profile, local_ok, warnings)
         sem_det = PageHinkleyDetector()
         sem_det.seed(
             sem_baseline,
@@ -182,7 +153,6 @@ class PerpetualKYCPipeline:
         tx_det = PageHinkleyDetector()
         tx_det.seed(tx_baseline_z if len(tx_baseline_z) >= 3 else [0.1, 0.2, 0.15, 0.25, 0.2])
 
-        # Phase 4: fusion gateway -----------------------------------------
         fusion = DriftFusion(
             [
                 StreamSignal(_SEMANTIC, sem_det, weight=1.0),
@@ -192,12 +162,64 @@ class PerpetualKYCPipeline:
             target_fwer=self.config.target_fwer,
         )
 
+        # Stage 1-4: process Layer-1 events sequentially with early stopping.
+        triage = RelevanceTriage(profile.all_aliases())
+        outcomes: list[EventOutcome] = []
         max_risk = 0.0
         peak_outcome: EventOutcome | None = None
-        for i, (event, masked_title) in enumerate(relevant):
-            fact_text, used_fallback = facts[i]
-            sem_distance = event_distances[i]
-            tx_amount = tx_amounts[(i + 1) % len(tx_amounts)] if tx_amounts else 0.0
+        company_exposure = graph.exposure_of(profile.company_node_id, beta=self.config.contagion_beta)
+        contributors = graph.top_risk_contributors(
+            profile.company_node_id, beta=self.config.contagion_beta
+        )
+        has_cycle = graph.check_ownership_cycles(profile.company_node_id)
+        total_events = min(len(news), limit)
+
+        for index, event in enumerate(news[:limit], start=1):
+            self.cost.events_seen += 1
+            verdict = triage.is_relevant(f"{event.title} {event.summary}")
+            if not verdict.is_relevant:
+                outcome = EventOutcome(event.title, "", "", 0.0, 0.0, {}, False, False)
+                outcomes.append(outcome)
+                self._stream_log(
+                    index,
+                    total_events,
+                    event.title,
+                    semantic_distance=0.0,
+                    contagion_score=company_exposure,
+                    combined_risk=0.0,
+                    trigger_fired=False,
+                )
+                continue
+
+            self.cost.events_passed_triage += 1
+
+            masked_title = anonymizer.mask_text(event.title)
+            fact_text, used_fallback, entities = self._extract_fact(masked_title, local_ok)
+            new_nodes = self._resolve_and_update_graph(
+                entities=entities,
+                resolver=resolver,
+                registry=registry,
+                graph=graph,
+                anonymizer=anonymizer,
+                company_node_id=profile.company_node_id,
+                adverse_score=event.adverse_score,
+            )
+            has_cycle = graph.check_ownership_cycles(profile.company_node_id)
+            company_exposure = graph.exposure_of(
+                profile.company_node_id, beta=self.config.contagion_beta
+            )
+            contributors = graph.top_risk_contributors(
+                profile.company_node_id, beta=self.config.contagion_beta
+            )
+
+            sem_distance = self._semantic_distance(
+                profile_text=profile_text,
+                m0=m0,
+                fact_text=fact_text,
+                event=event,
+                local_ok=local_ok,
+            )
+            tx_amount = tx_amounts[(index - 1) % len(tx_amounts)] if tx_amounts else 0.0
             tx_z = tx_stream.record_transaction(tx_amount)
 
             result = fusion.update(
@@ -207,6 +229,7 @@ class PerpetualKYCPipeline:
                     _BEHAVIOURAL: tx_z,
                 }
             )
+            trigger_fired = result.combined_risk > self.config.combined_risk_threshold
 
             outcome = EventOutcome(
                 title=event.title,
@@ -217,12 +240,26 @@ class PerpetualKYCPipeline:
                 alarms=result.alarms,
                 triaged_in=True,
                 used_fallback=used_fallback,
+                new_graph_nodes=new_nodes,
             )
             outcomes.append(outcome)
 
             if result.combined_risk > max_risk:
                 max_risk = result.combined_risk
                 peak_outcome = outcome
+
+            self._stream_log(
+                index,
+                total_events,
+                event.title,
+                semantic_distance=sem_distance,
+                contagion_score=company_exposure,
+                combined_risk=result.combined_risk,
+                trigger_fired=trigger_fired,
+            )
+
+            if trigger_fired:
+                break
 
         alarm_fired = max_risk > self.config.combined_risk_threshold
 
@@ -272,6 +309,14 @@ class PerpetualKYCPipeline:
         )
 
     # -- phase helpers -----------------------------------------------------
+
+    @staticmethod
+    def _chronological_events(events: list[NewsEvent]) -> list[NewsEvent]:
+        """Return Layer-1 events in chronological order, oldest first."""
+        return sorted(
+            events,
+            key=lambda event: event.published_at or dt.datetime.max,
+        )
 
     def _build_registry(self, profile: ClientProfile) -> EntityRegistry:
         registry = EntityRegistry()
@@ -336,72 +381,138 @@ class PerpetualKYCPipeline:
         ]
         return [v for v in variants if v]
 
-    def _extract_fact(self, masked_title: str, local_ok: bool):
+    def _initialise_semantic_baseline(
+        self,
+        profile: ClientProfile,
+        local_ok: bool,
+        warnings: list[str],
+    ) -> tuple[list[float] | None, list[float]]:
+        """Calibrate the semantic detector before streaming Layer-1 events."""
+        profile_text = profile.profile_text()
+        rng = random.Random(len(profile_text))
+        fallback_baseline = [round(0.08 + rng.uniform(0, 0.04), 4) for _ in range(5)]
+        if not local_ok:
+            return None, fallback_baseline
+
+        try:
+            m0 = self.ollama.embed(profile_text)
+            self.cost.add_local(0, 0, "embedding_profile")
+        except Exception as exc:
+            warnings.append(f"Ollama embedding failed during baseline setup ({exc}); using lexical fallback.")
+            return None, fallback_baseline
+
+        baseline: list[float] = []
+        for text in self._gen_synthetic_headlines(profile, local_ok):
+            try:
+                baseline.append(cosine_distance(self.ollama.embed(text), m0))
+                self.cost.events_embedded += 1
+            except Exception:
+                continue
+        return m0, baseline if len(baseline) >= 3 else fallback_baseline
+
+    def _extract_fact(
+        self, masked_title: str, local_ok: bool
+    ) -> tuple[str, bool, list[dict]]:
         """Stage 2: atomic fact extraction on masked text (chat model)."""
         if not local_ok:
-            return masked_title, True
+            return masked_title, True, []
         fact = self.sentinel.extract(masked_title)
         self.cost.add_local(
             self.ollama.last_usage.prompt_tokens,
             self.ollama.last_usage.completion_tokens,
             "sentinel_extract",
         )
-        return fact.text_for_embedding, fact.used_fallback
+        return fact.text_for_embedding, fact.used_fallback, fact.entities_involved
 
-    def _embed_all(
+    def _semantic_distance(
         self,
         profile_text: str,
-        headlines: list[str],
-        fact_texts: list[str],
-        relevant: list[tuple],
+        m0: list[float] | None,
+        fact_text: str,
+        event: NewsEvent,
         local_ok: bool,
-    ):
-        """Stage 3a: compute every embedding in one consecutive batch.
-
-        Returns (m0, baseline_distances, event_distances). Keeping all embedding
-        calls together means the embedding model is loaded into memory only
-        once for the whole run.
-        """
-        rng = random.Random(len(profile_text))
-        fallback_baseline = [round(0.08 + rng.uniform(0, 0.04), 4) for _ in range(5)]
-
-        if local_ok:
+    ) -> float:
+        """Embed one extracted fact and measure its drift from onboarding."""
+        del profile_text
+        if local_ok and m0 is not None and fact_text:
             try:
-                m0 = self.ollama.embed(profile_text)
-                self.cost.add_local(
-                    self.ollama.last_usage.prompt_tokens,
-                    self.ollama.last_usage.completion_tokens,
-                    "embedding",
-                )
-                baseline = []
-                for text in headlines:
-                    try:
-                        baseline.append(cosine_distance(self.ollama.embed(text), m0))
-                        self.cost.events_embedded += 1
-                    except Exception:
-                        continue
-
-                event_distances = []
-                for (event, _masked), fact in zip(relevant, fact_texts):
-                    dist = None
-                    if fact:
-                        try:
-                            dist = cosine_distance(self.ollama.embed(fact), m0)
-                            self.cost.events_embedded += 1
-                        except Exception:
-                            dist = None
-                    if dist is None:
-                        dist = 0.10 + 0.6 * event.adverse_score
-                    event_distances.append(dist)
-
-                baseline = baseline if len(baseline) >= 3 else fallback_baseline
-                return m0, baseline, event_distances
+                self.cost.events_embedded += 1
+                return cosine_distance(self.ollama.embed(fact_text), m0)
             except Exception:
                 pass
+        return 0.10 + 0.6 * event.adverse_score
 
-        # Full lexical fallback when local inference is unavailable.
-        event_distances = [0.10 + 0.6 * ev.adverse_score for (ev, _m) in relevant]
-        return None, fallback_baseline, event_distances
+    def _resolve_and_update_graph(
+        self,
+        entities: list[dict],
+        resolver: EntityResolver,
+        registry: EntityRegistry,
+        graph: ComplianceDirectedGraph,
+        anonymizer: DataAnonymizer,
+        company_node_id: str,
+        adverse_score: float,
+    ) -> list[dict[str, object]]:
+        """Resolve extracted entities and insert new graph nodes lazily."""
+        created: list[dict[str, object]] = []
+        for entity in entities:
+            raw_name = str(entity.get("name") or "").strip()
+            raw_type = str(entity.get("type") or "ENTITY").strip().upper()
+            if raw_type not in {"PERSON", "COMPANY"} or not raw_name:
+                continue
+
+            real_name = anonymizer.unmask_text(raw_name).strip()
+            if not real_name or real_name.startswith("MASKED_"):
+                continue
+
+            resolution = resolver.resolve(real_name)
+            if not resolution.get("is_new"):
+                continue
+
+            node_id = self._dynamic_node_id(registry, raw_type)
+            intrinsic_risk = min(max(float(adverse_score or 0.0), 0.0), 1.0)
+            registry.add_entity(node_id, [real_name], raw_type.lower())
+            graph.add_node(node_id, real_name, raw_type, intrinsic_risk)
+            graph.add_edge(node_id, company_node_id, "ASSOCIATED_WITH", 0.1)
+            created.append(
+                {
+                    "node_id": node_id,
+                    "name": real_name,
+                    "type": raw_type,
+                    "intrinsic_risk": round(intrinsic_risk, 4),
+                    "relation": "ASSOCIATED_WITH",
+                }
+            )
+        return created
+
+    @staticmethod
+    def _dynamic_node_id(registry: EntityRegistry, entity_type: str) -> str:
+        prefix = "DYN_PERSON" if entity_type == "PERSON" else "DYN_COMPANY"
+        index = 1
+        while f"{prefix}_{index:03d}" in registry.canonical:
+            index += 1
+        return f"{prefix}_{index:03d}"
+
+    @staticmethod
+    def _stream_log(
+        index: int,
+        total: int,
+        title: str,
+        semantic_distance: float,
+        contagion_score: float,
+        combined_risk: float,
+        trigger_fired: bool,
+    ) -> None:
+        safe_title = " ".join((title or "").split())[:140]
+        print(
+            f"[STREAMING EVENT {index}/{total}] "
+            f"Title: {safe_title} | "
+            f"Semantic Dist: {semantic_distance:.4f} | "
+            f"Contagion Score: {contagion_score:.4f} | "
+            f"Combined Risk: {combined_risk:.4f} "
+            f"[TRIGGER FIRED: {str(trigger_fired).upper()}]",
+            file=sys.stderr,
+            flush=True,
+        )
 
     def _simulate_transactions(self, profile: ClientProfile, inject_anomaly: bool = False):
         """Simulate an internal transaction stream (Layer 2, allowed by the brief).
