@@ -24,6 +24,24 @@ _LEGAL_SUFFIXES = re.compile(
     re.IGNORECASE,
 )
 
+_STRICT_SUB_ENTITY_TERMS = {
+    "georgia",
+    "europe",
+    "uk",
+    "london",
+    "asia",
+    "pacific",
+    "swiss",
+    "switzerland",
+    "zurich",
+    "singapore",
+    "hong kong",
+    "usa",
+    "limited",
+    "subsidiary",
+    "branch",
+}
+
 
 def normalize_name(name: str) -> str:
     """Strip legal suffixes and punctuation, lowercase and collapse spaces."""
@@ -33,6 +51,22 @@ def normalize_name(name: str) -> str:
     stripped = stripped.replace(".", " ")
     stripped = re.sub(r"\s+", " ", stripped)
     return stripped.strip().lower()
+
+
+def strict_entity_pre_check(mention: str, canonical_name: str) -> bool:
+    """Block automatic parent/subsidiary fusion on explicit local qualifiers.
+
+    A mention such as "VTB Bank Georgia" must not resolve to "VTB Bank" just
+    because the shared parent name has a high fuzzy score. If the mention
+    carries a geographic or structural qualifier absent from the canonical
+    anchor, force the entity to be treated as new.
+    """
+    mention_lower = mention.lower()
+    canonical_lower = canonical_name.lower()
+    for term in _STRICT_SUB_ENTITY_TERMS:
+        if term in mention_lower and term not in canonical_lower:
+            return False
+    return True
 
 
 @dataclass
@@ -72,10 +106,12 @@ class EntityResolver:
         """
         aliases: list[str] = []
         node_ids: list[str] = []
+        canonical_names: list[str] = []
         for nid, data in self.registry.canonical.items():
             for alias in data["aliases"]:
                 aliases.append(alias)
                 node_ids.append(nid)
+                canonical_names.append(str(data.get("display_name") or alias))
 
         if not aliases:
             return {"node_id": None, "is_new": True, "method": "empty_registry", "score": 0.0}
@@ -88,8 +124,17 @@ class EntityResolver:
         if result is None:
             return {"node_id": None, "is_new": True, "method": "no_match", "score": 0.0}
 
-        _matched_alias, score, index = result
+        matched_alias, score, index = result
         if score >= self.fuzzy_high:
+            if not strict_entity_pre_check(mention, canonical_names[index]):
+                return {
+                    "node_id": None,
+                    "is_new": True,
+                    "method": "strict_sub_entity_guardrail",
+                    "score": float(score),
+                    "blocked_alias": matched_alias,
+                    "blocked_node_id": node_ids[index],
+                }
             return {
                 "node_id": node_ids[index],
                 "is_new": False,

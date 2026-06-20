@@ -9,6 +9,7 @@ every loosely associated entity.
 Edge control weights mirror the technical specification::
 
     DIRECTS, OWNS_MAJORITY (>= 25%) -> W = 1.0  (full contagion)
+    LEGAL_PROCEEDING -> W = 0.75  (direct adverse structural pressure)
     LOCATED_AT, OWNS_MINORITY (< 25%) -> W = 0.1 (attenuated)
 """
 
@@ -16,7 +17,19 @@ from __future__ import annotations
 
 import networkx as nx
 
-CONTROL_RELATIONS = {"DIRECTS", "OWNS_MAJORITY"}
+DEFAULT_RELATION_WEIGHTS = {
+    "DIRECTS": 1.0,
+    "OWNS_MAJORITY": 1.0,
+    "LEGAL_PROCEEDING": 0.75,
+    "LOCATED_AT": 0.1,
+    "OWNS_MINORITY": 0.1,
+    "ASSOCIATED_WITH": 0.1,
+}
+CONTROL_RELATIONS = {
+    rel_type
+    for rel_type, weight in DEFAULT_RELATION_WEIGHTS.items()
+    if weight >= 1.0
+}
 
 
 class ComplianceDirectedGraph:
@@ -70,7 +83,7 @@ class ComplianceDirectedGraph:
             for v in self.graph.successors(u):
                 edge = self.graph.get_edge_data(u, v) or {}
                 rel_type = edge.get("type", "UNKNOWN")
-                edge_weight = 1.0 if rel_type in CONTROL_RELATIONS else 0.1
+                edge_weight = self._edge_weight(edge, rel_type)
                 impact = u_risk * beta * edge_weight
                 contagion[v] = min(1.0, contagion[v] + impact)
 
@@ -93,7 +106,7 @@ class ComplianceDirectedGraph:
                 continue
             edge = self.graph.get_edge_data(u, target) or {}
             rel_type = edge.get("type", "UNKNOWN")
-            edge_weight = 1.0 if rel_type in CONTROL_RELATIONS else 0.1
+            edge_weight = self._edge_weight(edge, rel_type)
             contributors.append(
                 {
                     "node_id": u,
@@ -106,6 +119,14 @@ class ComplianceDirectedGraph:
             )
         contributors.sort(key=lambda c: c["contributed"], reverse=True)
         return contributors
+
+    @staticmethod
+    def _edge_weight(edge: dict, rel_type: str) -> float:
+        """Return the stored edge weight, falling back to relation defaults."""
+        try:
+            return float(edge.get("weight", DEFAULT_RELATION_WEIGHTS.get(rel_type, 0.1)))
+        except (TypeError, ValueError):
+            return DEFAULT_RELATION_WEIGHTS.get(rel_type, 0.1)
 
     def check_ownership_cycles(self, target: str, max_len: int = 5) -> bool:
         """Detect short circular-ownership loops involving ``target``.

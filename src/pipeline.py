@@ -203,6 +203,7 @@ class PerpetualKYCPipeline:
                 anonymizer=anonymizer,
                 company_node_id=profile.company_node_id,
                 adverse_score=event.adverse_score,
+                event_text=f"{event.title} {event.summary} {fact_text}",
             )
             has_cycle = graph.check_ownership_cycles(profile.company_node_id)
             company_exposure = graph.exposure_of(
@@ -259,6 +260,12 @@ class PerpetualKYCPipeline:
             )
 
             if trigger_fired:
+                print(
+                    f"[EARLY STOP] Critical risk threshold breached "
+                    f"({result.combined_risk:.4f}). Halting Layer-1 stream.",
+                    file=sys.stderr,
+                    flush=True,
+                )
                 break
 
         alarm_fired = max_risk > self.config.combined_risk_threshold
@@ -451,9 +458,12 @@ class PerpetualKYCPipeline:
         anonymizer: DataAnonymizer,
         company_node_id: str,
         adverse_score: float,
+        event_text: str,
     ) -> list[dict[str, object]]:
-        """Resolve extracted entities and insert new graph nodes lazily."""
+        """Resolve extracted entities and mutate the live topology graph."""
         created: list[dict[str, object]] = []
+        relation, control_weight = self._infer_graph_relation(event_text)
+        is_red_flag = self._is_red_flag_event(event_text)
         for entity in entities:
             raw_name = str(entity.get("name") or "").strip()
             raw_type = str(entity.get("type") or "ENTITY").strip().upper()
@@ -465,24 +475,151 @@ class PerpetualKYCPipeline:
                 continue
 
             resolution = resolver.resolve(real_name)
-            if not resolution.get("is_new"):
+            node_id = str(resolution.get("node_id") or "")
+            was_new = bool(resolution.get("is_new"))
+            if not was_new and not node_id:
                 continue
 
-            node_id = self._dynamic_node_id(registry, raw_type)
-            intrinsic_risk = min(max(float(adverse_score or 0.0), 0.0), 1.0)
-            registry.add_entity(node_id, [real_name], raw_type.lower())
-            graph.add_node(node_id, real_name, raw_type, intrinsic_risk)
-            graph.add_edge(node_id, company_node_id, "ASSOCIATED_WITH", 0.1)
-            created.append(
-                {
-                    "node_id": node_id,
-                    "name": real_name,
-                    "type": raw_type,
-                    "intrinsic_risk": round(intrinsic_risk, 4),
-                    "relation": "ASSOCIATED_WITH",
-                }
+            if was_new:
+                node_id = self._dynamic_node_id(registry, raw_type)
+                privacy_token = anonymizer.register_sensitive_entity(real_name, raw_type)
+                registry.add_entity(node_id, [real_name], raw_type.lower())
+                graph.add_node(node_id, real_name, raw_type, 0.0)
+                self._graph_mutation_log(
+                    f"New Entity Detected: '{real_name}' -> registered as {node_id} "
+                    f"(GDPR token {privacy_token})"
+                )
+            else:
+                privacy_token = anonymizer.token_for(real_name) or node_id
+
+            if node_id == company_node_id:
+                continue
+
+            graph.add_edge(node_id, company_node_id, relation, control_weight)
+            self._graph_mutation_log(
+                f"Added Directed Edge: {node_id} --[{relation} (w={control_weight:.1f})]--> "
+                f"{company_node_id}"
             )
+            if self._should_close_circular_ownership(event_text, relation):
+                graph.add_edge(company_node_id, node_id, "OWNS_MAJORITY", 1.0)
+                self._graph_mutation_log(
+                    f"Added Circular Ownership Edge: {company_node_id} "
+                    f"--[OWNS_MAJORITY (w=1.0)]--> {node_id}"
+                )
+
+            if is_red_flag:
+                graph.set_intrinsic_risk(node_id, 1.0)
+                intrinsic_risk = 1.0
+                self._graph_mutation_log(
+                    f"Risk Injection: node {node_id} ({privacy_token}) marked with "
+                    "intrinsic_risk=1.0"
+                )
+            else:
+                intrinsic_risk = min(max(float(adverse_score or 0.0), 0.0), 1.0)
+                if was_new:
+                    graph.set_intrinsic_risk(node_id, intrinsic_risk)
+
+            if was_new:
+                created.append(
+                    {
+                        "node_id": node_id,
+                        "name": real_name,
+                        "type": raw_type,
+                        "intrinsic_risk": round(intrinsic_risk, 4),
+                        "relation": relation,
+                        "control_weight": control_weight,
+                    }
+                )
         return created
+
+    @staticmethod
+    def _graph_mutation_log(message: str) -> None:
+        print(
+            f"[GRAPH MUTATION] {message}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+    @staticmethod
+    def _infer_graph_relation(event_text: str) -> tuple[str, float]:
+        text = event_text.lower()
+        legal_proceeding_terms = (
+            "investigation",
+            "fraud",
+            "lawsuit",
+            "legal action",
+            "class action",
+            "securities fraud",
+            "shareholder alert",
+            "litigation",
+            "court",
+            "fine",
+            "fined",
+        )
+        director_terms = (
+            "director",
+            "directs",
+            "chief executive",
+            "ceo",
+            "chairman",
+            "board",
+            "appointed",
+            "assumes",
+            "joins",
+            "takes control",
+        )
+        ownership_terms = (
+            "owns",
+            "owner",
+            "shareholder",
+            "majority",
+            "stake",
+            "acquires",
+            "acquisition",
+            "subsidiary",
+            "beneficial owner",
+        )
+        if any(term in text for term in legal_proceeding_terms):
+            return "LEGAL_PROCEEDING", 0.75
+        if any(term in text for term in director_terms):
+            return "DIRECTS", 1.0
+        if any(term in text for term in ownership_terms):
+            return "OWNS_MAJORITY", 1.0
+        return "ASSOCIATED_WITH", 0.1
+
+    @staticmethod
+    def _is_red_flag_event(event_text: str) -> bool:
+        text = event_text.lower()
+        red_flags = (
+            "sanction",
+            "sancionado",
+            "ofac",
+            "criminal investigation",
+            "penal",
+            "fraud",
+            "money laundering",
+            "aml",
+            "terrorist financing",
+            "default",
+            "fine",
+            "fined",
+        )
+        return any(flag in text for flag in red_flags)
+
+    @staticmethod
+    def _should_close_circular_ownership(event_text: str, relation: str) -> bool:
+        if relation != "OWNS_MAJORITY":
+            return False
+        text = event_text.lower()
+        circular_terms = (
+            "circular ownership",
+            "cross-owned",
+            "cross ownership",
+            "ownership loop",
+            "loop",
+            "layering",
+        )
+        return any(term in text for term in circular_terms)
 
     @staticmethod
     def _dynamic_node_id(registry: EntityRegistry, entity_type: str) -> str:
@@ -555,6 +692,7 @@ class PerpetualKYCPipeline:
             "triggering_event": {
                 "headline": peak_outcome.title,
                 "extracted_fact": peak_outcome.extracted_fact,
+                "dynamic_graph_nodes": peak_outcome.new_graph_nodes,
             },
             "metrics": {
                 "combined_risk": round(max_risk, 4),
@@ -607,14 +745,20 @@ class PerpetualKYCPipeline:
             f"Se ha detectado una desviacion de KYC estadisticamente significativa para "
             f"{trace['client_profile']['legal_name']} (riesgo combinado "
             f"{m['combined_risk']}). Evento disparador: {trace['triggering_event']['headline']}.\n\n"
-            "## 2. ANALISIS DE DERIVA DE KYC (KYC DRIFT) MULTICORRIENTE\n"
+            "## 2. EXPLICACION OPERATIVA PARA COMITE DE RIESGO\n"
+            f"- Que cambio en el perfil del cliente: el evento publico indica "
+            f"{trace['triggering_event']['extracted_fact']}.\n"
+            "- Por que importa para KYC/AML: el hecho altera el perfil esperado y "
+            "genera una senal adversa que debe revisarse antes de seguir operando.\n"
+            f"- Cual fue el trigger principal: alarmas activas {m['alarms']}.\n\n"
+            "## 3. ANALISIS DE DERIVA DE KYC (KYC DRIFT) MULTICORRIENTE\n"
             f"- Desviacion Semantica: distancia de coseno {m['semantic_cosine_distance']} "
             f"respecto al modelo de negocio declarado.\n"
             f"{driver_line}\n"
             f"- Anomalia Transaccional: alarmas activas {m['alarms']}.\n\n"
-            "## 3. TRAZA DE METRICAS AUDITABLES\n"
+            "## 4. TRAZA DE METRICAS AUDITABLES\n"
             f"```json\n{trace['metrics']}\n```\n\n"
-            "## 4. ACCION DE GOBERNANZA RECOMENDADA\n"
+            "## 5. ACCION DE GOBERNANZA RECOMENDADA\n"
             f"- {trace['proposed_action']}: justificada por la deriva multicorriente detectada.\n"
         )
 

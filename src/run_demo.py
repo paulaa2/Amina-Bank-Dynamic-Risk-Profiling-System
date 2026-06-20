@@ -67,6 +67,8 @@ def _print_human(report: EngineReport) -> None:
     print(f"       cloud tokens: {cost['cloud_tokens']['prompt']}+{cost['cloud_tokens']['completion']} "
           f"= ${cost['cloud_tokens']['cost_usd']}")
     print(f"       projected cloud cost / 1000 analyses = ${cost['projected_cloud_cost_per_1000_analyses_usd']}")
+    print(f"       demo takeaway: early stopping keeps 1000 analyses under "
+          f"${cost['projected_cloud_cost_per_1000_analyses_usd']} cloud spend")
 
     if report.governance:
         g = report.governance
@@ -100,10 +102,13 @@ def _report_to_dict(report: EngineReport) -> dict:
         "events": [
             {
                 "title": e.title,
+                "masked_title": e.masked_title,
+                "extracted_fact": e.extracted_fact,
                 "triaged_in": e.triaged_in,
                 "semantic_distance": e.semantic_distance,
                 "combined_risk": e.combined_risk,
                 "alarms": e.alarms,
+                "new_graph_nodes": e.new_graph_nodes,
             }
             for e in report.events
         ],

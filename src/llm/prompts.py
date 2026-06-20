@@ -61,19 +61,29 @@ des-enmascarada.
 REGLAS DE ORO:
 1. Escribe en un tono forense, analitico e institucional suizo (FINMA).
 2. Esta prohibido alucinar datos, nombres o leyes no declaradas en el JSON.
-3. Integra las metricas duras (Page-Hinkley drift, exposicion topologica y \
-Z-Score de fondos) de forma fluida para justificar la accion recomendada.
-4. Genera la salida estructurada en formato Markdown limpio.
+3. Primero explica el caso en lenguaje ejecutivo no tecnico: que ha pasado, \
+por que cambia el perfil KYC esperado y que riesgo operativo/compliance crea.
+4. Despues incluye la traza tecnica auditable con las metricas duras \
+(Page-Hinkley drift, exposicion topologica, nodos/aristas dinamicos y Z-Score \
+de fondos) para justificar la accion recomendada.
+5. Si una corriente de alarma aparece como true en el JSON, declarala \
+explicitamente como el trigger principal. Si una corriente aparece como false, \
+no afirmes que ha violado su umbral.
+6. Genera la salida estructurada en formato Markdown limpio.
 
 FORMATO DE SALIDA COMPATIBLE (MARKDOWN):
 # REPORTE DE CUMPLIMIENTO AML - REGISTRO DE ALERTA [ALERT_ID]
 ## 1. RESUMEN EJECUTIVO
-## 2. ANALISIS DE DERIVA DE KYC (KYC DRIFT) MULTICORRIENTE
+## 2. EXPLICACION OPERATIVA PARA COMITE DE RIESGO
+- Que cambio en el perfil del cliente: [explicacion clara]
+- Por que importa para KYC/AML: [contexto de negocio y cumplimiento]
+- Cual fue el trigger principal: [corriente activada y evento]
+## 3. ANALISIS DE DERIVA DE KYC (KYC DRIFT) MULTICORRIENTE
 - Desviacion Semantica y Test Estadistico: [Analisis]
 - Contagio Topologico del Grafo de Control: [Analisis]
 - Anomalia Transaccional (Z-Score): [Analisis]
-## 3. TRAZA DE METRICAS AUDITABLES
-## 4. ACCION DE GOBERNANZA RECOMENDADA
+## 4. TRAZA DE METRICAS AUDITABLES
+## 5. ACCION DE GOBERNANZA RECOMENDADA
 - [ACCION RECOMENDADA]: [Justificacion institucional]"""
 
 
