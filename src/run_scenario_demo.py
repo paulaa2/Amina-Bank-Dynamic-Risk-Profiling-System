@@ -2,6 +2,9 @@
 
 The scenario JSON only curates dated public facts. Semantic, topology and
 behavioural signals are always computed by the same pipeline as ``run_demo``.
+
+Stream events are always processed **oldest-first** by ``date`` (same rule as
+live news ingestion). JSON array order is ignored for processing.
 """
 
 from __future__ import annotations
@@ -53,11 +56,20 @@ def _scenario_events_as_news(scenario: dict[str, Any]) -> list[NewsEvent]:
     return events
 
 
+def _chronological(events: list[NewsEvent]) -> list[NewsEvent]:
+    """Oldest first; matches live ``run_demo`` ordering."""
+    return sorted(events, key=lambda event: event.published_at or dt.datetime.max)
+
+
+def _chronological_scenario_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(events, key=lambda event: str(event.get("date") or ""))
+
+
 def replay_scenario(path: Path) -> dict[str, Any]:
     scenario = json.loads(path.read_text(encoding="utf-8"))
     news = _scenario_events_as_news(scenario)
-    burn_in = [event for event in news if event.burn_in]
-    stream = [event for event in news if not event.burn_in]
+    burn_in = _chronological([event for event in news if event.burn_in])
+    stream = _chronological([event for event in news if not event.burn_in])
     pipeline = PerpetualKYCPipeline(load_config())
     report = pipeline.run(
         name_substring=scenario["client"],
@@ -70,7 +82,9 @@ def replay_scenario(path: Path) -> dict[str, Any]:
     threshold = float(report.decision["threshold"])
     rows: list[dict[str, Any]] = []
     alarm_row: dict[str, Any] | None = None
-    scenario_events = [event for event in scenario["events"] if not event.get("burn_in")]
+    scenario_events = _chronological_scenario_events(
+        [event for event in scenario["events"] if not event.get("burn_in")]
+    )
     for index, (event, outcome) in enumerate(zip(scenario_events, report.events), start=1):
         trigger = outcome.combined_risk > threshold
         row = {

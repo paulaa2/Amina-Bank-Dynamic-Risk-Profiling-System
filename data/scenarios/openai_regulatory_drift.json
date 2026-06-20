@@ -21,6 +21,13 @@
       "burn_in": true
     },
     {
+      "date": "2023-03-31",
+      "title": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/technology/italy-data-protection-agency-opens-chatgpt-probe-privacy-concerns-2023-03-31/",
+      "evidence": "Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection."
+    },
+    {
       "date": "2023-07-13",
       "title": "US FTC opens investigation into OpenAI over consumer harm, reputational risk and data practices",
       "source": "Reuters",
@@ -40,13 +47,6 @@
       "source": "Reuters/Yahoo timeline",
       "url": "https://finance.yahoo.com/news/timeline-altmans-departure-musks-lawsuit-004141057.html",
       "evidence": "Staff revolt and Microsoft intervention reveal extreme governance fragility."
-    },
-    {
-      "date": "2023-03-31",
-      "title": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection",
-      "source": "Reuters",
-      "url": "https://www.reuters.com/technology/italy-data-protection-agency-opens-chatgpt-probe-privacy-concerns-2023-03-31/",
-      "evidence": "Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection."
     },
     {
       "date": "2023-12-27",
