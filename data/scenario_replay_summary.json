@@ -144,7 +144,7 @@
       "triggering_event": "Binance walks away from FTX rescue after due diligence"
     },
     "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99455, Requested 853. Please try again in 4m26.111999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
+      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99372, Requested 853. Please try again in 3m14.399999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
     ]
   },
   {
@@ -274,7 +274,7 @@
       "triggering_event": "Russia requires foreign gas payments through Gazprombank rouble-conversion mechanism"
     },
     "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99430, Requested 862. Please try again in 4m12.287999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
+      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99344, Requested 862. Please try again in 2m57.984s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
     ]
   },
   {
@@ -377,13 +377,13 @@
       "triggering_event": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin"
     },
     "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99416, Requested 859. Please try again in 3m57.6s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
+      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99324, Requested 859. Please try again in 2m38.112s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
     ]
   },
   {
     "scenario_id": "openai_regulatory_drift",
     "client": "OpenAI",
-    "description": "Chronological watchlist example: heavy commercial burn-in absorbs early regulatory hits so risk rises gradually without crossing the alarm threshold in this curated window. For Sequoia/FTX investor contagion use run_global_demo --companies FTX OpenAI.",
+    "description": "Chronological watchlist example (6 stream events): one commercial burn-in, then Sequoia/FTX cap-table stress, EU privacy action, US scrutiny and governance/litigation — combined risk climbs gradually without crossing 0.5. Cross-client Sequoia contagion at scale: run_global_demo --companies FTX OpenAI.",
     "reference_model": "AI research lab monetising via API and subscriptions.",
     "threshold": 0.5,
     "bonferroni_scale": 2.0986,
@@ -393,21 +393,57 @@
     "events": [
       {
         "index": 1,
+        "date": "2022-11-10",
+        "title": "OpenAI investor Sequoia Capital writes down entire FTX stake to zero",
+        "source": "Reuters",
+        "url": "https://www.reuters.com/technology/what-are-ftxs-investors-saying-2022-11-11/",
+        "evidence": "Sequoia, also an early backer of OpenAI, marks $213M FTX exposure to zero after the exchange collapse.",
+        "semantic_signal": 0.5213,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.1271102982524813,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.1372768236823585,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.1373,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "MASKED_COMPANY_001 vendió toda su participación en FTX a cero",
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_001",
+            "name": "FTX",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.233,
+            "relation": "OWNS_MAJORITY",
+            "control_weight": 1.0
+          }
+        ]
+      },
+      {
+        "index": 2,
         "date": "2023-03-31",
         "title": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection",
         "source": "Reuters",
         "url": "https://www.reuters.com/technology/italy-data-protection-agency-opens-chatgpt-probe-privacy-concerns-2023-03-31/",
-        "evidence": "Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection.",
+        "evidence": "Italy's Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection.",
         "semantic_signal": 0.547,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.014543235875309094,
+        "semantic_stat": 0.23289437061812573,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.28730625825112716,
+        "semantic_ratio": 0.2515217090314254,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.2873,
+        "combined_risk": 0.2515,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -416,33 +452,6 @@
         "trigger": false,
         "triaged_in": true,
         "extracted_fact": "La autoridad de privacidad italiana ordena una prohibición temporal de ChatGPT por recopilación ilegal de datos",
-        "new_graph_nodes": []
-      },
-      {
-        "index": 2,
-        "date": "2023-04-28",
-        "title": "ChatGPT returns to Italy after OpenAI implements privacy safeguards requested by regulator",
-        "source": "The Verge",
-        "url": "https://www.theverge.com/2023/4/28/23702883/chatgpt-italy-ban-lifted-gpdp-data-protection-age-verification",
-        "evidence": "OpenAI restores ChatGPT access in Italy after meeting regulator demands on transparency and age controls.",
-        "semantic_signal": 0.4787,
-        "topology_signal": 0.0,
-        "behavioral_signal": 0.0,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "La empresa implementó medidas de protección de privacidad solicitadas por la regulador",
         "new_graph_nodes": []
       },
       {
@@ -455,13 +464,13 @@
         "semantic_signal": 0.4816,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.0,
+        "semantic_stat": 0.24616327187101797,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
+        "semantic_ratio": 0.26585188245398955,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
+        "combined_risk": 0.2659,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -482,13 +491,13 @@
         "semantic_signal": 0.4456,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.0,
+        "semantic_stat": 0.2063774363832867,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
+        "semantic_ratio": 0.22288389954157442,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
+        "combined_risk": 0.2229,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -509,13 +518,13 @@
         "semantic_signal": 0.4952,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.0,
+        "semantic_stat": 0.19755272188419523,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
+        "semantic_ratio": 0.2133533674525642,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
+        "combined_risk": 0.2134,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -536,13 +545,13 @@
         "semantic_signal": 0.4762,
         "topology_signal": 0.0,
         "behavioral_signal": 1.0112,
-        "semantic_stat": 0.0,
+        "semantic_stat": 0.15621717347919328,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
+        "semantic_ratio": 0.16871172261167283,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
+        "combined_risk": 0.1687,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -552,112 +561,13 @@
         "triaged_in": true,
         "extracted_fact": "La empresa fue demandada por el New York Times por uso no autorizado de obras protegidas para entrenamiento de sistemas de inteligencia artificial",
         "new_graph_nodes": []
-      },
-      {
-        "index": 7,
-        "date": "2024-05-26",
-        "title": "Former OpenAI board members accuse Altman of lying and call the governance experiment failed",
-        "source": "TIME timeline",
-        "url": "https://time.com/6986711/openai-sam-altman-accusations-controversies-timeline/",
-        "evidence": "Former board members publicly question governance and safety oversight.",
-        "semantic_signal": 0.4642,
-        "topology_signal": 0.0,
-        "behavioral_signal": 0.8355,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "Antiguos miembros del consejo de MASKED_COMPANY_001 acusan a Altman de mentir y declaran que el experimento de gobernanza falló",
-        "new_graph_nodes": [
-          {
-            "node_id": "DYN_PERSON_001",
-            "name": "Altman",
-            "type": "PERSON",
-            "intrinsic_risk": 0.0,
-            "relation": "DIRECTS",
-            "control_weight": 1.0
-          }
-        ]
-      },
-      {
-        "index": 8,
-        "date": "2024-06-06",
-        "title": "US regulators clear antitrust probes into Microsoft OpenAI and Nvidia",
-        "source": "Reuters",
-        "url": "https://www.reuters.com/technology/us-regulators-open-antitrust-inquiries-microsoft-openai-nvidia-nyt-reports-2024-06-06/",
-        "evidence": "DOJ and FTC divide antitrust work; FTC leads the Microsoft-OpenAI conduct review.",
-        "semantic_signal": 0.4678,
-        "topology_signal": 0.0,
-        "behavioral_signal": 1.1184,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "Las autoridades estadounidenses han autorizado la finalización de las investigaciones antimonopolio sobre las empresas mencionadas.",
-        "new_graph_nodes": [
-          {
-            "node_id": "DYN_COMPANY_001",
-            "name": "Nvidia",
-            "type": "COMPANY",
-            "intrinsic_risk": 0.367,
-            "relation": "ASSOCIATED_WITH",
-            "control_weight": 0.1
-          }
-        ]
-      },
-      {
-        "index": 9,
-        "date": "2024-12-20",
-        "title": "Italian privacy regulator fines OpenAI €15M over EU data privacy breaches",
-        "source": "Reuters",
-        "url": "https://www.reuters.com/technology/italy-fines-openai-15-million-euros-over-data-privacy-2024-12-20/",
-        "evidence": "Garante Privacy confirms material privacy enforcement with a €15M fine.",
-        "semantic_signal": 0.474,
-        "topology_signal": 0.0,
-        "behavioral_signal": 1.1683,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "La empresa fue sancionada con una multa de €15M por incumplimiento de normas de privacidad de datos en la UE.",
-        "new_graph_nodes": []
       }
     ],
     "decision": {
       "alarm_fired": false,
-      "max_combined_risk": 0.2873,
+      "max_combined_risk": 0.2659,
       "threshold": 0.5,
-      "triggering_event": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection"
+      "triggering_event": "US FTC opens investigation into OpenAI over consumer harm, reputational risk and data practices"
     },
     "warnings": []
   },
@@ -824,7 +734,7 @@
       "triggering_event": "US and UK designate Surgutneftegas and Gazprom Neft as major Russian oil sanctions targets"
     },
     "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99298, Requested 952. Please try again in 3m36s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
+      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99200, Requested 952. Please try again in 2m11.328s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
     ]
   },
   {
@@ -972,9 +882,7 @@
       "threshold": 0.5,
       "triggering_event": "EU orders VTB and six other Russian banks disconnected from SWIFT"
     },
-    "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99280, Requested 846. Please try again in 1m48.864s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
-    ]
+    "warnings": []
   },
   {
     "scenario_id": "wirecard_drift",
@@ -1147,16 +1055,16 @@
         "source": "Reuters",
         "url": "https://www.reuters.com/article/technology/the-moneys-gone-wirecard-collapses-owing-4-billion-idUSKBN23W176/",
         "evidence": "Wirecard collapses owing creditors almost $4B after auditor points to sophisticated global fraud.",
-        "semantic_signal": 0.5636,
+        "semantic_signal": 0.5887,
         "topology_signal": 0.0,
         "behavioral_signal": 1.7726,
-        "semantic_stat": 0.44283923206767695,
+        "semantic_stat": 0.4656377890692185,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.5607549081872847,
+        "semantic_ratio": 0.5896240819470483,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.5608,
+        "combined_risk": 0.5896,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -1164,18 +1072,18 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "Wirecard presenta su quiebra tras confirmarse la fraude de efectivo desaparecido",
+        "extracted_fact": "Wirecard presenta su quiebra tras confirmarse la fraude de falta de efectivo",
         "new_graph_nodes": []
       }
     ],
     "decision": {
       "alarm_fired": true,
-      "max_combined_risk": 0.5608,
+      "max_combined_risk": 0.5896,
       "threshold": 0.5,
       "triggering_event": "Wirecard files for insolvency after the missing-cash fraud becomes undeniable"
     },
     "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99248, Requested 849. Please try again in 1m23.808s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
+      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99873, Requested 847. Please try again in 10m22.079999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
     ]
   }
 ]

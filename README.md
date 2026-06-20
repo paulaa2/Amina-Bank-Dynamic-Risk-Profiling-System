@@ -305,18 +305,17 @@ Resultado esperado tras `--all` (última batería con Ollama activo):
 | MicroStrategy | E3 | 2 | 0.51 |
 | FTX | E4 | 3 | 0.53 |
 | Gazprombank | E4 | 3 | 0.60 |
-| OpenAI | — | 9 | 0.29 (peak E1) |
+| OpenAI | — | 6 | 0.27 (peak E3) |
 | VTB | E5 | 4 | 0.55 |
 | Surgutneftegas | E5 | 4 | 0.52 |
 | Wirecard | E6 | 5 | 0.56 |
 
 La mayoría muestran **acumulación gradual** (2–5 eventos por debajo del umbral).
-OpenAI es el **ejemplo watchlist** (sin alarma en esta ventana): orden
-cronológico estricto, 4 hitos comerciales en `burn_in`, Italia en E1 sube a ~0.29
-pero no cruza 0.5. Sirve para mostrar drift absorbido por baseline comercial.
-**Sequoia/FTX no entra aquí** — es solo en la demo global:
-`run_global_demo --companies FTX OpenAI` (contagio cruzado vía inversor compartido
-en el grafo KYC).
+OpenAI es el **ejemplo watchlist** (6 eventos, sin alarma): orden cronológico,
+1 burn-in comercial (API), luego Sequoia/FTX → Italia → FTC → board → staff → NYT.
+El riesgo sube de ~0.14 a ~0.27 y no se queda en cero. La demo global
+`run_global_demo --companies FTX OpenAI` sigue mostrando herencia cruzada Sequoia
+a escala multi-cliente.
 Las transacciones del stream comportamental siguen siendo **simuladas**.
 
 **Umbral `COMBINED_RISK_THRESHOLD=0.5`:** las alarmas caen en la banda 0.51–0.60.
