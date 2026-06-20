@@ -1,0 +1,3 @@
+index,date,title,semantic_signal,topology_signal,behavioral_signal,semantic_stat,topology_stat,behavioral_stat,semantic_ratio,topology_ratio,behavioral_ratio,combined_risk,trigger,source,url
+1,2022-11-02,CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token,0.4572,0.0,0.4305,0.18091312383245262,0.0,0.0,0.40341464635496843,0.0,0.0,0.4034,False,Reuters / CoinDesk timeline,https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/
+2,2022-11-06,Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations,0.3991,0.0,0.5669,0.27401966939466826,0.0,0.0,0.6110311163801037,0.0,0.0,0.611,True,Reuters,https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/

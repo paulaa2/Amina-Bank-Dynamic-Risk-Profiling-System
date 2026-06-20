@@ -61,9 +61,6 @@ export function buildGraphFromReport(report: LiveReport): {
 
   const contributors = report.topology.top_contributors;
   const mutations = collectGraphMutations(report);
-  const mutationByName = new Map(
-    mutations.map((m) => [m.name.toLowerCase(), m])
-  );
 
   const totalTopNodes = Math.max(contributors.length, 1);
   const canvasWidth   = Math.max(640, totalTopNodes * 170 + 80);
@@ -88,11 +85,9 @@ export function buildGraphFromReport(report: LiveReport): {
       ? centerX - 55
       : centerX - (hSpacing * (contributors.length - 1)) / 2 - 55;
 
-  const linkedContributorIds = new Set<string>();
-
   contributors.forEach((c, i) => {
     const nodeId = `node_c${i}`;
-    const mutation = mutationByName.get(c.name.toLowerCase());
+    const mutation = mutations.find((m) => namesMatch(c.name, m.name));
     nodes.push({
       id: nodeId,
       label: c.name,
@@ -113,12 +108,11 @@ export function buildGraphFromReport(report: LiveReport): {
       target: companyNodeId,
       label: (mutation?.relation ?? c.relation).replace(/_/g, " "),
     });
-    if (mutation) linkedContributorIds.add(c.name.toLowerCase());
   });
 
-  // Newly discovered entities that are not already shown as KYC contributors.
+  // Dynamically discovered entities not already shown in the top contributor row.
   const novelMutations = mutations.filter(
-    (m) => !linkedContributorIds.has(m.name.toLowerCase())
+    (m) => !contributors.some((c) => namesMatch(c.name, m.name))
   );
 
   const discoverySpacing = Math.min(

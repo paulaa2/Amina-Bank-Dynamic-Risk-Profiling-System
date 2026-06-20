@@ -1,0 +1,105 @@
+{
+  "scenario_id": "ftx_rapid_deterioration",
+  "client": "FTX Trading Ltd",
+  "description": "Evidence-backed rapid deterioration replay: not slow KYC drift, but a multi-day liquidity and governance collapse before bankruptcy.",
+  "reference_model": "Centralised crypto-asset exchange and custody.",
+  "threshold": 0.5,
+  "bonferroni_scale": 2.0986,
+  "alarm_event_index": 2,
+  "alarm_date": "2022-11-06",
+  "alarm_title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
+  "events": [
+    {
+      "index": 1,
+      "date": "2022-11-02",
+      "title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
+      "source": "Reuters / CoinDesk timeline",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+      "evidence": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns.",
+      "semantic_signal": 0.4572,
+      "topology_signal": 0.0,
+      "behavioral_signal": 0.4305,
+      "semantic_stat": 0.18091312383245262,
+      "topology_stat": 0.0,
+      "behavioral_stat": 0.0,
+      "semantic_ratio": 0.40341464635496843,
+      "topology_ratio": 0.0,
+      "behavioral_ratio": 0.0,
+      "combined_risk": 0.4034,
+      "alarms": {
+        "semantic": false,
+        "topology": false,
+        "behavioral_tx": false
+      },
+      "trigger": false,
+      "triaged_in": true,
+      "extracted_fact": "Alameda Research depende significativamente de los activos relacionados con el token FTT de FTX en su balance sheet",
+      "new_graph_nodes": [
+        {
+          "node_id": "DYN_COMPANY_001",
+          "name": "Alameda Research",
+          "type": "COMPANY",
+          "intrinsic_risk": 0.35,
+          "relation": "ASSOCIATED_WITH",
+          "control_weight": 0.1,
+          "is_new": true
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "date": "2022-11-06",
+      "title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+      "evidence": "Public counterparty action accelerates market pressure and begins a bank-run dynamic.",
+      "semantic_signal": 0.3991,
+      "topology_signal": 0.0,
+      "behavioral_signal": 0.5669,
+      "semantic_stat": 0.27401966939466826,
+      "topology_stat": 0.0,
+      "behavioral_stat": 0.0,
+      "semantic_ratio": 0.6110311163801037,
+      "topology_ratio": 0.0,
+      "behavioral_ratio": 0.0,
+      "combined_risk": 0.611,
+      "alarms": {
+        "semantic": false,
+        "topology": false,
+        "behavioral_tx": false
+      },
+      "trigger": true,
+      "triaged_in": true,
+      "extracted_fact": "Binance anunció que liquidará sus activos restantes de FTT relacionados con FTX tras revelaciones de CoinDesk",
+      "new_graph_nodes": [
+        {
+          "node_id": "DYN_COMPANY_002",
+          "name": "Binance",
+          "type": "COMPANY",
+          "intrinsic_risk": 0.35,
+          "relation": "ASSOCIATED_WITH",
+          "control_weight": 0.1,
+          "is_new": true
+        },
+        {
+          "node_id": "DYN_COMPANY_003",
+          "name": "CoinDesk",
+          "type": "COMPANY",
+          "intrinsic_risk": 0.35,
+          "relation": "ASSOCIATED_WITH",
+          "control_weight": 0.1,
+          "is_new": true
+        }
+      ]
+    }
+  ],
+  "decision": {
+    "alarm_fired": true,
+    "max_combined_risk": 0.611,
+    "threshold": 0.5,
+    "triggering_event": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations"
+  },
+  "warnings": [
+    "Groq report generation failed (No module named 'groq'); using local fallback."
+  ]
+}

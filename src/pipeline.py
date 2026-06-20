@@ -356,7 +356,7 @@ class PerpetualKYCPipeline:
                         "intrinsic_risk": round(c["intrinsic_risk"], 3),
                         "contributed": round(c["contributed"], 3),
                     }
-                    for c in contributors[:5]
+                    for c in contributors
                 ],
             },
             streams=self._stream_summary(fusion, sem_det, topo_det, tx_det, company_exposure),

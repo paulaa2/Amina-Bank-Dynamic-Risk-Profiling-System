@@ -192,7 +192,7 @@ def _analyze_company_streaming(
                         "intrinsic_risk": round(c["intrinsic_risk"], 3),
                         "contributed":    round(c["contributed"], 3),
                     }
-                    for c in contributors[:5]
+                    for c in contributors
                 ],
             },
             "stream_thresholds": {
@@ -310,7 +310,7 @@ def _analyze_company_streaming(
                         "intrinsic_risk": round(c["intrinsic_risk"], 3),
                         "contributed":    round(c["contributed"], 3),
                     }
-                    for c in contributors[:5]
+                    for c in contributors
                 ],
             },
         }
@@ -354,7 +354,7 @@ def _analyze_company_streaming(
                     "intrinsic_risk": round(c["intrinsic_risk"], 3),
                     "contributed":    round(c["contributed"], 3),
                 }
-                for c in contributors[:5]
+                for c in contributors
             ],
         },
         "streams": pipeline._stream_summary(
