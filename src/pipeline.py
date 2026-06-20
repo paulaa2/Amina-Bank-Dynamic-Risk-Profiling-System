@@ -325,6 +325,16 @@ class PerpetualKYCPipeline:
             key=lambda event: event.published_at or dt.datetime.max,
         )
 
+    @staticmethod
+    def _event_timestamp_str(event: NewsEvent) -> str:
+        """Return an ISO timestamp for chronological cache comparisons."""
+        timestamp = event.published_at
+        if timestamp is None:
+            timestamp = dt.datetime.now(dt.timezone.utc)
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=dt.timezone.utc)
+        return timestamp.astimezone(dt.timezone.utc).isoformat()
+
     def _build_registry(self, profile: ClientProfile) -> EntityRegistry:
         registry = EntityRegistry()
         registry.add_entity(profile.company_node_id, [profile.legal_name, *profile.aliases], "company")

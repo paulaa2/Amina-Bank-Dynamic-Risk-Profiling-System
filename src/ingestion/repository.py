@@ -153,16 +153,30 @@ class ClientProfileRepository:
         )
 
     def load_news(self, company_id: int, limit: int = 50) -> list[NewsEvent]:
-        """Return the most adverse, most recent news events for a company."""
+        """Return a balanced adverse/recent event set for a company."""
+        if limit <= 0:
+            return []
+        adverse_limit = max(1, limit // 2)
+        recent_limit = max(1, limit - adverse_limit)
         with self._connect() as conn:
-            rows = conn.execute(
+            adverse_rows = conn.execute(
                 "SELECT title, summary, url, source, published_at, adverse_score, "
                 "matched_keywords FROM news_articles WHERE company_id = ? "
                 "ORDER BY adverse_score DESC, published_at DESC LIMIT ?",
-                (company_id, limit),
+                (company_id, adverse_limit),
             ).fetchall()
+            recent_rows = conn.execute(
+                "SELECT title, summary, url, source, published_at, adverse_score, "
+                "matched_keywords FROM news_articles WHERE company_id = ? "
+                "ORDER BY published_at DESC, adverse_score DESC LIMIT ?",
+                (company_id, recent_limit),
+            ).fetchall()
+        rows_by_key = {}
+        for r in [*adverse_rows, *recent_rows]:
+            key = r["url"] or r["title"]
+            rows_by_key.setdefault(key, r)
         events: list[NewsEvent] = []
-        for r in rows:
+        for r in rows_by_key.values():
             events.append(
                 NewsEvent(
                     title=r["title"] or "",

@@ -31,6 +31,14 @@ from scripts.seed_kyc import BASELINE_COMPANIES
 _SEED_EXTRA_KEYS = {"topology"}
 
 
+def _clear_existing_public_signals(session, company_id: int) -> None:
+    """Make collector re-runs idempotent for a single company."""
+    session.query(TopologyEdge).filter_by(target_company_id=company_id).delete(synchronize_session=False)
+    for model in (NewsArticle, SanctionsHit, RegistryRecord, FundingEvent, DomainRecord, TopologyNode):
+        session.query(model).filter_by(company_id=company_id).delete(synchronize_session=False)
+    session.flush()
+
+
 def seed_companies(session) -> list[tuple[Company, list[dict]]]:
     """Insert baseline KYC profiles if the table is empty.
 
@@ -66,6 +74,7 @@ def collect_for_company(
 ) -> None:
     name = company.legal_name
     print(f"\n=== {name} ===")
+    _clear_existing_public_signals(session, company.id)
 
     # 1. News & adverse media
     news = news_col.fetch_news(name, limit_per_query=news_limit)

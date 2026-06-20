@@ -83,8 +83,8 @@ def _sanctions_for_person(name: str) -> tuple[bool, float]:
         from .sanctions import fetch_sanctions
         hits = fetch_sanctions(name)
         if hits:
-            best = max(h.get("score", 0.0) for h in hits)
-            return True, min(best / 100.0, 1.0)
+            best = max(float(h.get("match_score", h.get("score", 0.0)) or 0.0) for h in hits)
+            return True, min(best / 100.0 if best > 1.0 else best, 1.0)
     except Exception:
         pass
     return False, 0.0
