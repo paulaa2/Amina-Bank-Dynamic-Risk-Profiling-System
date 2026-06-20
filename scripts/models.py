@@ -20,10 +20,9 @@ def utcnow() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
 
-# --- Data classification markers (data-security: public vs internal) ---
-PUBLIC = "public"      # Layer 1 - non-sensitive
-INTERNAL = "internal"  # Layer 2 - sensitive
-DERIVED = "derived"    # combined intelligence
+PUBLIC = "public"     
+INTERNAL = "internal"  
+DERIVED = "derived"    
 
 
 class Base(DeclarativeBase):
@@ -63,6 +62,7 @@ class Company(Base):
     funding = relationship("FundingEvent", back_populates="company", cascade="all, delete-orphan")
     domains = relationship("DomainRecord", back_populates="company", cascade="all, delete-orphan")
     signals = relationship("RiskSignal", back_populates="company", cascade="all, delete-orphan")
+    topology_nodes = relationship("TopologyNode", back_populates="company", cascade="all, delete-orphan")
 
 
 class NewsArticle(Base):
@@ -221,6 +221,61 @@ class RiskSignal(Base):
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=utcnow)
 
     company = relationship("Company", back_populates="signals")
+
+
+class TopologyNode(Base):
+    """Layer 2 — person or entity in the corporate graph (director, shareholder, subsidiary).
+
+    Each node is linked to a Company (the monitored client). The graph engine
+    propagates risk from flagged nodes to the company via TopologyEdge.
+    """
+
+    __tablename__ = "topology_nodes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+    data_classification: Mapped[str] = mapped_column(String(16), default=INTERNAL)
+
+    node_id: Mapped[str] = mapped_column(String(120), index=True)   # stable ID used in the graph
+    name: Mapped[str] = mapped_column(String(255), index=True)       # real name (masked before LLM)
+    node_type: Mapped[str] = mapped_column(String(32))               # PERSON / COMPANY / JURISDICTION
+    role: Mapped[str | None] = mapped_column(String(120))            # CEO, Director, Shareholder 25%…
+    ownership_pct: Mapped[float | None] = mapped_column(Float)       # % if shareholder
+
+    # Risk computed by the topology collector from news + sanctions
+    intrinsic_risk: Mapped[float] = mapped_column(Float, default=0.0)   # 0..1
+    sanctions_hit: Mapped[bool] = mapped_column(default=False)
+    max_adverse_score: Mapped[float] = mapped_column(Float, default=0.0)
+    adverse_news_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=utcnow)
+
+    company = relationship("Company", back_populates="topology_nodes")
+    outgoing_edges = relationship(
+        "TopologyEdge", foreign_keys="TopologyEdge.source_node_id",
+        back_populates="source_node", cascade="all, delete-orphan",
+    )
+
+
+class TopologyEdge(Base):
+    """Directed edge in the compliance graph: source --[rel_type]--> target_company.
+
+    Mirrors the edge model from ComplianceDirectedGraph in final_implementation.md:
+      W = 1.0  for DIRECTS, OWNS_MAJORITY  (full contagion)
+      W = 0.1  for LOCATED_AT, OWNS_MINORITY  (attenuated)
+    """
+
+    __tablename__ = "topology_edges"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_node_id: Mapped[int] = mapped_column(ForeignKey("topology_nodes.id"), index=True)
+    target_company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+
+    rel_type: Mapped[str] = mapped_column(String(32))        # DIRECTS / OWNS_MAJORITY / OWNS_MINORITY / LOCATED_AT
+    control_weight: Mapped[float] = mapped_column(Float, default=1.0)   # W in the contagion formula
+
+    source_node = relationship("TopologyNode", foreign_keys=[source_node_id], back_populates="outgoing_edges")
+    target_company = relationship("Company")
 
 
 class AuditLog(Base):

@@ -1,15 +1,4 @@
-"""End-to-end database generator.
 
-Run from the project root with either:
-    python scripts/build_database.py [options]
-    python -m scripts.build_database [options]
-
-Steps:
-  1. Initialise the SQLite schema (optionally resetting it).
-  2. Seed Layer 2 baseline KYC profiles.
-  3. For each company, collect Layer 1 public signals from the free APIs.
-  4. Persist everything with an audit trail.
-"""
 from __future__ import annotations
 
 import argparse
@@ -25,6 +14,7 @@ from scripts.collectors import funding as funding_col
 from scripts.collectors import news as news_col
 from scripts.collectors import registry as registry_col
 from scripts.collectors import sanctions as sanctions_col
+from scripts.collectors import topology as topology_col
 from scripts.models import (
     Company,
     DomainRecord,
@@ -32,28 +22,48 @@ from scripts.models import (
     NewsArticle,
     RegistryRecord,
     SanctionsHit,
+    TopologyNode,
+    TopologyEdge,
 )
 from scripts.seed_kyc import BASELINE_COMPANIES
 
+# Fields in seed_kyc that are NOT columns in Company (handled separately)
+_SEED_EXTRA_KEYS = {"topology"}
 
-def seed_companies(session) -> list[Company]:
-    """Insert baseline KYC profiles if the table is empty."""
+
+def seed_companies(session) -> list[tuple[Company, list[dict]]]:
+    """Insert baseline KYC profiles if the table is empty.
+
+    Returns list of (Company, topology_entries) so the caller can
+    run the topology collector after the main collection loop.
+    """
     existing = session.query(Company).count()
     if existing:
-        return session.query(Company).all()
-    companies = []
+        rows = session.query(Company).all()
+        # Rebuild topology map from original seed so we can re-collect if needed
+        topology_map = {d["legal_name"]: d.get("topology", []) for d in BASELINE_COMPANIES}
+        return [(c, topology_map.get(c.legal_name, [])) for c in rows]
+
+    result = []
     for data in BASELINE_COMPANIES:
-        company = Company(**data)
+        topology_entries = data.get("topology", [])
+        company_data = {k: v for k, v in data.items() if k not in _SEED_EXTRA_KEYS}
+        company = Company(**company_data)
         session.add(company)
         session.flush()
         db.log_audit(session, "seed_company", "company", company.id,
                      {"legal_name": company.legal_name})
-        companies.append(company)
-    print(f"Seeded {len(companies)} baseline KYC profiles.")
-    return companies
+        result.append((company, topology_entries))
+    print(f"Seeded {len(result)} baseline KYC profiles.")
+    return result
 
 
-def collect_for_company(session, company: Company, news_limit: int) -> None:
+def collect_for_company(
+    session,
+    company: Company,
+    topology_entries: list[dict],
+    news_limit: int,
+) -> None:
     name = company.legal_name
     print(f"\n=== {name} ===")
 
@@ -87,10 +97,22 @@ def collect_for_company(session, company: Company, news_limit: int) -> None:
         session.add(DomainRecord(company_id=company.id, **domain))
     print(f"  domain      : {'1 record' if domain else 'n/a'}")
 
+    # 6. Topology: directors and shareholders
+    if topology_entries:
+        print(f"  topology    : {len(topology_entries)} person(s)/entit(ies) to screen")
+        topology_col.build_topology(
+            session,
+            company_id=company.id,
+            company_legal_name=name,
+            topology_entries=topology_entries,
+            news_limit_per_query=3,
+        )
+
     session.flush()
     db.log_audit(session, "collect_signals", "company", company.id, {
         "news": len(news), "sanctions": len(sanctions), "registry": len(registry),
         "funding": len(funding), "domain": bool(domain),
+        "topology_nodes": len(topology_entries),
     })
 
 
@@ -109,19 +131,19 @@ def main() -> None:
     print("Schema ready." + (" (reset)" if args.reset else ""))
 
     with db.session_scope() as session:
-        companies = seed_companies(session)
+        company_pairs = seed_companies(session)
 
     if args.no_collect:
         print("\n--no-collect set: skipping data collection.")
         _summary()
         return
 
-    for company in companies:
+    for company, topology_entries in company_pairs:
         if args.company and args.company.lower() not in company.legal_name.lower():
             continue
         with db.session_scope() as session:
             company = session.merge(company)
-            collect_for_company(session, company, args.news_limit)
+            collect_for_company(session, company, topology_entries, args.news_limit)
 
     _summary()
 
@@ -130,14 +152,16 @@ def _summary() -> None:
     with db.session_scope() as session:
         print("\n===== DATABASE SUMMARY =====")
         for model, label in [
-            (Company, "companies (KYC baselines)"),
-            (NewsArticle, "news articles"),
+            (Company,      "companies (KYC baselines)"),
+            (NewsArticle,  "news articles"),
             (SanctionsHit, "sanctions hits"),
-            (RegistryRecord, "registry records"),
+            (RegistryRecord,"registry records"),
             (FundingEvent, "funding events"),
             (DomainRecord, "domain records"),
+            (TopologyNode, "topology nodes (persons/entities)"),
+            (TopologyEdge, "topology edges"),
         ]:
-            print(f"  {label:<28}: {session.query(model).count()}")
+            print(f"  {label:<36}: {session.query(model).count()}")
 
 
 if __name__ == "__main__":
