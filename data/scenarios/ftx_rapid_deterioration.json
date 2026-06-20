@@ -1,109 +1,50 @@
 {
-  "scenario_id": "ftx_rapid_deterioration",
-  "client": "FTX Trading Ltd",
-  "description": "Evidence-backed rapid deterioration replay: not slow KYC drift, but a multi-day liquidity and governance collapse before bankruptcy.",
   "reference_model": "Centralised crypto-asset exchange and custody.",
-  "alarm_threshold": 0.5,
-  "baseline": {
-    "semantic": [
-      0.08,
-      0.1,
-      0.12,
-      0.09,
-      0.11
-    ],
-    "topology": [
-      0.04,
-      0.05,
-      0.04,
-      0.06,
-      0.05
-    ],
-    "behavioral_tx": [
-      0.05,
-      0.08,
-      0.06,
-      0.09,
-      0.07
-    ]
-  },
-  "detector_calibration": {
-    "semantic": {
-      "k_std_delta": 1.0,
-      "k_std_threshold": 8.0,
-      "weight": 0.75
-    },
-    "topology": {
-      "k_std_delta": 1.0,
-      "k_std_threshold": 9.0,
-      "weight": 0.6
-    },
-    "behavioral_tx": {
-      "k_std_delta": 1.0,
-      "k_std_threshold": 10.0,
-      "weight": 0.35
-    }
-  },
+  "description": "Evidence-backed rapid deterioration replay: not slow KYC drift, but a multi-day liquidity and governance collapse before bankruptcy.",
   "events": [
     {
-      "date": "2022-11-02",
-      "title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
-      "source": "Reuters / CoinDesk timeline",
-      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
       "evidence": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns.",
-      "semantic_signal": 0.08,
-      "topology_signal": 0.04,
-      "behavioral_signal": 0.06
+      "title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
+      "date": "2022-11-02",
+      "source": "Reuters / CoinDesk timeline",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
     },
     {
-      "date": "2022-11-06",
-      "title": "Binance says it will liquidate remaining FTT holdings after recent revelations",
-      "source": "Reuters",
-      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
       "evidence": "Public counterparty action accelerates market pressure and begins a bank-run dynamic.",
-      "semantic_signal": 0.11,
-      "topology_signal": 0.06,
-      "behavioral_signal": 0.09
+      "title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
+      "date": "2022-11-06",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
     },
     {
-      "date": "2022-11-08",
-      "title": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal",
-      "source": "CoinDesk timeline",
-      "url": "https://www.coindesk.com/markets/2022/11/12/the-epic-collapse-of-sam-bankman-frieds-ftx-exchange-a-crypto-markets-timeline",
       "evidence": "FTX withdrawal stress and bailout discussions show acute liquidity deterioration.",
-      "semantic_signal": 0.18,
-      "topology_signal": 0.1,
-      "behavioral_signal": 0.13
+      "title": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal",
+      "date": "2022-11-08",
+      "source": "CoinDesk timeline",
+      "url": "https://www.coindesk.com/markets/2022/11/12/the-epic-collapse-of-sam-bankman-frieds-ftx-exchange-a-crypto-markets-timeline"
     },
     {
-      "date": "2022-11-09",
-      "title": "Binance walks away from FTX rescue after due diligence",
-      "source": "Reuters / CoinDesk",
-      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
       "evidence": "Failed acquisition removes last-resort support and exposes severe financial issues.",
-      "semantic_signal": 0.26,
-      "topology_signal": 0.15,
-      "behavioral_signal": 0.18
+      "title": "Binance walks away from FTX rescue after due diligence",
+      "date": "2022-11-09",
+      "source": "Reuters / CoinDesk",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
     },
     {
-      "date": "2022-11-10",
-      "title": "FTX halts withdrawals and faces severe liquidity crisis",
-      "source": "Reuters",
-      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
       "evidence": "Withdrawal halt is the material pre-bankruptcy failure event.",
-      "semantic_signal": 0.34,
-      "topology_signal": 0.22,
-      "behavioral_signal": 0.24
+      "title": "FTX halts withdrawals and faces severe liquidity crisis",
+      "date": "2022-11-10",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
     },
     {
-      "date": "2022-11-11",
-      "title": "FTX files for Chapter 11 bankruptcy and Sam Bankman-Fried resigns",
-      "source": "Reuters",
-      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
       "evidence": "Formal bankruptcy filing confirms the collapse.",
-      "semantic_signal": 0.43,
-      "topology_signal": 0.3,
-      "behavioral_signal": 0.3
+      "title": "FTX files for Chapter 11 bankruptcy and Sam Bankman-Fried resigns",
+      "date": "2022-11-11",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
     }
-  ]
+  ],
+  "client": "FTX Trading Ltd",
+  "scenario_id": "ftx_rapid_deterioration"
 }

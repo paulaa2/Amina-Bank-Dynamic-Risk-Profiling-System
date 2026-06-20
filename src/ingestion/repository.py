@@ -65,6 +65,7 @@ class NewsEvent:
     published_at: dt.datetime | None
     adverse_score: float
     matched_keywords: list[str] = field(default_factory=list)
+    burn_in: bool = False
 
 
 @dataclass

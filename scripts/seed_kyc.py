@@ -45,10 +45,10 @@ BASELINE_COMPANIES: list[dict] = [
         "onboarding_date": dt.date(2016, 1, 15),
         "notes": "DAX-listed payments group. Collapsed in 2020 due to EUR 1.9B accounting fraud.",
         "topology": [
-            {"name": "Markus Braun",  "node_type": "PERSON", "role": "CEO / Executive Director",      "ownership_pct": 7.0,  "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Jan Marsalek",  "node_type": "PERSON", "role": "COO / Executive Director",      "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "James Freis",   "node_type": "PERSON", "role": "Interim CEO (post-fraud)",      "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "SoftBank Group","node_type": "COMPANY","role": "Strategic investor",            "ownership_pct": 5.6,  "rel_type": "OWNS_MINORITY", "control_weight": 0.1},
+            {"name": "Markus Braun",  "node_type": "PERSON", "role": "CEO / Executive Director",      "ownership_pct": 7.0,  "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Jan Marsalek",  "node_type": "PERSON", "role": "COO / Executive Director",      "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "James Freis",   "node_type": "PERSON", "role": "Interim CEO (post-fraud)",      "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "SoftBank Group","node_type": "COMPANY","role": "Strategic investor",            "ownership_pct": 5.6,  "rel_type": "OWNS_MINORITY", "control_weight": 0.1, "at_onboarding_risk": 0.1},
         ],
     },
 
@@ -69,10 +69,10 @@ BASELINE_COMPANIES: list[dict] = [
         "onboarding_date": dt.date(2021, 3, 1),
         "notes": "Offshore crypto exchange. Collapsed Nov 2022; founder SBF convicted of fraud.",
         "topology": [
-            {"name": "Sam Bankman-Fried", "node_type": "PERSON", "role": "Founder & CEO",         "ownership_pct": 53.0, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Caroline Ellison",  "node_type": "PERSON", "role": "CEO of Alameda Research","ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Ryan Salame",       "node_type": "PERSON", "role": "Co-CEO FTX Digital Mkts","ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Sequoia Capital",   "node_type": "COMPANY","role": "Venture investor",       "ownership_pct": 1.0,  "rel_type": "OWNS_MINORITY", "control_weight": 0.1},
+            {"name": "Sam Bankman-Fried", "node_type": "PERSON", "role": "Founder & CEO",         "ownership_pct": 53.0, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Caroline Ellison",  "node_type": "PERSON", "role": "CEO of Alameda Research","ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Ryan Salame",       "node_type": "PERSON", "role": "Co-CEO FTX Digital Mkts","ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Sequoia Capital",   "node_type": "COMPANY","role": "Venture investor",       "ownership_pct": 1.0,  "rel_type": "OWNS_MINORITY", "control_weight": 0.1, "at_onboarding_risk": 0.2},
         ],
     },
 
@@ -98,10 +98,10 @@ BASELINE_COMPANIES: list[dict] = [
             "Classic semantic drift: software -> crypto asset holding company."
         ),
         "topology": [
-            {"name": "Michael Saylor",  "node_type": "PERSON", "role": "Executive Chairman / Founder", "ownership_pct": 30.0, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Phong Le",        "node_type": "PERSON", "role": "CEO",                          "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Andrew Kang",     "node_type": "PERSON", "role": "CFO",                          "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Capital International Investors", "node_type": "COMPANY", "role": "Institutional shareholder", "ownership_pct": 11.2, "rel_type": "OWNS_MINORITY", "control_weight": 0.1},
+            {"name": "Michael Saylor",  "node_type": "PERSON", "role": "Executive Chairman / Founder", "ownership_pct": 30.0, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Phong Le",        "node_type": "PERSON", "role": "CEO",                          "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Andrew Kang",     "node_type": "PERSON", "role": "CFO",                          "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Capital International Investors", "node_type": "COMPANY", "role": "Institutional shareholder", "ownership_pct": 11.2, "rel_type": "OWNS_MINORITY", "control_weight": 0.1, "at_onboarding_risk": 0.1},
         ],
     },
 
@@ -121,9 +121,9 @@ BASELINE_COMPANIES: list[dict] = [
         "onboarding_date": dt.date(2023, 6, 1),
         "notes": "Fast-scaling AI company; watch for scale-risk and funding signals.",
         "topology": [
-            {"name": "Sam Altman",      "node_type": "PERSON", "role": "CEO",             "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Greg Brockman",   "node_type": "PERSON", "role": "President",       "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Microsoft",       "node_type": "COMPANY","role": "Strategic investor","ownership_pct": 49.0, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0},
+            {"name": "Sam Altman",      "node_type": "PERSON", "role": "CEO",             "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Greg Brockman",   "node_type": "PERSON", "role": "President",       "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Microsoft",       "node_type": "COMPANY","role": "Strategic investor","ownership_pct": 49.0, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0, "at_onboarding_risk": 0.0},
             {"name": "Sequoia Capital",   "node_type": "COMPANY","role": "Early-stage investor", "ownership_pct": None, "rel_type": "OWNS_MINORITY", "control_weight": 0.1, "at_onboarding_risk": 0.2},
         ],
     },
@@ -144,9 +144,9 @@ BASELINE_COMPANIES: list[dict] = [
         "onboarding_date": dt.date(2019, 6, 1),
         "notes": "Russia's second-largest bank. Sanctioned by EU/OFAC/UK/AU/CA/CH (2022).",
         "topology": [
-            {"name": "Andrei Kostin",    "node_type": "PERSON", "role": "President & Chairman",    "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Dmitry Pyanov",    "node_type": "PERSON", "role": "Deputy President",        "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Government of Russia", "node_type": "COMPANY", "role": "Majority shareholder", "ownership_pct": 61.8, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0},
+            {"name": "Andrei Kostin",    "node_type": "PERSON", "role": "President & Chairman",    "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Dmitry Pyanov",    "node_type": "PERSON", "role": "Deputy President",        "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Government of Russia", "node_type": "COMPANY", "role": "Majority shareholder", "ownership_pct": 61.8, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0, "at_onboarding_risk": 0.15},
             {"name": "Gazprom",          "node_type": "COMPANY", "role": "Energy-sector counterparty", "ownership_pct": None, "rel_type": "ASSOCIATED_WITH", "control_weight": 0.1, "at_onboarding_risk": 0.2},
         ],
     },
@@ -167,8 +167,8 @@ BASELINE_COMPANIES: list[dict] = [
         "onboarding_date": dt.date(2019, 9, 1),
         "notes": "Major Russian bank tied to Gazprom. Sanctioned EU/OFAC/UK/AU/CA/CH.",
         "topology": [
-            {"name": "Andrey Akimov",   "node_type": "PERSON", "role": "Chairman of Management Board", "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
-            {"name": "Gazprom",         "node_type": "COMPANY","role": "Majority shareholder",          "ownership_pct": 35.5, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0},
+            {"name": "Andrey Akimov",   "node_type": "PERSON", "role": "Chairman of Management Board", "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
+            {"name": "Gazprom",         "node_type": "COMPANY","role": "Majority shareholder",          "ownership_pct": 35.5, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0, "at_onboarding_risk": 0.2},
             {"name": "Government of Russia", "node_type": "COMPANY", "role": "Sovereign / state nexus", "ownership_pct": None, "rel_type": "ASSOCIATED_WITH", "control_weight": 0.1, "at_onboarding_risk": 0.15},
         ],
     },
@@ -189,7 +189,7 @@ BASELINE_COMPANIES: list[dict] = [
         "onboarding_date": dt.date(2020, 1, 15),
         "notes": "One of Russia's largest oil producers, opaque ownership. Sanctioned EU/AU/CA/UK/CH.",
         "topology": [
-            {"name": "Vladimir Bogdanov", "node_type": "PERSON", "role": "CEO / General Director",  "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
+            {"name": "Vladimir Bogdanov", "node_type": "PERSON", "role": "CEO / General Director",  "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0, "at_onboarding_risk": 0.0},
             {"name": "Government of Russia", "node_type": "COMPANY", "role": "Sovereign / jurisdiction nexus", "ownership_pct": None, "rel_type": "ASSOCIATED_WITH", "control_weight": 0.1, "at_onboarding_risk": 0.15},
         ],
     },

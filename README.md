@@ -215,9 +215,10 @@ python -m src.run_demo --company "MicroStrategy" --json
 ### Demo de drift gradual — MicroStrategy replay
 
 La evaluación retrospectiva sobre la DB live detecta muchos **shocks** (FTX
-bankruptcy, sanciones VTB, insolvencia Wirecard). Para enseñar la matemática de
-**drift gradual** sin depender de lo que Google News devuelva hoy, usa el replay
-curado de MicroStrategy:
+bankruptcy, sanciones VTB, insolvencia Wirecard). Para evitar depender de lo que
+Google News devuelva hoy, usa un replay histórico: el JSON aporta hechos
+fechados y verificables, pero por defecto las señales las calcula el mismo
+pipeline que `run_demo`.
 
 ```bash
 python -m src.run_scenario_demo
@@ -238,18 +239,17 @@ públicos reales con fecha y URL (SEC/Strategy/CNBC):
 Salida esperada:
 
 ```text
-idx | date       | combined | stream alarms      | trigger
-  1 | 2020-07-28 | 0.0000   | none               | FALSE
-  2 | 2020-08-11 | 0.0320   | none               | FALSE
-  3 | 2020-12-11 | 0.1867   | none               | FALSE
-  4 | 2021-02-24 | 0.4674   | none               | FALSE
-  5 | 2022-03-29 | 0.8317   | none               | TRUE
-  6 | 2022-08-02 | 0.9026   | semantic,topology  | TRUE
+idx | date       | semantic | topology | tx     | combined | trigger
+  1 | 2020-07-28 | 0.439    | 0.000    | 0.000  | 0.1350   | FALSE
+  2 | 2020-08-11 | 0.548    | 0.000    | 0.000  | 0.3533   | FALSE
+  3 | 2020-12-11 | 0.529    | 0.000    | 0.000  | 0.4977   | FALSE
+  4 | 2021-02-24 | 0.503    | 0.000    | 0.000  | 0.5725   | TRUE
 ```
 
-**Mensaje clave para jurado técnico:** el evento 5 cruza el umbral con
-`stream alarms = none`; no es un `if keyword in text`, sino acumulación de
-estadísticos Page-Hinkley y fusión probabilística de señales débiles.
+**Mensaje clave para jurado técnico:** los eventos son curados como timeline
+histórico verificable, pero la decisión la calcula el mismo pipeline que
+`run_demo`. El replay histórico parte del KYC de onboarding, no del OSINT
+enriquecido de hoy.
 
 El runner escribe:
 
@@ -264,7 +264,8 @@ DriftFusion.
 
 #### Batería completa de escenarios curados
 
-Para evaluación / PowerPoint, ejecuta los 7 escenarios curados:
+Para evaluación / PowerPoint, ejecuta los 7 escenarios históricos con señales
+calculadas:
 
 ```bash
 python -m src.run_scenario_demo --all
@@ -290,9 +291,11 @@ Escenarios incluidos:
 | `gazprombank_sanctions_escalation` | Gazprombank | Exposición energía/sanciones |
 | `surgutneftegas_sanctions_escalation` | Surgutneftegas | Escalada sectorial petróleo/sanciones |
 
-Resultado esperado tras `--all`: todos los escenarios tienen varios eventos
-pre-alarma y congelan en evento 4 o 5, no en evento 1. Esto es lo que demuestra
-memoria temporal y acumulación matemática.
+Resultado esperado tras `--all`: el pipeline real decide caso a
+caso. MicroStrategy muestra acumulación gradual; los casos con sanciones,
+fraude o topología inicial de alto riesgo pueden congelar en evento 1. Eso es
+útil para explicar la diferencia entre **detección honesta con el motor** y una
+curva calibrada para enseñar solo la matemática.
 
 ### Demo global — orquestador multi-cliente
 

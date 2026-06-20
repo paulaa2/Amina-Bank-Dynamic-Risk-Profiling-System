@@ -1,98 +1,100 @@
-"""Replay curated as-of scenarios through the statistical drift engine.
+"""Replay evidence-backed as-of scenarios through the pKYC engine.
 
-This runner is intentionally separate from ``run_demo``:
-
-* ``run_demo`` consumes the live SQLite OSINT snapshot and is good for shock
-  detection / end-to-end pKYC.
-* ``run_scenario_demo`` consumes evidence-backed dated events with calibrated
-  stream observations. It is good for demonstrating gradual drift, Page-Hinkley
-  memory and DriftFusion without relying on whatever Google News returns today.
+The scenario JSON only curates dated public facts. Semantic, topology and
+behavioural signals are always computed by the same pipeline as ``run_demo``.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import datetime as dt
 import json
 from pathlib import Path
 from typing import Any
 
+from scripts.collectors.base import adverse_media_score
+
 from .config import DATA_DIR, load_config
-from .detectors import DriftFusion, PageHinkleyDetector, StreamSignal
+from .ingestion import NewsEvent
+from .pipeline import PerpetualKYCPipeline
 
 _SEMANTIC = "semantic"
 _TOPOLOGY = "topology"
 _BEHAVIOURAL = "behavioral_tx"
 
 
-def _detector(values: list[float], calibration: dict[str, float]) -> PageHinkleyDetector:
-    detector = PageHinkleyDetector()
-    detector.seed(
-        values,
-        k_std_delta=float(calibration.get("k_std_delta", 1.0)),
-        k_std_threshold=float(calibration.get("k_std_threshold", 6.0)),
-    )
-    return detector
+def _parse_event_date(value: str) -> dt.datetime | None:
+    if not value:
+        return None
+    return dt.datetime.fromisoformat(value)
+
+
+def _scenario_events_as_news(scenario: dict[str, Any]) -> list[NewsEvent]:
+    events: list[NewsEvent] = []
+    for event in scenario["events"]:
+        text = " ".join(
+            str(part or "")
+            for part in (event.get("title"), event.get("evidence"), event.get("source"))
+        )
+        adverse_score, matched_keywords = adverse_media_score(text)
+        events.append(
+            NewsEvent(
+                title=str(event.get("title") or ""),
+                summary=str(event.get("evidence") or ""),
+                url=str(event.get("url") or ""),
+                source=str(event.get("source") or ""),
+                published_at=_parse_event_date(str(event.get("date") or "")),
+                adverse_score=adverse_score,
+                matched_keywords=matched_keywords,
+                burn_in=bool(event.get("burn_in", False)),
+            )
+        )
+    return events
 
 
 def replay_scenario(path: Path) -> dict[str, Any]:
     scenario = json.loads(path.read_text(encoding="utf-8"))
-    config = load_config()
-    baseline = scenario["baseline"]
-    calibration = scenario["detector_calibration"]
-    fusion = DriftFusion(
-        [
-            StreamSignal(
-                _SEMANTIC,
-                _detector(baseline[_SEMANTIC], calibration[_SEMANTIC]),
-                weight=float(calibration[_SEMANTIC].get("weight", 1.0)),
-            ),
-            StreamSignal(
-                _TOPOLOGY,
-                _detector(baseline[_TOPOLOGY], calibration[_TOPOLOGY]),
-                weight=float(calibration[_TOPOLOGY].get("weight", 0.8)),
-            ),
-            StreamSignal(
-                _BEHAVIOURAL,
-                _detector(baseline[_BEHAVIOURAL], calibration[_BEHAVIOURAL]),
-                weight=float(calibration[_BEHAVIOURAL].get("weight", 0.9)),
-            ),
-        ],
-        target_fwer=config.target_fwer,
+    news = _scenario_events_as_news(scenario)
+    burn_in = [event for event in news if event.burn_in]
+    stream = [event for event in news if not event.burn_in]
+    pipeline = PerpetualKYCPipeline(load_config())
+    report = pipeline.run(
+        name_substring=scenario["client"],
+        max_events=len(stream),
+        simulate_tx_anomaly=False,
+        events_override=stream,
+        burn_in_events=burn_in or None,
     )
 
-    threshold = float(scenario.get("alarm_threshold", config.combined_risk_threshold))
+    threshold = float(report.decision["threshold"])
     rows: list[dict[str, Any]] = []
     alarm_row: dict[str, Any] | None = None
-
-    for index, event in enumerate(scenario["events"], start=1):
-        result = fusion.update(
-            {
-                _SEMANTIC: float(event["semantic_signal"]),
-                _TOPOLOGY: float(event["topology_signal"]),
-                _BEHAVIOURAL: float(event["behavioral_signal"]),
-            }
-        )
-        trigger = result.combined_risk > threshold
+    scenario_events = [event for event in scenario["events"] if not event.get("burn_in")]
+    for index, (event, outcome) in enumerate(zip(scenario_events, report.events), start=1):
+        trigger = outcome.combined_risk > threshold
         row = {
             "index": index,
             "date": event["date"],
-            "title": event["title"],
+            "title": outcome.title,
             "source": event["source"],
             "url": event["url"],
             "evidence": event["evidence"],
-            "semantic_signal": float(event["semantic_signal"]),
-            "topology_signal": float(event["topology_signal"]),
-            "behavioral_signal": float(event["behavioral_signal"]),
-            "semantic_stat": result.statistics.get(_SEMANTIC, 0.0),
-            "topology_stat": result.statistics.get(_TOPOLOGY, 0.0),
-            "behavioral_stat": result.statistics.get(_BEHAVIOURAL, 0.0),
-            "semantic_ratio": result.ratios.get(_SEMANTIC, 0.0),
-            "topology_ratio": result.ratios.get(_TOPOLOGY, 0.0),
-            "behavioral_ratio": result.ratios.get(_BEHAVIOURAL, 0.0),
-            "combined_risk": result.combined_risk,
-            "alarms": result.alarms,
+            "semantic_signal": outcome.semantic_distance,
+            "topology_signal": outcome.topology_signal,
+            "behavioral_signal": outcome.behavioral_signal,
+            "semantic_stat": outcome.stream_statistics.get(_SEMANTIC, 0.0),
+            "topology_stat": outcome.stream_statistics.get(_TOPOLOGY, 0.0),
+            "behavioral_stat": outcome.stream_statistics.get(_BEHAVIOURAL, 0.0),
+            "semantic_ratio": outcome.stream_ratios.get(_SEMANTIC, 0.0),
+            "topology_ratio": outcome.stream_ratios.get(_TOPOLOGY, 0.0),
+            "behavioral_ratio": outcome.stream_ratios.get(_BEHAVIOURAL, 0.0),
+            "combined_risk": outcome.combined_risk,
+            "alarms": outcome.alarms,
             "trigger": trigger,
+            "triaged_in": outcome.triaged_in,
+            "extracted_fact": outcome.extracted_fact,
+            "new_graph_nodes": outcome.new_graph_nodes,
         }
         rows.append(row)
         if trigger and alarm_row is None:
@@ -104,11 +106,13 @@ def replay_scenario(path: Path) -> dict[str, Any]:
         "description": scenario["description"],
         "reference_model": scenario["reference_model"],
         "threshold": threshold,
-        "bonferroni_scale": fusion.bonferroni_scale,
+        "bonferroni_scale": report.streams["bonferroni_scale"],
         "alarm_event_index": alarm_row["index"] if alarm_row else None,
         "alarm_date": alarm_row["date"] if alarm_row else None,
         "alarm_title": alarm_row["title"] if alarm_row else None,
         "events": rows,
+        "decision": report.decision,
+        "warnings": report.warnings,
     }
 
 
@@ -242,11 +246,11 @@ def main() -> None:
     parser.add_argument("--json", action="store_true", help="Print JSON result.")
     parser.add_argument(
         "--output-json",
-        default=(DATA_DIR / "scenario_microstrategy_drift_result.json").as_posix(),
+        default=(DATA_DIR / "scenario_microstrategy_computed_result.json").as_posix(),
     )
     parser.add_argument(
         "--output-csv",
-        default=(DATA_DIR / "scenario_microstrategy_drift_result.csv").as_posix(),
+        default=(DATA_DIR / "scenario_microstrategy_computed_result.csv").as_posix(),
     )
     parser.add_argument(
         "--all",

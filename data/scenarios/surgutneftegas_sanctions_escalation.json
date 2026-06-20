@@ -1,109 +1,50 @@
 {
-  "scenario_id": "surgutneftegas_sanctions_escalation",
-  "client": "Surgutneftegas",
-  "description": "Russian energy-sector escalation replay from sectoral controls to full US/UK oil-major designation.",
   "reference_model": "Vertically integrated Russian oil and gas producer.",
-  "alarm_threshold": 0.5,
-  "baseline": {
-    "semantic": [
-      0.08,
-      0.1,
-      0.12,
-      0.09,
-      0.11
-    ],
-    "topology": [
-      0.04,
-      0.05,
-      0.04,
-      0.06,
-      0.05
-    ],
-    "behavioral_tx": [
-      0.05,
-      0.08,
-      0.06,
-      0.09,
-      0.07
-    ]
-  },
-  "detector_calibration": {
-    "semantic": {
-      "k_std_delta": 1.0,
-      "k_std_threshold": 8.0,
-      "weight": 0.75
-    },
-    "topology": {
-      "k_std_delta": 1.0,
-      "k_std_threshold": 9.0,
-      "weight": 0.6
-    },
-    "behavioral_tx": {
-      "k_std_delta": 1.0,
-      "k_std_threshold": 10.0,
-      "weight": 0.35
-    }
-  },
+  "description": "Russian energy-sector escalation replay from sectoral controls to full US/UK oil-major designation.",
   "events": [
     {
-      "date": "2014-09-12",
-      "title": "US sectoral restrictions target Russian oil companies including Surgutneftegas",
-      "source": "OpenSanctions / sanctions summaries",
-      "url": "https://www.opensanctions.org/entities/NK-gyXAZAjfijNDV3fHyi8HTR/adjacent/sanctions/",
       "evidence": "OpenSanctions records US sanctions entries for Surgutneftegas starting 2014-09-12.",
-      "semantic_signal": 0.08,
-      "topology_signal": 0.05,
-      "behavioral_signal": 0.055
+      "title": "US sectoral restrictions target Russian oil companies including Surgutneftegas",
+      "date": "2014-09-12",
+      "source": "OpenSanctions / sanctions summaries",
+      "url": "https://www.opensanctions.org/entities/NK-gyXAZAjfijNDV3fHyi8HTR/adjacent/sanctions/"
     },
     {
-      "date": "2014-09-17",
-      "title": "BIS Entity List restrictions apply to Surgutneftegas-linked Russian energy technology exposure",
-      "source": "OpenSanctions",
-      "url": "https://www.opensanctions.org/entities/NK-gyXAZAjfijNDV3fHyi8HTR/adjacent/sanctions/",
       "evidence": "BIS Entity List entry appears in sanctions adjacency data.",
-      "semantic_signal": 0.1,
-      "topology_signal": 0.06,
-      "behavioral_signal": 0.065
+      "title": "BIS Entity List restrictions apply to Surgutneftegas-linked Russian energy technology exposure",
+      "date": "2014-09-17",
+      "source": "OpenSanctions",
+      "url": "https://www.opensanctions.org/entities/NK-gyXAZAjfijNDV3fHyi8HTR/adjacent/sanctions/"
     },
     {
-      "date": "2022-12-05",
-      "title": "G7/EU oil price cap reshapes sanctions exposure for Russian oil producers",
-      "source": "International sanctions summary",
-      "url": "https://en.wikipedia.org/wiki/International_sanctions_during_the_Russo-Ukrainian_war",
       "evidence": "Oil price cap comes into effect to reduce Russia's ability to finance the war.",
-      "semantic_signal": 0.14,
-      "topology_signal": 0.09,
-      "behavioral_signal": 0.075
-    },
-    {
-      "date": "2023-02-05",
-      "title": "EU refined oil products ban increases pressure on Russian energy-sector revenues",
+      "title": "G7/EU oil price cap increases Surgutneftegas sanctions exposure for Russian oil exports",
+      "date": "2022-12-05",
       "source": "International sanctions summary",
-      "url": "https://en.wikipedia.org/wiki/International_sanctions_during_the_Russo-Ukrainian_war",
+      "url": "https://en.wikipedia.org/wiki/International_sanctions_during_the_Russo-Ukrainian_war"
+    },
+    {
       "evidence": "Refined oil product restrictions add sectoral pressure to Russian oil producers.",
-      "semantic_signal": 0.19,
-      "topology_signal": 0.13,
-      "behavioral_signal": 0.09
+      "title": "EU refined oil products ban adds revenue pressure on Surgutneftegas and Russian energy sector",
+      "date": "2023-02-05",
+      "source": "International sanctions summary",
+      "url": "https://en.wikipedia.org/wiki/International_sanctions_during_the_Russo-Ukrainian_war"
     },
     {
-      "date": "2025-01-10",
-      "title": "US and UK designate Surgutneftegas and Gazprom Neft as major Russian oil sanctions targets",
-      "source": "GOV.UK / Baker McKenzie sanctions update",
-      "url": "https://www.gov.uk/government/news/support-for-ukraine-is-unwavering-as-uk-announces-new-sanctions-on-russian-oil-giants",
       "evidence": "UK and US directly sanction two major Russian oil companies, including PJSC Surgutneftegas.",
-      "semantic_signal": 0.27,
-      "topology_signal": 0.22,
-      "behavioral_signal": 0.12
+      "title": "US and UK designate Surgutneftegas and Gazprom Neft as major Russian oil sanctions targets",
+      "date": "2025-01-10",
+      "source": "GOV.UK / Baker McKenzie sanctions update",
+      "url": "https://www.gov.uk/government/news/support-for-ukraine-is-unwavering-as-uk-announces-new-sanctions-on-russian-oil-giants"
     },
     {
-      "date": "2025-01-10",
-      "title": "UK sanctions notice lists PJSC Surgutneftegas with asset-freeze and trust-services restrictions",
-      "source": "UK sanctions notice PDF",
-      "url": "https://assets.publishing.service.gov.uk/media/678123d261e7988536018435/Notice_Russia_100125.pdf",
       "evidence": "Official notice lists PJSC SURGUTNEFTEGAS with date designated 10/01/2025.",
-      "semantic_signal": 0.36,
-      "topology_signal": 0.31,
-      "behavioral_signal": 0.15
+      "title": "UK sanctions notice lists PJSC Surgutneftegas with asset-freeze and trust-services restrictions",
+      "date": "2025-01-10",
+      "source": "UK sanctions notice PDF",
+      "url": "https://assets.publishing.service.gov.uk/media/678123d261e7988536018435/Notice_Russia_100125.pdf"
     }
-  ]
+  ],
+  "client": "Surgutneftegas",
+  "scenario_id": "surgutneftegas_sanctions_escalation"
 }

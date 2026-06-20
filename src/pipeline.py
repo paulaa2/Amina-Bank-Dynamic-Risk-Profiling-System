@@ -58,6 +58,10 @@ class EventOutcome:
     alarms: dict[str, bool]
     triaged_in: bool
     used_fallback: bool
+    topology_signal: float = 0.0
+    behavioral_signal: float = 0.0
+    stream_statistics: dict[str, float] = field(default_factory=dict)
+    stream_ratios: dict[str, float] = field(default_factory=dict)
     new_graph_nodes: list[dict[str, object]] = field(default_factory=list)
 
 
@@ -103,6 +107,8 @@ class PerpetualKYCPipeline:
         company_id: int | None = None,
         max_events: int | None = None,
         simulate_tx_anomaly: bool | None = None,
+        events_override: list[NewsEvent] | None = None,
+        burn_in_events: list[NewsEvent] | None = None,
     ) -> EngineReport:
         self.cost = CostTracker(
             groq_input_usd_per_mtok=self.config.groq_input_usd_per_mtok,
@@ -118,10 +124,13 @@ class PerpetualKYCPipeline:
             )
 
         profile = self.repository.load_profile(name_substring, company_id)
-        limit = max_events or self.config.max_events_per_run
-        news = self._chronological_events(
-            self.repository.load_news(profile.id, limit=max(limit * 3, 30))
-        )
+        limit = max_events or (len(events_override) if events_override is not None else self.config.max_events_per_run)
+        if events_override is None:
+            news = self._chronological_events(
+                self.repository.load_news(profile.id, limit=max(limit * 3, 30))
+            )
+        else:
+            news = list(events_override)
 
         # Phase 1: masking proxy ------------------------------------------
         anonymizer = DataAnonymizer()
@@ -133,6 +142,8 @@ class PerpetualKYCPipeline:
         registry = self._build_registry(profile)
         resolver = EntityResolver(registry)
         graph = self._build_graph(profile)
+        if events_override is not None:
+            self._apply_onboarding_topology(graph, profile)
 
         # Semantic cold-start is calibrated once; Layer-1 events stay lazy.
         profile_text = profile.profile_text()
@@ -143,8 +154,11 @@ class PerpetualKYCPipeline:
             k_std_delta=self.config.ph_semantic_delta_std,
             k_std_threshold=self.config.ph_semantic_threshold_std,
         )
+        initial_exposure = graph.exposure_of(
+            profile.company_node_id, beta=self.config.contagion_beta
+        )
         topo_det = PageHinkleyDetector()
-        topo_det.seed([0.01, 0.02, 0.01, 0.02, 0.015])
+        topo_det.seed(self._topo_baseline(initial_exposure))
 
         tx_stream = QuantitativeTransactionStream()
         tx_amounts, tx_baseline_z = self._simulate_transactions(
@@ -164,10 +178,27 @@ class PerpetualKYCPipeline:
 
         # Stage 1-4: process Layer-1 events sequentially with early stopping.
         triage = RelevanceTriage(profile.all_aliases())
+        if burn_in_events:
+            burn_in_distances = self._semantic_burn_in_distances(
+                burn_in_events=burn_in_events,
+                triage=triage,
+                anonymizer=anonymizer,
+                m0=m0,
+                local_ok=local_ok,
+            )
+            if len(burn_in_distances) >= 2:
+                calibration = list(burn_in_distances)
+                while len(calibration) < 3:
+                    calibration.append(max(0.0, calibration[-1] - 0.01))
+                sem_det.seed(
+                    calibration,
+                    k_std_delta=self.config.ph_semantic_delta_std,
+                    k_std_threshold=self.config.ph_semantic_threshold_std,
+                )
         outcomes: list[EventOutcome] = []
         max_risk = 0.0
         peak_outcome: EventOutcome | None = None
-        company_exposure = graph.exposure_of(profile.company_node_id, beta=self.config.contagion_beta)
+        company_exposure = initial_exposure
         contributors = graph.top_risk_contributors(
             profile.company_node_id, beta=self.config.contagion_beta
         )
@@ -178,7 +209,18 @@ class PerpetualKYCPipeline:
             self.cost.events_seen += 1
             verdict = triage.is_relevant(f"{event.title} {event.summary}")
             if not verdict.is_relevant:
-                outcome = EventOutcome(event.title, "", "", 0.0, 0.0, {}, False, False)
+                outcome = EventOutcome(
+                    event.title,
+                    "",
+                    "",
+                    0.0,
+                    0.0,
+                    {},
+                    False,
+                    False,
+                    topology_signal=round(company_exposure, 4),
+                    behavioral_signal=0.0,
+                )
                 outcomes.append(outcome)
                 self._stream_log(
                     index,
@@ -205,6 +247,14 @@ class PerpetualKYCPipeline:
                 adverse_score=event.adverse_score,
                 event_text=f"{event.title} {event.summary} {fact_text}",
             )
+            event_text = f"{event.title} {event.summary} {fact_text}"
+            if self._is_red_flag_event(event_text) and self._targets_client(
+                event_text, profile.all_aliases()
+            ):
+                graph.set_intrinsic_risk(profile.company_node_id, 1.0)
+                self._graph_mutation_log(
+                    f"Direct client hit: {profile.company_node_id} marked with intrinsic_risk=1.0"
+                )
             has_cycle = graph.check_ownership_cycles(profile.company_node_id)
             company_exposure = graph.exposure_of(
                 profile.company_node_id, beta=self.config.contagion_beta
@@ -216,7 +266,7 @@ class PerpetualKYCPipeline:
             sem_distance = self._semantic_distance(
                 profile_text=profile_text,
                 m0=m0,
-                fact_text=fact_text,
+                embed_text=fact_text,
                 event=event,
                 local_ok=local_ok,
             )
@@ -241,6 +291,10 @@ class PerpetualKYCPipeline:
                 alarms=result.alarms,
                 triaged_in=True,
                 used_fallback=used_fallback,
+                topology_signal=round(company_exposure, 4),
+                behavioral_signal=round(tx_z, 4),
+                stream_statistics=result.statistics,
+                stream_ratios=result.ratios,
                 new_graph_nodes=new_nodes,
             )
             outcomes.append(outcome)
@@ -356,6 +410,65 @@ class PerpetualKYCPipeline:
             )
         return graph
 
+    @staticmethod
+    def _topo_baseline(exposure: float) -> list[float]:
+        """Seed topology drift detection around the client's starting exposure.
+
+        A minimum jitter band avoids false spikes when exposure starts near zero
+        and later rises through weak associate edges (e.g. 0.0 -> 0.05).
+        """
+        span = max(0.01, exposure * 0.05 + 0.005)
+        jitter = (-span, -span / 2, 0.0, span / 2, span)
+        return [max(0.0, round(exposure + delta, 4)) for delta in jitter]
+
+    def _apply_onboarding_topology(
+        self, graph: ComplianceDirectedGraph, profile: ClientProfile
+    ) -> None:
+        """Historical replay must start from Layer-2 KYC, not today's OSINT screen."""
+        onboarding = self._onboarding_risks_for(profile.legal_name, profile.aliases)
+        for node in profile.nodes:
+            graph.set_intrinsic_risk(node.node_id, onboarding.get(node.name, 0.0))
+
+    @staticmethod
+    def _onboarding_risks_for(legal_name: str, aliases: list[str]) -> dict[str, float]:
+        from scripts.seed_kyc import BASELINE_COMPANIES
+
+        names = {legal_name, *aliases}
+        for company in BASELINE_COMPANIES:
+            company_names = {company["legal_name"], *company.get("aliases", [])}
+            if names & company_names:
+                return {
+                    entry["name"]: float(entry.get("at_onboarding_risk", 0.0))
+                    for entry in company.get("topology", [])
+                }
+        return {}
+
+    def _semantic_burn_in_distances(
+        self,
+        burn_in_events: list[NewsEvent],
+        triage: RelevanceTriage,
+        anonymizer: DataAnonymizer,
+        m0: list[float] | None,
+        local_ok: bool,
+    ) -> list[float]:
+        """Calibrate semantic drift from benign historical precursor events."""
+        distances: list[float] = []
+        for event in burn_in_events:
+            if not triage.is_relevant(f"{event.title} {event.summary}").is_relevant:
+                continue
+            masked_title = anonymizer.mask_text(event.title)
+            fact_text, _, _ = self._extract_fact(masked_title, local_ok)
+            distances.append(
+                self._semantic_distance(
+                    profile_text="",
+                    m0=m0,
+                    embed_text=fact_text,
+                    event=event,
+                    local_ok=local_ok,
+                )
+            )
+        return distances
+
     def _gen_synthetic_headlines(self, profile: ClientProfile, local_ok: bool) -> list[str]:
         """Cold-start burn-in texts for the semantic baseline.
 
@@ -445,16 +558,16 @@ class PerpetualKYCPipeline:
         self,
         profile_text: str,
         m0: list[float] | None,
-        fact_text: str,
+        embed_text: str,
         event: NewsEvent,
         local_ok: bool,
     ) -> float:
-        """Embed one extracted fact and measure its drift from onboarding."""
+        """Embed one event text and measure its drift from onboarding."""
         del profile_text
-        if local_ok and m0 is not None and fact_text:
+        if local_ok and m0 is not None and embed_text:
             try:
                 self.cost.events_embedded += 1
-                return cosine_distance(self.ollama.embed(fact_text), m0)
+                return cosine_distance(self.ollama.embed(embed_text), m0)
             except Exception:
                 pass
         return 0.10 + 0.6 * event.adverse_score
@@ -615,6 +728,14 @@ class PerpetualKYCPipeline:
             "fined",
         )
         return any(flag in text for flag in red_flags)
+
+    @staticmethod
+    def _targets_client(event_text: str, aliases: list[str]) -> bool:
+        lowered = event_text.lower()
+        for alias in aliases:
+            if alias and alias.strip().lower() in lowered:
+                return True
+        return False
 
     @staticmethod
     def _should_close_circular_ownership(event_text: str, relation: str) -> bool:

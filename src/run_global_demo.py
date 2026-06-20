@@ -124,8 +124,11 @@ def _build_runtime(
         k_std_delta=pipeline.config.ph_semantic_delta_std,
         k_std_threshold=pipeline.config.ph_semantic_threshold_std,
     )
+    initial_exposure = graph.exposure_of(
+        profile.company_node_id, beta=pipeline.config.contagion_beta
+    )
     topo_det = PageHinkleyDetector()
-    topo_det.seed([0.01, 0.02, 0.01, 0.02, 0.015])
+    topo_det.seed(pipeline._topo_baseline(initial_exposure))
 
     tx_stream = QuantitativeTransactionStream()
     tx_amounts, tx_baseline_z = pipeline._simulate_transactions(
