@@ -1,0 +1,280 @@
+{
+  "generated_at": "2026-06-20T12:55:27.544227+00:00",
+  "max_events": 7,
+  "method_note": "Public-reference retrospective benchmark. Positive lead_days means the engine alarm timestamp precedes the public reference date. This is a demo metric over the current Google News / OSINT snapshot, not a regulatory-grade historical backtest.",
+  "cases": [
+    {
+      "company": "Wirecard",
+      "label": "Wirecard AG",
+      "case_type": "fraud / insolvency",
+      "reference_date": "2020-06-25",
+      "reference_event": "Wirecard files for insolvency after the EUR 1.9B accounting scandal.",
+      "alarm_fired": true,
+      "max_combined_risk": 0.8343,
+      "threshold": 0.5,
+      "triggering_event": "Wirecard committed 'elaborate fraud' say auditors - DW.com",
+      "trigger_timestamp": "2020-06-25T07:00:00+00:00",
+      "lead_days": 0,
+      "status": "same_day",
+      "events_seen": 1,
+      "events_passed_triage": 1,
+      "cloud_reports_generated": 0,
+      "top_contributors": [
+        {
+          "name": "Markus Braun",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.533,
+          "contributed": 0.267
+        },
+        {
+          "name": "James Freis",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.533,
+          "contributed": 0.267
+        },
+        {
+          "name": "Jan Marsalek",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.233,
+          "contributed": 0.117
+        }
+      ]
+    },
+    {
+      "company": "FTX",
+      "label": "FTX Trading Ltd",
+      "case_type": "fraud / bankruptcy",
+      "reference_date": "2022-11-11",
+      "reference_event": "FTX Group files for Chapter 11 bankruptcy.",
+      "alarm_fired": true,
+      "max_combined_risk": 0.8422,
+      "threshold": 0.5,
+      "triggering_event": "BOOM: FTX Group Files for Bankruptcy - Sovereign Wealth Fund Institute | SWFI",
+      "trigger_timestamp": "2022-11-11T08:00:00+00:00",
+      "lead_days": 0,
+      "status": "same_day",
+      "events_seen": 1,
+      "events_passed_triage": 1,
+      "cloud_reports_generated": 0,
+      "top_contributors": [
+        {
+          "name": "Caroline Ellison",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.6,
+          "contributed": 0.3
+        },
+        {
+          "name": "Sam Bankman-Fried",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.533,
+          "contributed": 0.267
+        },
+        {
+          "name": "Ryan Salame",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.2,
+          "contributed": 0.1
+        }
+      ]
+    },
+    {
+      "company": "MicroStrategy",
+      "label": "MicroStrategy Incorporated",
+      "case_type": "semantic drift",
+      "reference_date": "2020-08-11",
+      "reference_event": "MicroStrategy announces its first major Bitcoin treasury purchase.",
+      "alarm_fired": true,
+      "max_combined_risk": 0.8497,
+      "threshold": 0.5,
+      "triggering_event": "Securities Fraud Investigation Into MicroStrategy Incorporated (MSTR) Announced – Investors Who Lost Money Urged To Contact Glancy Prongay & Murray LLP, a Leading Securities Fraud Law Firm - Business Wire",
+      "trigger_timestamp": "2025-05-20T07:00:00+00:00",
+      "lead_days": -1743,
+      "status": "late",
+      "events_seen": 2,
+      "events_passed_triage": 1,
+      "cloud_reports_generated": 0,
+      "top_contributors": [
+        {
+          "name": "Glancy Prongay & Murray LLP",
+          "type": "COMPANY",
+          "relation": "LEGAL_PROCEEDING",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.375
+        },
+        {
+          "name": "Michael Saylor",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.333,
+          "contributed": 0.167
+        },
+        {
+          "name": "Phong Le",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.333,
+          "contributed": 0.167
+        }
+      ]
+    },
+    {
+      "company": "VTB",
+      "label": "VTB Bank",
+      "case_type": "sanctions",
+      "reference_date": "2022-02-24",
+      "reference_event": "Full-blocking sanctions announced after Russia's invasion of Ukraine.",
+      "alarm_fired": true,
+      "max_combined_risk": 0.8524,
+      "threshold": 0.5,
+      "triggering_event": "VTB Bank Georgia Hit with Int’l Sanctions - Civil Georgia",
+      "trigger_timestamp": "2022-02-25T08:00:00+00:00",
+      "lead_days": -1,
+      "status": "late",
+      "events_seen": 1,
+      "events_passed_triage": 1,
+      "cloud_reports_generated": 0,
+      "top_contributors": [
+        {
+          "name": "Andrei Kostin",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.5
+        },
+        {
+          "name": "Government of Russia",
+          "type": "COMPANY",
+          "relation": "OWNS_MAJORITY",
+          "intrinsic_risk": 0.9,
+          "contributed": 0.45
+        },
+        {
+          "name": "Dmitry Pyanov",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.6,
+          "contributed": 0.3
+        }
+      ]
+    },
+    {
+      "company": "Gazprombank",
+      "label": "Gazprombank",
+      "case_type": "sanctions / state exposure",
+      "reference_date": "2022-03-12",
+      "reference_event": "Public adverse coverage of Gazprombank dodging Western sanctions.",
+      "alarm_fired": true,
+      "max_combined_risk": 0.8386,
+      "threshold": 0.5,
+      "triggering_event": "Gazprombank: The Big Russian Lender That Dodged Western Sanctions - WSJ",
+      "trigger_timestamp": "2022-03-12T08:00:00+00:00",
+      "lead_days": 0,
+      "status": "same_day",
+      "events_seen": 1,
+      "events_passed_triage": 1,
+      "cloud_reports_generated": 0,
+      "top_contributors": [
+        {
+          "name": "Gazprom",
+          "type": "COMPANY",
+          "relation": "OWNS_MAJORITY",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.5
+        },
+        {
+          "name": "Andrey Akimov",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.8,
+          "contributed": 0.4
+        },
+        {
+          "name": "Government of Russia",
+          "type": "COMPANY",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 0.15,
+          "contributed": 0.007
+        }
+      ]
+    },
+    {
+      "company": "Surgutneftegas",
+      "label": "Surgutneftegas",
+      "case_type": "sanctions",
+      "reference_date": "2025-01-10",
+      "reference_event": "US/UK sanctions package targets Russian oil majors.",
+      "alarm_fired": false,
+      "max_combined_risk": 0.0,
+      "threshold": 0.5,
+      "triggering_event": null,
+      "trigger_timestamp": null,
+      "lead_days": null,
+      "status": "no_alarm",
+      "events_seen": 7,
+      "events_passed_triage": 0,
+      "cloud_reports_generated": 0,
+      "top_contributors": [
+        {
+          "name": "Vladimir Bogdanov",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.5
+        },
+        {
+          "name": "Government of Russia",
+          "type": "COMPANY",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 0.15,
+          "contributed": 0.007
+        }
+      ]
+    },
+    {
+      "company": "OpenAI",
+      "label": "OpenAI",
+      "case_type": "regulatory / safety litigation",
+      "reference_date": "2026-06-01",
+      "reference_event": "Public reporting of safety and consumer-protection legal pressure.",
+      "alarm_fired": true,
+      "max_combined_risk": 0.8217,
+      "threshold": 0.5,
+      "triggering_event": "OpenAI let ChatGPT aid and abet mass shooters, Florida lawsuit claims - BBC",
+      "trigger_timestamp": "2026-06-01T07:00:00+00:00",
+      "lead_days": 0,
+      "status": "same_day",
+      "events_seen": 1,
+      "events_passed_triage": 1,
+      "cloud_reports_generated": 0,
+      "top_contributors": [
+        {
+          "name": "Microsoft",
+          "type": "COMPANY",
+          "relation": "OWNS_MAJORITY",
+          "intrinsic_risk": 0.567,
+          "contributed": 0.283
+        },
+        {
+          "name": "Greg Brockman",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.333,
+          "contributed": 0.167
+        },
+        {
+          "name": "Sam Altman",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.267,
+          "contributed": 0.134
+        }
+      ]
+    }
+  ]
+}

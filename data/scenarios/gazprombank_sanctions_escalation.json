@@ -1,0 +1,109 @@
+{
+  "scenario_id": "gazprombank_sanctions_escalation",
+  "client": "Gazprombank",
+  "description": "Energy-payment exposure replay showing Gazprombank's sanctions risk rising despite initial exemptions.",
+  "reference_model": "Large private/state-linked commercial bank.",
+  "alarm_threshold": 0.5,
+  "baseline": {
+    "semantic": [
+      0.08,
+      0.1,
+      0.12,
+      0.09,
+      0.11
+    ],
+    "topology": [
+      0.04,
+      0.05,
+      0.04,
+      0.06,
+      0.05
+    ],
+    "behavioral_tx": [
+      0.05,
+      0.08,
+      0.06,
+      0.09,
+      0.07
+    ]
+  },
+  "detector_calibration": {
+    "semantic": {
+      "k_std_delta": 1.0,
+      "k_std_threshold": 8.0,
+      "weight": 0.75
+    },
+    "topology": {
+      "k_std_delta": 1.0,
+      "k_std_threshold": 9.0,
+      "weight": 0.6
+    },
+    "behavioral_tx": {
+      "k_std_delta": 1.0,
+      "k_std_threshold": 10.0,
+      "weight": 0.35
+    }
+  },
+  "events": [
+    {
+      "date": "2014-09-12",
+      "title": "Gazprombank is subject to Ukraine/Russia-related sectoral sanctions directives",
+      "source": "OFAC sanctions list search",
+      "url": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=17016",
+      "evidence": "Gazprombank appears under Ukraine/Russia-related sanctions directives as a Russian financial institution.",
+      "semantic_signal": 0.08,
+      "topology_signal": 0.05,
+      "behavioral_signal": 0.055
+    },
+    {
+      "date": "2022-02-24",
+      "title": "Gazprombank becomes subject to EO 14024 Directive 3 restrictions on new debt and equity",
+      "source": "OFAC sanctions list search",
+      "url": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=17016",
+      "evidence": "Directive 3 restrictions apply to new debt/equity after effective date.",
+      "semantic_signal": 0.11,
+      "topology_signal": 0.07,
+      "behavioral_signal": 0.07
+    },
+    {
+      "date": "2022-03-02",
+      "title": "EU removes several Russian banks from SWIFT but spares Gazprombank for energy payments",
+      "source": "Davis Polk / Global News",
+      "url": "https://www.davispolk.com/insights/client-update/russia-sanctions-update-march-4-2022",
+      "evidence": "Gazprombank is spared because it processes Russian oil and gas payments, creating continuing sanctions exposure.",
+      "semantic_signal": 0.15,
+      "topology_signal": 0.1,
+      "behavioral_signal": 0.08
+    },
+    {
+      "date": "2022-03-31",
+      "title": "Russia requires foreign gas payments through Gazprombank rouble-conversion mechanism",
+      "source": "Reuters UK Gazprombank payments coverage",
+      "url": "https://www.reuters.com/world/uk/britain-permits-gas-payments-gazprombank-until-may-31-2022-04-22/",
+      "evidence": "Putin decree makes Gazprombank central to foreign gas settlement and sanctions compliance risk.",
+      "semantic_signal": 0.21,
+      "topology_signal": 0.14,
+      "behavioral_signal": 0.1
+    },
+    {
+      "date": "2022-04-22",
+      "title": "UK extends licence allowing EU gas payments to Gazprombank despite sanctions wind-down",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/world/uk/britain-permits-gas-payments-gazprombank-until-may-31-2022-04-22/",
+      "evidence": "Exception management shows Gazprombank remains a high-risk energy-payment channel.",
+      "semantic_signal": 0.29,
+      "topology_signal": 0.21,
+      "behavioral_signal": 0.125
+    },
+    {
+      "date": "2024-11-21",
+      "title": "US imposes full blocking sanctions on Gazprombank",
+      "source": "OFAC sanctions list / public sanctions coverage",
+      "url": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=17016",
+      "evidence": "Gazprombank's long-running exemption risk culminates in full blocking restrictions.",
+      "semantic_signal": 0.37,
+      "topology_signal": 0.29,
+      "behavioral_signal": 0.15
+    }
+  ]
+}

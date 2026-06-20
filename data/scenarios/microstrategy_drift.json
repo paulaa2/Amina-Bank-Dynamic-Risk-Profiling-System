@@ -1,0 +1,79 @@
+{
+  "scenario_id": "microstrategy_drift",
+  "client": "MicroStrategy Incorporated",
+  "description": "Evidence-backed as-of replay showing gradual KYC drift from enterprise BI software toward a leveraged Bitcoin treasury strategy.",
+  "reference_model": "Enterprise Business Intelligence software and cloud analytics.",
+  "alarm_threshold": 0.5,
+  "baseline": {
+    "semantic": [0.08, 0.10, 0.12, 0.09, 0.11],
+    "topology": [0.04, 0.05, 0.04, 0.06, 0.05],
+    "behavioral_tx": [0.05, 0.08, 0.06, 0.09, 0.07]
+  },
+  "detector_calibration": {
+    "semantic": {"k_std_delta": 1.0, "k_std_threshold": 8.0, "weight": 0.75},
+    "topology": {"k_std_delta": 1.0, "k_std_threshold": 9.0, "weight": 0.60},
+    "behavioral_tx": {"k_std_delta": 1.0, "k_std_threshold": 10.0, "weight": 0.35}
+  },
+  "events": [
+    {
+      "date": "2020-07-28",
+      "title": "MicroStrategy announces capital allocation strategy: buyback plus alternative assets including digital assets such as bitcoin",
+      "source": "SEC 8-K / Q2 2020 earnings release",
+      "url": "https://www.sec.gov/Archives/edgar/data/1050446/000156459020033897/mstr-ex991_10.htm",
+      "evidence": "Company says it may invest up to $250M in alternative assets including digital assets such as bitcoin.",
+      "semantic_signal": 0.09,
+      "topology_signal": 0.05,
+      "behavioral_signal": 0.06
+    },
+    {
+      "date": "2020-08-11",
+      "title": "MicroStrategy adopts Bitcoin as primary treasury reserve asset with a $250M purchase",
+      "source": "SEC 8-K / press release",
+      "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312520215604/d921849dex991.htm",
+      "evidence": "Company purchases 21,454 bitcoins and states Bitcoin is now the principal holding in treasury reserve strategy.",
+      "semantic_signal": 0.13,
+      "topology_signal": 0.05,
+      "behavioral_signal": 0.06
+    },
+    {
+      "date": "2020-12-11",
+      "title": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin",
+      "source": "Strategy press release / SEC 8-K",
+      "url": "https://www.strategy.com/press/microstrategy-completes-650m-offering-of-convertible-senior-notes-due-2025",
+      "evidence": "Net proceeds from convertible senior notes are intended for Bitcoin purchases under the Treasury Reserve Policy.",
+      "semantic_signal": 0.17,
+      "topology_signal": 0.07,
+      "behavioral_signal": 0.065
+    },
+    {
+      "date": "2021-02-24",
+      "title": "MicroStrategy buys an additional 19,452 bitcoins for $1.026B after issuing more convertible debt",
+      "source": "Strategy press release",
+      "url": "https://www.strategy.com/press/microstrategy-acquires-additional-19452-bitcoins-for-1-026-billion_02-24-2021",
+      "evidence": "Company now holds over 90,000 BTC and says it will continue acquiring Bitcoin with excess cash and possible debt/equity issuance.",
+      "semantic_signal": 0.22,
+      "topology_signal": 0.09,
+      "behavioral_signal": 0.075
+    },
+    {
+      "date": "2022-03-29",
+      "title": "MacroStrategy closes $205M Bitcoin-collateralized Silvergate loan to acquire additional Bitcoin",
+      "source": "SEC 8-K / Strategy press release",
+      "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312522087494/d312252d8k.htm",
+      "evidence": "Subsidiary borrows against Bitcoin collateral; proceeds may be used to purchase more Bitcoin or for corporate purposes.",
+      "semantic_signal": 0.28,
+      "topology_signal": 0.13,
+      "behavioral_signal": 0.09
+    },
+    {
+      "date": "2022-08-02",
+      "title": "MicroStrategy reports $917.8M digital asset impairment and separates CEO/chairman roles so Saylor can focus on Bitcoin strategy",
+      "source": "Strategy Q2 2022 results / CNBC",
+      "url": "https://www.strategy.com/press/microstrategy-announces-separation-of-chairman-and-ceo-roles-and-second-quarter-2022-financial-results",
+      "evidence": "Company reports major Bitcoin impairment charge; Saylor moves to Executive Chairman to focus on Bitcoin acquisition strategy.",
+      "semantic_signal": 0.36,
+      "topology_signal": 0.20,
+      "behavioral_signal": 0.11
+    }
+  ]
+}

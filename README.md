@@ -79,6 +79,7 @@ Ambas se comunican únicamente a través de la base de datos SQLite.
     ├── ingestion/repository.py    # acceso de solo lectura a la base de datos
     ├── pipeline.py                # orquestador de las 6 fases
     ├── run_demo.py                # CLI demo single-client
+    ├── run_scenario_demo.py       # replay de escenarios drift curados
     └── run_global_demo.py         # CLI demo multi-cliente (orquestador global)
 ```
 
@@ -193,7 +194,7 @@ las APIs externas se usan al construir la base (`python -m scripts.build_databas
 ```bash
 source .venv/bin/activate
 
-# Semantic drift — el caso más fuerte para explicar deriva de modelo de negocio
+# Shock / litigation detection sobre el snapshot OSINT actual
 python -m src.run_demo --company "MicroStrategy" --max-events 7
 
 # Sanciones + contagio topológico local (Kostin 1.0 desde el grafo)
@@ -210,6 +211,88 @@ python -m src.run_demo --company "MicroStrategy" --json
 ```
 
 **Qué mirar en stderr:** `[STREAMING EVENT]`, `[GRAPH MUTATION]`, `[EARLY STOP]`.
+
+### Demo de drift gradual — MicroStrategy replay
+
+La evaluación retrospectiva sobre la DB live detecta muchos **shocks** (FTX
+bankruptcy, sanciones VTB, insolvencia Wirecard). Para enseñar la matemática de
+**drift gradual** sin depender de lo que Google News devuelva hoy, usa el replay
+curado de MicroStrategy:
+
+```bash
+python -m src.run_scenario_demo
+```
+
+Este escenario está en `data/scenarios/microstrategy_drift.json` y usa hitos
+públicos reales con fecha y URL (SEC/Strategy/CNBC):
+
+| Evento | Fecha | Señal |
+|--------|-------|-------|
+| E1 | 2020-07-28 | Capital allocation menciona activos digitales |
+| E2 | 2020-08-11 | Bitcoin pasa a ser treasury reserve asset |
+| E3 | 2020-12-11 | Deuda convertible para comprar Bitcoin |
+| E4 | 2021-02-24 | Compra adicional >$1B, estrategia ya material |
+| E5 | 2022-03-29 | Préstamo colateralizado con Bitcoin |
+| E6 | 2022-08-02 | Impairment $917.8M y cambio CEO/Chairman |
+
+Salida esperada:
+
+```text
+idx | date       | combined | stream alarms      | trigger
+  1 | 2020-07-28 | 0.0000   | none               | FALSE
+  2 | 2020-08-11 | 0.0320   | none               | FALSE
+  3 | 2020-12-11 | 0.1867   | none               | FALSE
+  4 | 2021-02-24 | 0.4674   | none               | FALSE
+  5 | 2022-03-29 | 0.8317   | none               | TRUE
+  6 | 2022-08-02 | 0.9026   | semantic,topology  | TRUE
+```
+
+**Mensaje clave para jurado técnico:** el evento 5 cruza el umbral con
+`stream alarms = none`; no es un `if keyword in text`, sino acumulación de
+estadísticos Page-Hinkley y fusión probabilística de señales débiles.
+
+El runner escribe:
+
+```text
+data/scenario_microstrategy_drift_result.json
+data/scenario_microstrategy_drift_result.csv
+```
+
+El notebook `notebooks/retro_lead_time_evaluation.ipynb` incluye dos gráficas
+adicionales para este replay: curva de riesgo acumulado y componentes de
+DriftFusion.
+
+#### Batería completa de escenarios curados
+
+Para evaluación / PowerPoint, ejecuta los 7 escenarios curados:
+
+```bash
+python -m src.run_scenario_demo --all
+```
+
+Genera:
+
+```text
+data/scenario_replay_summary.csv
+data/scenario_replay_events.csv
+data/scenario_replay_summary.json
+```
+
+Escenarios incluidos:
+
+| Escenario | Cliente | Tipo |
+|-----------|---------|------|
+| `wirecard_drift` | Wirecard | Fraude contable gradual |
+| `ftx_rapid_deterioration` | FTX | Deterioro rápido de liquidez/gobernanza |
+| `microstrategy_drift` | MicroStrategy | Drift estratégico real |
+| `openai_regulatory_drift` | OpenAI | Drift regulatorio/gobernanza |
+| `vtb_sanctions_escalation` | VTB | Escalada de sanciones |
+| `gazprombank_sanctions_escalation` | Gazprombank | Exposición energía/sanciones |
+| `surgutneftegas_sanctions_escalation` | Surgutneftegas | Escalada sectorial petróleo/sanciones |
+
+Resultado esperado tras `--all`: todos los escenarios tienen varios eventos
+pre-alarma y congelan en evento 4 o 5, no en evento 1. Esto es lo que demuestra
+memoria temporal y acumulación matemática.
 
 ### Demo global — orquestador multi-cliente
 

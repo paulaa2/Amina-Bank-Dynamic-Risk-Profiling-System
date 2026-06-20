@@ -1,0 +1,109 @@
+{
+  "scenario_id": "wirecard_drift",
+  "client": "Wirecard AG",
+  "description": "Evidence-backed replay showing accounting-risk drift before Wirecard's insolvency shock.",
+  "reference_model": "Licensed payment processing and merchant acquiring.",
+  "alarm_threshold": 0.5,
+  "baseline": {
+    "semantic": [
+      0.08,
+      0.1,
+      0.12,
+      0.09,
+      0.11
+    ],
+    "topology": [
+      0.04,
+      0.05,
+      0.04,
+      0.06,
+      0.05
+    ],
+    "behavioral_tx": [
+      0.05,
+      0.08,
+      0.06,
+      0.09,
+      0.07
+    ]
+  },
+  "detector_calibration": {
+    "semantic": {
+      "k_std_delta": 1.0,
+      "k_std_threshold": 8.0,
+      "weight": 0.75
+    },
+    "topology": {
+      "k_std_delta": 1.0,
+      "k_std_threshold": 9.0,
+      "weight": 0.6
+    },
+    "behavioral_tx": {
+      "k_std_delta": 1.0,
+      "k_std_threshold": 10.0,
+      "weight": 0.35
+    }
+  },
+  "events": [
+    {
+      "date": "2015-04-27",
+      "title": "Financial Times begins questioning inconsistencies in Wirecard's accounts",
+      "source": "Financial Times timeline",
+      "url": "https://www.ft.com/content/284fb1ad-ddc0-45df-a075-0709b36868db",
+      "evidence": "FT timeline records early investigative reporting questioning Wirecard's accounting years before insolvency.",
+      "semantic_signal": 0.08,
+      "topology_signal": 0.04,
+      "behavioral_signal": 0.06
+    },
+    {
+      "date": "2019-01-30",
+      "title": "FT reports suspicious transactions and alleged forged/backdated contracts in Wirecard's Singapore operations",
+      "source": "Reuters Wirecard timeline",
+      "url": "https://www.reuters.com/business/finance/rise-fall-wirecard-2022-12-06/",
+      "evidence": "Reuters timeline notes a January 2019 FT report on suspicious transactions and accounting-practice integrity.",
+      "semantic_signal": 0.12,
+      "topology_signal": 0.06,
+      "behavioral_signal": 0.07
+    },
+    {
+      "date": "2019-10-21",
+      "title": "Wirecard hires KPMG to conduct an independent special audit under investor pressure",
+      "source": "Reuters Wirecard timeline",
+      "url": "https://www.reuters.com/business/finance/rise-fall-wirecard-2022-12-06/",
+      "evidence": "Independent audit commissioned to address allegations that finance team inflated reported sales and profits.",
+      "semantic_signal": 0.17,
+      "topology_signal": 0.09,
+      "behavioral_signal": 0.08
+    },
+    {
+      "date": "2020-04-28",
+      "title": "KPMG special audit cannot verify key Wirecard profit arrangements and cash balances",
+      "source": "Reuters / FT timeline",
+      "url": "https://www.reuters.com/article/technology/the-moneys-gone-wirecard-collapses-owing-4-billion-idUSKBN23W176/",
+      "evidence": "KPMG was unable to verify cash balances and could not trace transactions underpinning major reported profits.",
+      "semantic_signal": 0.23,
+      "topology_signal": 0.13,
+      "behavioral_signal": 0.1
+    },
+    {
+      "date": "2020-06-18",
+      "title": "Wirecard announces €1.9B cash is missing after auditor EY refuses to sign accounts",
+      "source": "Financial Times",
+      "url": "https://www.ft.com/content/1e753e2b-f576-4f32-aa19-d240be26e773",
+      "evidence": "Wirecard says cash balances may be intended to deceive the auditor; this is the material pre-insolvency break.",
+      "semantic_signal": 0.31,
+      "topology_signal": 0.19,
+      "behavioral_signal": 0.13
+    },
+    {
+      "date": "2020-06-25",
+      "title": "Wirecard files for insolvency after the missing-cash fraud becomes undeniable",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/article/technology/the-moneys-gone-wirecard-collapses-owing-4-billion-idUSKBN23W176/",
+      "evidence": "Wirecard collapses owing creditors almost $4B after auditor points to sophisticated global fraud.",
+      "semantic_signal": 0.4,
+      "topology_signal": 0.26,
+      "behavioral_signal": 0.16
+    }
+  ]
+}
