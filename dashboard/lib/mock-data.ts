@@ -150,6 +150,10 @@ export interface GraphNode {
   type: NodeType;
   intrinsicRisk: number; // 0–1
   position: { x: number; y: number };
+  /** Set when Sentinel / graph mutation linked this entity during the current run. */
+  discoveredDuringRun?: boolean;
+  /** True for nodes that did not exist in the onboarding KYC graph. */
+  isNewDiscovery?: boolean;
 }
 
 /** ReactFlow graph edge */

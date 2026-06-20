@@ -32,6 +32,8 @@ function riskColor(score: number): string {
 function RiskNode({ data }: NodeProps) {
   const borderColor = riskColor(data.intrinsicRisk);
   const isHighRisk  = data.intrinsicRisk >= 0.75;
+  const isDiscovered = Boolean(data.discoveredDuringRun);
+  const isNewDiscovery = Boolean(data.isNewDiscovery);
 
   return (
     <>
@@ -41,16 +43,26 @@ function RiskNode({ data }: NodeProps) {
           "graph-node-enter",
           "rounded-lg border-2 px-3 py-2 text-center min-w-[110px] max-w-[140px]",
           "bg-slate-900",
-          isHighRisk && "shadow-[0_0_15px_rgba(251,113,133,0.35)]"
+          isHighRisk && "shadow-[0_0_15px_rgba(251,113,133,0.35)]",
+          isDiscovered && !isHighRisk && "shadow-[0_0_12px_rgba(251,191,36,0.25)]"
         )}
-        style={{ borderColor, transition: "border-color 1s ease, box-shadow 1s ease" }}
+        style={{
+          borderColor: isDiscovered && !isHighRisk ? "#fbbf24" : borderColor,
+          borderStyle: isNewDiscovery ? "dashed" : "solid",
+          transition: "border-color 1s ease, box-shadow 1s ease",
+        }}
       >
+        {isDiscovered && (
+          <p className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-400">
+            {isNewDiscovery ? "New entity" : "New link"}
+          </p>
+        )}
         <p className="text-[11px] font-semibold text-slate-200 leading-tight break-words">
           {data.label}
         </p>
         <p
           className="mt-0.5 text-[10px] font-medium font-mono"
-          style={{ color: borderColor, transition: "color 1s ease" }}
+          style={{ color: isDiscovered && !isHighRisk ? "#fbbf24" : borderColor, transition: "color 1s ease" }}
         >
           {(data.intrinsicRisk * 100).toFixed(0)}%
         </p>
@@ -73,14 +85,22 @@ function toFlowNodes(nodes: GraphNode[]): Node[] {
       label:         n.label,
       intrinsicRisk: n.intrinsicRisk,
       nodeType:      n.type,
+      discoveredDuringRun: n.discoveredDuringRun ?? false,
+      isNewDiscovery:      n.isNewDiscovery ?? false,
     },
     draggable: true,
   }));
 }
 
-function toFlowEdges(edges: GraphEdge[], highRiskIds: Set<string>): Edge[] {
+function toFlowEdges(
+  edges: GraphEdge[],
+  highRiskIds: Set<string>,
+  discoveredIds: Set<string> = new Set(),
+): Edge[] {
   return edges.map((e) => {
-    const isRisk = highRiskIds.has(e.source);
+    const isHighRisk = highRiskIds.has(e.source);
+    const isDiscovered = discoveredIds.has(e.source);
+    const stroke = isHighRisk ? "#fb7185" : isDiscovered ? "#fbbf24" : "#475569";
     return {
       id:     e.id,
       source: e.source,
@@ -89,9 +109,9 @@ function toFlowEdges(edges: GraphEdge[], highRiskIds: Set<string>): Edge[] {
       labelStyle:     { fontSize: 9, fill: "#ffffff" },
       labelBgPadding: [4, 2] as [number, number],
       labelBgStyle:   { fill: "#0f172a", stroke: "#334155", strokeWidth: 1 },
-      animated:       isRisk,
-      markerEnd:      { type: MarkerType.ArrowClosed, color: isRisk ? "#fb7185" : "#475569" },
-      style:          { stroke: isRisk ? "#fb7185" : "#475569", strokeWidth: isRisk ? 2 : 1.5 },
+      animated:       isHighRisk || isDiscovered,
+      markerEnd:      { type: MarkerType.ArrowClosed, color: stroke },
+      style:          { stroke, strokeWidth: isHighRisk || isDiscovered ? 2 : 1.5 },
     };
   });
 }
@@ -125,7 +145,12 @@ export function CorporateGraph({ nodes, edges, height = 480 }: CorporateGraphPro
     const highRiskIds = new Set(
       nodes.filter((n) => n.intrinsicRisk >= 0.75).map((n) => n.id)
     );
-    setFlowEdges(toFlowEdges(edges, highRiskIds));
+    const discoveredIds = new Set(
+      nodes.filter((n) => n.discoveredDuringRun).map((n) => n.id)
+    );
+    setFlowEdges(
+      toFlowEdges(edges, highRiskIds, discoveredIds)
+    );
   }, [edges, nodes, setFlowEdges]);
 
   return (

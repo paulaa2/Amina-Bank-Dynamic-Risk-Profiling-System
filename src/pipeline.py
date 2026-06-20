@@ -195,6 +195,10 @@ class PerpetualKYCPipeline:
                     k_std_delta=self.config.ph_semantic_delta_std,
                     k_std_threshold=self.config.ph_semantic_threshold_std,
                 )
+                # Re-apply the Bonferroni scale that DriftFusion applied at
+                # construction — the re-seed above resets threshold to the raw
+                # value, losing the family-wise error rate correction.
+                sem_det.threshold *= fusion.bonferroni_scale
         outcomes: list[EventOutcome] = []
         max_risk = 0.0
         peak_outcome: EventOutcome | None = None
@@ -545,7 +549,7 @@ class PerpetualKYCPipeline:
     ) -> tuple[str, bool, list[dict]]:
         """Stage 2: atomic fact extraction on masked text (chat model)."""
         if not local_ok:
-            return masked_title, True, []
+            return masked_title, True, self._ner_fallback(masked_title)
         fact = self.sentinel.extract(masked_title)
         self.cost.add_local(
             self.ollama.last_usage.prompt_tokens,
@@ -553,6 +557,54 @@ class PerpetualKYCPipeline:
             "sentinel_extract",
         )
         return fact.text_for_embedding, fact.used_fallback, fact.entities_involved
+
+    @staticmethod
+    def _ner_fallback(text: str) -> list[dict]:
+        """Lightweight regex NER used when Ollama is unavailable.
+
+        Extracts capitalised noun phrases (2-3 consecutive Title-Case tokens)
+        that are likely company or person names.  MASKED_* tokens and
+        single-letter tokens are skipped.
+        """
+        import re
+        # Split into whitespace-separated tokens, strip punctuation.
+        tokens = re.split(r"\s+", text.strip())
+        clean = [re.sub(r"[^A-Za-z0-9']", "", t) for t in tokens]
+
+        skip = {
+            "The", "A", "An", "In", "On", "At", "For", "And", "Or", "But",
+            "With", "From", "To", "By", "Of", "Is", "Are", "Was", "Were",
+            "Has", "Have", "Had", "Its", "This", "That", "After", "Before",
+            "New", "Will", "Says", "Said", "Reports", "Files", "Faces",
+            "Halts", "Walks", "Away", "After", "Due",
+        }
+        entities: list[dict] = []
+        seen: set[str] = set()
+        i = 0
+        while i < len(clean):
+            tok = clean[i]
+            # Skip masked tokens, short tokens, or lowercase words
+            if not tok or tok.startswith("MASKED") or not tok[0].isupper() or tok in skip:
+                i += 1
+                continue
+            # Try to build a multi-word phrase (up to 3 tokens)
+            phrase_tokens = [tok]
+            j = i + 1
+            while j < min(i + 3, len(clean)):
+                nxt = clean[j]
+                if nxt and nxt[0].isupper() and nxt not in skip and not nxt.startswith("MASKED"):
+                    phrase_tokens.append(nxt)
+                    j += 1
+                else:
+                    break
+            phrase = " ".join(phrase_tokens)
+            if len(phrase) > 2 and phrase not in seen:
+                seen.add(phrase)
+                # Heuristic: single capitalised word → likely PERSON; multi-word → COMPANY
+                etype = "COMPANY" if len(phrase_tokens) > 1 else "PERSON"
+                entities.append({"name": phrase, "type": etype})
+            i = j if j > i + 1 else i + 1
+        return entities
 
     def _semantic_distance(
         self,
@@ -572,6 +624,10 @@ class PerpetualKYCPipeline:
                 pass
         return 0.10 + 0.6 * event.adverse_score
 
+    # Floor so dynamically discovered entities appear in contributors and the UI
+    # graph (ASSOCIATED_WITH edges use weight 0.1 — without this they stay at 0%).
+    _MIN_DYNAMIC_INTRINSIC_RISK = 0.35
+
     def _resolve_and_update_graph(
         self,
         entities: list[dict],
@@ -583,8 +639,13 @@ class PerpetualKYCPipeline:
         adverse_score: float,
         event_text: str,
     ) -> list[dict[str, object]]:
-        """Resolve extracted entities and mutate the live topology graph."""
+        """Resolve extracted entities and mutate the live topology graph.
+
+        Returns every entity linked to the client this event — both brand-new
+        nodes and pre-existing KYC nodes that receive a new directed edge.
+        """
         created: list[dict[str, object]] = []
+        seen: set[str] = set()
         relation, control_weight = self._infer_graph_relation(event_text)
         is_red_flag = self._is_red_flag_event(event_text)
         for entity in entities:
@@ -637,22 +698,34 @@ class PerpetualKYCPipeline:
                     f"Risk Injection: node {node_id} ({privacy_token}) marked with "
                     "intrinsic_risk=1.0"
                 )
-            else:
-                intrinsic_risk = min(max(float(adverse_score or 0.0), 0.0), 1.0)
-                if was_new:
-                    graph.set_intrinsic_risk(node_id, intrinsic_risk)
-
-            if was_new:
-                created.append(
-                    {
-                        "node_id": node_id,
-                        "name": real_name,
-                        "type": raw_type,
-                        "intrinsic_risk": round(intrinsic_risk, 4),
-                        "relation": relation,
-                        "control_weight": control_weight,
-                    }
+            elif was_new:
+                intrinsic_risk = min(
+                    max(
+                        float(adverse_score or 0.0),
+                        self._MIN_DYNAMIC_INTRINSIC_RISK,
+                    ),
+                    1.0,
                 )
+                graph.set_intrinsic_risk(node_id, intrinsic_risk)
+            else:
+                intrinsic_risk = float(
+                    graph.graph.nodes[node_id].get("intrinsic_risk", 0.0)
+                )
+
+            if node_id in seen:
+                continue
+            seen.add(node_id)
+            created.append(
+                {
+                    "node_id": node_id,
+                    "name": real_name,
+                    "type": raw_type,
+                    "intrinsic_risk": round(intrinsic_risk, 4),
+                    "relation": relation,
+                    "control_weight": control_weight,
+                    "is_new": was_new,
+                }
+            )
         return created
 
     @staticmethod

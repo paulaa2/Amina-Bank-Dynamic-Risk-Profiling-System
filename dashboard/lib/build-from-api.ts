@@ -27,6 +27,24 @@ function normalizeNodeType(raw: string): NodeType {
   }
 }
 
+/** Collect the latest graph mutation per node_id across all triaged events. */
+function collectGraphMutations(report: LiveReport): LiveNewGraphNode[] {
+  const byId = new Map<string, LiveNewGraphNode>();
+  for (const ev of report.events) {
+    if (!ev.triaged_in || !ev.new_graph_nodes?.length) continue;
+    for (const n of ev.new_graph_nodes) {
+      byId.set(n.node_id, n);
+    }
+  }
+  return [...byId.values()];
+}
+
+function namesMatch(a: string, b: string): boolean {
+  const la = a.toLowerCase();
+  const lb = b.toLowerCase();
+  return la === lb || la.includes(lb) || lb.includes(la);
+}
+
 // ── Automatic graph layout ────────────────────────────────────────────────────
 
 /**
@@ -42,32 +60,19 @@ export function buildGraphFromReport(report: LiveReport): {
   const edges: GraphEdge[] = [];
 
   const contributors = report.topology.top_contributors;
-
-  // Collect unique dynamic nodes discovered during event processing
-  const seenDynIds = new Set<string>();
-  const dynNodes: LiveNewGraphNode[] = [];
-  for (const ev of report.events) {
-    if (!ev.triaged_in || !ev.new_graph_nodes) continue;
-    for (const n of ev.new_graph_nodes) {
-      if (!seenDynIds.has(n.node_id)) {
-        seenDynIds.add(n.node_id);
-        dynNodes.push(n);
-      }
-    }
-  }
-
-  // ── Layout constants ──────────────────────────────────────────────────────
+  const mutations = collectGraphMutations(report);
+  const mutationByName = new Map(
+    mutations.map((m) => [m.name.toLowerCase(), m])
+  );
 
   const totalTopNodes = Math.max(contributors.length, 1);
   const canvasWidth   = Math.max(640, totalTopNodes * 170 + 80);
   const centerX       = canvasWidth / 2;
   const companyY      = 220;
   const topRowY       = 50;
-  const dynRowY       = 400;
+  const discoveryY    = 340;
 
   const hSpacing      = Math.min(220, (canvasWidth - 100) / totalTopNodes);
-
-  // ── Central company node ──────────────────────────────────────────────────
 
   const companyNodeId = "node_company";
   nodes.push({
@@ -78,50 +83,54 @@ export function buildGraphFromReport(report: LiveReport): {
     position: { x: Math.round(centerX - 55), y: companyY },
   });
 
-  // ── Contributor nodes (top arc) ───────────────────────────────────────────
-
   const topStart =
     contributors.length === 1
       ? centerX - 55
       : centerX - (hSpacing * (contributors.length - 1)) / 2 - 55;
 
+  const linkedContributorIds = new Set<string>();
+
   contributors.forEach((c, i) => {
     const nodeId = `node_c${i}`;
+    const mutation = mutationByName.get(c.name.toLowerCase());
     nodes.push({
       id: nodeId,
       label: c.name,
       type: normalizeNodeType(c.type),
-      intrinsicRisk: c.intrinsic_risk,
+      intrinsicRisk: mutation
+        ? Math.max(c.intrinsic_risk, mutation.intrinsic_risk)
+        : c.intrinsic_risk,
       position: {
         x: Math.round(topStart + i * hSpacing),
         y: topRowY,
       },
+      discoveredDuringRun: Boolean(mutation),
+      isNewDiscovery: mutation?.is_new ?? false,
     });
     edges.push({
       id: `edge_c${i}`,
       source: nodeId,
       target: companyNodeId,
-      label: c.relation.replace(/_/g, " "),
+      label: (mutation?.relation ?? c.relation).replace(/_/g, " "),
     });
+    if (mutation) linkedContributorIds.add(c.name.toLowerCase());
   });
 
-  // ── Dynamic nodes (bottom row, from Sentinel LLM) ────────────────────────
-  // Skip any dynamic node whose name already appears as a contributor to
-  // avoid the same entity appearing twice in the graph.
-
-  const contributorLabels = new Set(
-    contributors.map((c) => c.name.toLowerCase())
-  );
-  const uniqueDynNodes = dynNodes.filter(
-    (n) => !contributorLabels.has(n.name.toLowerCase())
+  // Newly discovered entities that are not already shown as KYC contributors.
+  const novelMutations = mutations.filter(
+    (m) => !linkedContributorIds.has(m.name.toLowerCase())
   );
 
-  const dynStart =
-    uniqueDynNodes.length === 1
+  const discoverySpacing = Math.min(
+    220,
+    (canvasWidth - 100) / Math.max(novelMutations.length, 1)
+  );
+  const discoveryStart =
+    novelMutations.length === 1
       ? centerX - 55
-      : centerX - (hSpacing * (uniqueDynNodes.length - 1)) / 2 - 55;
+      : centerX - (discoverySpacing * (novelMutations.length - 1)) / 2 - 55;
 
-  uniqueDynNodes.forEach((n, i) => {
+  novelMutations.forEach((n, i) => {
     const nodeId = `node_d${i}`;
     nodes.push({
       id: nodeId,
@@ -129,9 +138,11 @@ export function buildGraphFromReport(report: LiveReport): {
       type: normalizeNodeType(n.type),
       intrinsicRisk: n.intrinsic_risk,
       position: {
-        x: Math.round(dynStart + i * hSpacing),
-        y: dynRowY,
+        x: Math.round(discoveryStart + i * discoverySpacing),
+        y: discoveryY,
       },
+      discoveredDuringRun: true,
+      isNewDiscovery: n.is_new ?? true,
     });
     edges.push({
       id: `edge_d${i}`,
@@ -215,33 +226,59 @@ export function addDynamicNodesToGraph(
 ): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const companyNode = existingNodes.find((n) => n.id === "node_company");
   const centerX     = (companyNode?.position.x ?? 320) + 55;
-  const dynRowY     = 400;
+  const discoveryY  = 340;
   const hSpacing    = 200;
 
-  const existingDynCount = existingNodes.filter((n) => n.id.startsWith("node_d")).length;
-  const nodes = [...existingNodes];
+  const nodes = existingNodes.map((n) => ({ ...n }));
   const edges = [...existingEdges];
-
-  // Build a lowercase set of all labels already present for fast dedup.
-  const existingLabels = new Set(nodes.map((e) => e.label.toLowerCase()));
 
   let added = 0;
   for (const n of newApiNodes) {
-    if (existingLabels.has(n.name.toLowerCase())) continue;
+    const existingIdx = nodes.findIndex((node) =>
+      namesMatch(node.label, n.name)
+    );
 
+    if (existingIdx >= 0) {
+      const existing = nodes[existingIdx];
+      nodes[existingIdx] = {
+        ...existing,
+        intrinsicRisk: Math.max(existing.intrinsicRisk, n.intrinsic_risk),
+        discoveredDuringRun: true,
+        isNewDiscovery: n.is_new ?? false,
+      };
+      const edgeIdx = edges.findIndex(
+        (e) => e.source === existing.id && e.target === "node_company"
+      );
+      const edgeLabel = n.relation.replace(/_/g, " ");
+      if (edgeIdx >= 0) {
+        edges[edgeIdx] = { ...edges[edgeIdx], label: edgeLabel };
+      } else {
+        edges.push({
+          id:     `edge_link_${existing.id}`,
+          source: existing.id,
+          target: "node_company",
+          label:  edgeLabel,
+        });
+      }
+      continue;
+    }
+
+    const existingDynCount = nodes.filter((node) => node.id.startsWith("node_d")).length;
     const totalDyn = existingDynCount + (newApiNodes.length - added);
     const startX   = centerX - (hSpacing * (totalDyn - 1)) / 2 - 55;
     const nodeId   = `node_d${existingDynCount + added}`;
 
     nodes.push({
-      id:           nodeId,
-      label:        n.name,
-      type:         normalizeNodeType(n.type),
+      id:            nodeId,
+      label:         n.name,
+      type:          normalizeNodeType(n.type),
       intrinsicRisk: n.intrinsic_risk,
       position: {
         x: Math.round(startX + (existingDynCount + added) * hSpacing),
-        y: dynRowY,
+        y: discoveryY,
       },
+      discoveredDuringRun: true,
+      isNewDiscovery:      n.is_new ?? true,
     });
     edges.push({
       id:     `edge_d${existingDynCount + added}`,
@@ -271,10 +308,15 @@ export function updateGraphNodeRisks(
     }
     const match = contributors.find(
       (c) =>
-        node.label.toLowerCase().includes(c.name.toLowerCase()) ||
-        c.name.toLowerCase().includes(node.label.toLowerCase()),
+        namesMatch(node.label, c.name),
     );
-    return match ? { ...node, intrinsicRisk: match.intrinsic_risk } : node;
+    if (match) {
+      return {
+        ...node,
+        intrinsicRisk: Math.max(node.intrinsicRisk, match.intrinsic_risk),
+      };
+    }
+    return node;
   });
 }
 

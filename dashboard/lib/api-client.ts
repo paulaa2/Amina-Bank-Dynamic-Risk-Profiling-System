@@ -35,6 +35,8 @@ export interface LiveNewGraphNode {
   intrinsic_risk: number;
   relation: string;
   control_weight: number;
+  /** True when the node was created during this run; false when an existing KYC node received a new edge. */
+  is_new?: boolean;
 }
 
 export interface LiveEvent {
@@ -113,6 +115,20 @@ export interface LiveReport {
   warnings: string[];
   events: LiveEvent[];
   report_markdown: string | null;
+  scenario?: {
+    scenario_id: string;
+    description?: string;
+    reference_model?: string;
+  };
+}
+
+export interface ReplayScenarioItem {
+  scenario_id: string;
+  client: string;
+  description: string;
+  reference_model: string;
+  event_count: number;
+  company_id: number | null;
 }
 
 // ── Session cache ─────────────────────────────────────────────────────────────
@@ -193,6 +209,12 @@ export interface BaselineStreamData {
   client: LiveReport["client"];
   security: LiveReport["security"];
   topology: LiveReport["topology"];
+  stream_thresholds?: {
+    bonferroni_scale: number;
+    semantic: number;
+    topology: number;
+    behavioral_tx: number;
+  };
 }
 
 export interface ExtractionStreamData {
@@ -353,4 +375,47 @@ export async function analyzeCompanyCached(
     return _cache.get(key)!;
   }
   return analyzeCompany(id, opts);
+}
+
+/** Return a cached LiveReport if the API has one (404 → null). */
+export async function getCachedAnalysis(id: number): Promise<LiveReport | null> {
+  const res = await fetch(`${API_BASE}/api/analyze/${id}`);
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail ?? `getCachedAnalysis: ${res.status}`);
+  }
+  const report: LiveReport = await res.json();
+  _cache.set(cacheKey(id, false), report);
+  return report;
+}
+
+/** List curated historical scenarios (same as ``run_scenario_demo``). */
+export async function listReplayScenarios(): Promise<ReplayScenarioItem[]> {
+  const res = await fetch(`${API_BASE}/api/scenarios/replay`);
+  if (!res.ok) throw new Error(`listReplayScenarios: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+/**
+ * Replay a curated scenario and return a LiveReport with graph mutations in
+ * ``events[].new_graph_nodes`` (for the corporate graph visualisation).
+ */
+export async function replayScenario(
+  scenarioId: string,
+  opts: { force_refresh?: boolean } = {},
+): Promise<LiveReport> {
+  const qs = opts.force_refresh ? "?force_refresh=true" : "";
+  const res = await fetch(`${API_BASE}/api/scenario-replay/${scenarioId}${qs}`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail ?? "Scenario replay failed");
+  }
+  const report: LiveReport = await res.json();
+  if (report.id) {
+    _cache.set(cacheKey(Number(report.id), false), report);
+  }
+  return report;
 }

@@ -17,6 +17,7 @@ import {
   Loader2,
   RefreshCw,
   Zap,
+  History,
   Newspaper,
   ScanSearch,
   TriangleAlert,
@@ -36,10 +37,14 @@ import { ComplianceReport } from "@/components/compliance-report";
 import {
   analyzeCompanyStream,
   takeGovernanceAction,
+  listReplayScenarios,
+  getCachedAnalysis,
+  replayScenario,
   type LiveReport,
   type GovernanceAction,
   type BaselineStreamData,
   type RiskStreamData,
+  type ReplayScenarioItem,
 } from "@/lib/api-client";
 import {
   alertLevelFor,
@@ -57,6 +62,11 @@ import { cn } from "@/lib/utils";
 // ─────────────────────────────────────────────────────────────────────────────
 
 type StreamPhase = "connecting" | "streaming" | "complete" | "error";
+type AnalysisMode = "live" | "scenario";
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
 
 // ── Activity feed types ───────────────────────────────────────────────────────
 
@@ -225,12 +235,15 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
   const [baseline,          setBaseline]          = useState<BaselineStreamData | null>(null);
   const [graph,             setGraph]             = useState<{ nodes: GraphNode[]; edges: GraphEdge[] }>({ nodes: [], edges: [] });
   const [liveStreams,       setLiveStreams]        = useState<RiskStreamData | null>(null);
+  const [liveThresholds,    setLiveThresholds]    = useState<{ semantic: number; topology: number; behavioral_tx: number; bonferroni_scale: number } | null>(null);
   const [lastEventTitle,    setLastEventTitle]     = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [report,            setReport]            = useState<LiveReport | null>(null);
   const [error,             setError]             = useState<string | null>(null);
   const [actionLoading,     setActionLoading]     = useState(false);
   const [feedEntries,       setFeedEntries]       = useState<FeedEntry[]>([]);
+  const [curatedScenario,   setCuratedScenario]   = useState<ReplayScenarioItem | null>(null);
+  const [analysisMode,      setAnalysisMode]      = useState<AnalysisMode>("live");
 
   // Holds the AbortController for the currently active stream so we can cancel
   // it if the user clicks Refresh before the stream completes.
@@ -244,10 +257,149 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
     }
   }, [feedEntries]);
 
-  // ── Kick off streaming analysis ─────────────────────────────────────────────
+  // ── Scenario replay (curated timelines from run_scenario_demo) ─────────────
+
+  function resetAnalysisState() {
+    setBaseline(null);
+    setGraph({ nodes: [], edges: [] });
+    setLiveStreams(null);
+    setLiveThresholds(null);
+    setLastEventTitle(null);
+    setIsGeneratingReport(false);
+    setReport(null);
+    setError(null);
+    setFeedEntries([]);
+  }
+
+  async function displayScenarioReport(
+    report: LiveReport,
+    scenario: ReplayScenarioItem,
+    animate: boolean,
+  ) {
+    setAnalysisMode("scenario");
+    setBaseline({
+      id: report.id,
+      client: report.client,
+      security: report.security,
+      topology: report.topology,
+    });
+
+    setFeedEntries([
+      {
+        type: "status",
+        id: _feedCounter++,
+        ts: nowTs(),
+        category: "complete",
+        title: "Curated historical replay",
+        detail: scenario.description,
+      },
+    ]);
+
+    if (animate) {
+      const kycGraph = buildGraphFromReport({
+        ...report,
+        events: [],
+        decision: {
+          ...report.decision,
+          max_combined_risk: 0,
+          alarm_fired: false,
+          triggering_event: null,
+        },
+      } as LiveReport);
+      setGraph(kycGraph);
+
+      for (const ev of report.events.filter((e) => e.triaged_in)) {
+        await sleep(900);
+
+        if (ev.new_graph_nodes?.length) {
+          setGraph((prev) =>
+            addDynamicNodesToGraph(prev.nodes, prev.edges, ev.new_graph_nodes)
+          );
+        }
+
+        setLiveStreams({
+          event_title: ev.title,
+          semantic: ev.semantic_distance,
+          topology: report.topology.company_exposure,
+          behavioral_tx: 0,
+          r_combined: ev.combined_risk,
+          alarms: ev.alarms,
+          contributors: report.topology.top_contributors,
+        });
+        setLastEventTitle(ev.title);
+
+        setFeedEntries((prev) => [
+          ...prev,
+          {
+            type: "article",
+            data: {
+              id: _feedCounter++,
+              ts: nowTs(),
+              articleTitle: ev.title,
+              source: report.scenario?.scenario_id ?? "curated replay",
+              adverseScore: ev.semantic_distance,
+              findings: [
+                ...(ev.new_graph_nodes ?? []).map((n) => ({
+                  id: _feedCounter++,
+                  category: "entity" as FindingCategory,
+                  title: n.name,
+                  detail: n.is_new ? "New entity detected" : "New graph link",
+                })),
+                {
+                  id: _feedCounter++,
+                  category: "score" as FindingCategory,
+                  title: `Combined risk: ${Math.round(ev.combined_risk * 100)}%`,
+                },
+              ],
+            },
+          },
+        ]);
+      }
+    }
+
+    setGraph(buildGraphFromReport(report));
+    setReport(report);
+    setPhase("complete");
+    setFeedEntries((prev) => [
+      ...prev,
+      {
+        type: "status",
+        id: _feedCounter++,
+        ts: nowTs(),
+        category: "complete",
+        title: report.decision.alarm_fired
+          ? "Scenario alarm triggered"
+          : "Scenario replay complete",
+        detail: `${report.events.filter((e) => e.triaged_in).length} events · ${report.events.reduce((n, e) => n + (e.new_graph_nodes?.length ?? 0), 0)} graph mutations`,
+      },
+    ]);
+  }
+
+  async function startScenarioReplay(forceRefresh = false, animate = true) {
+    if (!curatedScenario || isNaN(companyId)) return;
+
+    controllerRef.current?.abort();
+    setPhase("connecting");
+    resetAnalysisState();
+
+    try {
+      setPhase("streaming");
+      const report = await replayScenario(curatedScenario.scenario_id, {
+        force_refresh: forceRefresh,
+      });
+      await displayScenarioReport(report, curatedScenario, animate);
+    } catch (err) {
+      setError(String(err));
+      setPhase("error");
+    }
+  }
+
+  // ── Live streaming analysis ─────────────────────────────────────────────────
 
   function startStream(forceRefresh = false) {
     if (isNaN(companyId)) { setError("Invalid company ID"); return () => {}; }
+
+    setAnalysisMode("live");
 
     // Abort any in-flight stream before starting a new one
     controllerRef.current?.abort();
@@ -302,6 +454,9 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
       (evt) => {
         if (evt.event === "baseline") {
           setBaseline(evt.data);
+          if (evt.data.stream_thresholds) {
+            setLiveThresholds(evt.data.stream_thresholds);
+          }
           const g = buildBaselineGraph(evt.data);
           setGraph(g);
           setPhase("streaming");
@@ -430,8 +585,56 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
   }
 
   useEffect(() => {
-    startStream();
-    return () => controllerRef.current?.abort();
+    let cancelled = false;
+    controllerRef.current?.abort();
+
+    async function initAnalysis() {
+      if (isNaN(companyId)) {
+        setError("Invalid company ID");
+        return;
+      }
+
+      setPhase("connecting");
+      resetAnalysisState();
+
+      try {
+        const scenarios = await listReplayScenarios();
+        if (cancelled) return;
+
+        const match = scenarios.find((s) => s.company_id === companyId) ?? null;
+        setCuratedScenario(match);
+
+        if (match) {
+          // Companies with a curated scenario (FTX, Wirecard, …) load the
+          // replay pushed by ``run_scenario_demo --all --push-to-api``.
+          setPhase("streaming");
+          const cached = await getCachedAnalysis(companyId);
+          if (cancelled) return;
+
+          if (cached?.scenario?.scenario_id === match.scenario_id) {
+            await displayScenarioReport(cached, match, false);
+            return;
+          }
+
+          const report = await replayScenario(match.scenario_id, {
+            force_refresh: false,
+          });
+          if (cancelled) return;
+          await displayScenarioReport(report, match, false);
+          return;
+        }
+
+        if (!cancelled) startStream();
+      } catch {
+        if (!cancelled) startStream();
+      }
+    }
+
+    initAnalysis();
+    return () => {
+      cancelled = true;
+      controllerRef.current?.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
@@ -472,7 +675,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             <p className="text-base font-semibold text-rose-300 mb-2">Analysis Failed</p>
             <p className="text-sm text-rose-400/80 mb-6">{error}</p>
             <div className="flex items-center justify-center gap-3">
-              <Button size="sm" variant="outline" className="gap-1.5 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700" onClick={() => startStream(true)}>
+              <Button size="sm" variant="outline" className="gap-1.5 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700" onClick={() => analysisMode === "scenario" ? startScenarioReplay(true) : startStream(true)}>
                 <RefreshCw className="h-3.5 w-3.5" /> Retry
               </Button>
               <p className="text-xs text-rose-400/60">
@@ -504,14 +707,15 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
   const gaugeColor  = riskPct >= 75 ? "#fb7185" : riskPct >= 50 ? "#fbbf24" : "#34d399";
   const alarmFired  = isComplete ? report!.decision.alarm_fired : (liveStreams ? Object.values(liveStreams.alarms).some(Boolean) : false);
 
-  // Streams display (use real thresholds after complete, approximate during streaming)
+  // Streams display — use real thresholds from report (complete) or from the
+  // calibrated baseline event (streaming). Never derive threshold from statistic.
   const streams = isComplete
     ? report!.streams
     : {
-        bonferroni_scale: 1,
-        semantic:      { last_statistic: liveStreams?.semantic      ?? 0, threshold: Math.max((liveStreams?.semantic      ?? 0) * 1.5, 0.5) },
-        topology:      { last_statistic: liveStreams?.topology      ?? 0, threshold: Math.max((liveStreams?.topology      ?? 0) * 1.5, 0.5), observed_exposure: liveStreams?.topology ?? 0 },
-        behavioral_tx: { last_statistic: liveStreams?.behavioral_tx ?? 0, threshold: Math.max((liveStreams?.behavioral_tx ?? 0) * 1.5, 0.5) },
+        bonferroni_scale: liveThresholds?.bonferroni_scale ?? 1,
+        semantic:      { last_statistic: liveStreams?.semantic      ?? 0, threshold: liveThresholds?.semantic      ?? 0.5 },
+        topology:      { last_statistic: liveStreams?.topology      ?? 0, threshold: liveThresholds?.topology      ?? 0.5, observed_exposure: liveStreams?.topology ?? 0 },
+        behavioral_tx: { last_statistic: liveStreams?.behavioral_tx ?? 0, threshold: liveThresholds?.behavioral_tx ?? 0.5 },
       };
 
   const contributors = isComplete
@@ -554,8 +758,13 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             {isStreaming && (
               <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400">
                 <Zap className="h-3.5 w-3.5 animate-pulse" />
-                Live analysis
+                {analysisMode === "scenario" ? "Scenario replay" : "Live analysis"}
               </span>
+            )}
+            {isComplete && analysisMode === "scenario" && (
+              <Badge variant="outline" className="border-violet-500/20 bg-violet-500/10 text-violet-300 text-xs">
+                Curated replay
+              </Badge>
             )}
             {isComplete && alarmFired && <AlertBadge level={level} />}
             {isComplete && governance && <GovernanceBadge status={governance.status} />}
@@ -567,13 +776,37 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                 {clientInfo.jurisdiction} · {clientInfo.country}
               </div>
             )}
+            {curatedScenario && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-violet-500/30 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20"
+                onClick={() => startScenarioReplay(isComplete && analysisMode === "scenario")}
+                disabled={phase === "connecting" || phase === "streaming"}
+              >
+                <History className="h-3.5 w-3.5" />
+                Curated replay
+              </Button>
+            )}
             {isComplete && (
               <button
-                onClick={() => startStream(true)}
+                onClick={() =>
+                  analysisMode === "scenario"
+                    ? startScenarioReplay(true)
+                    : startStream(true)
+                }
                 title="Re-run analysis"
                 className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-200 transition-colors"
               >
                 <RefreshCw className="h-3.5 w-3.5" /> Refresh
+              </button>
+            )}
+            {isComplete && analysisMode === "live" && curatedScenario && (
+              <button
+                onClick={() => startScenarioReplay(true)}
+                className="flex items-center gap-1.5 text-xs text-violet-400/80 hover:text-violet-300 transition-colors"
+              >
+                <History className="h-3.5 w-3.5" /> Switch to scenario
               </button>
             )}
           </div>

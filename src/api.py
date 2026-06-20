@@ -36,6 +36,7 @@ from .ingestion import ClientProfileRepository
 from .pipeline import EventOutcome, PerpetualKYCPipeline
 from .run_demo import _report_to_dict
 from .run_global_demo import run_global_demo as _run_global_demo
+from .run_scenario_demo import list_replay_scenarios, replay_scenario_for_api
 from .security import DataAnonymizer
 from .triage import RelevanceTriage
 
@@ -141,7 +142,35 @@ def _analyze_company_streaming(
     )
     has_cycle = graph.check_ownership_cycles(profile.company_node_id)
 
-    # ── Event 1: baseline ─────────────────────────────────────────────────────
+    # ── Phase 2: detector setup (before baseline so thresholds go in it) ────────
+    profile_text     = profile.profile_text()
+    m0, sem_baseline = pipeline._initialise_semantic_baseline(profile, local_ok, warnings)
+
+    sem_det = PageHinkleyDetector()
+    sem_det.seed(
+        sem_baseline,
+        k_std_delta=pipeline.config.ph_semantic_delta_std,
+        k_std_threshold=pipeline.config.ph_semantic_threshold_std,
+    )
+    topo_baseline = pipeline._topo_baseline(company_exposure)
+    topo_det = PageHinkleyDetector()
+    topo_det.seed(topo_baseline)
+
+    tx_stream             = QuantitativeTransactionStream()
+    tx_amounts, tx_baseline_z = pipeline._simulate_transactions(profile, inject_anomaly=False)
+    tx_det = PageHinkleyDetector()
+    tx_det.seed(tx_baseline_z if len(tx_baseline_z) >= 3 else [0.1, 0.2, 0.15, 0.25, 0.2])
+
+    fusion = DriftFusion(
+        [
+            StreamSignal(_SEMANTIC,    sem_det,  weight=1.0),
+            StreamSignal(_TOPOLOGY,    topo_det, weight=0.8),
+            StreamSignal(_BEHAVIOURAL, tx_det,   weight=0.9),
+        ],
+        target_fwer=pipeline.config.target_fwer,
+    )
+
+    # ── Event 1: baseline (now includes calibrated detector thresholds) ──────
     yield {
         "event": "baseline",
         "data": {
@@ -166,35 +195,14 @@ def _analyze_company_streaming(
                     for c in contributors[:5]
                 ],
             },
+            "stream_thresholds": {
+                "bonferroni_scale": round(fusion.bonferroni_scale, 4),
+                "semantic":      round(sem_det.threshold, 4),
+                "topology":      round(topo_det.threshold, 4),
+                "behavioral_tx": round(tx_det.threshold, 4),
+            },
         },
     }
-
-    # ── Phase 2: detector setup ───────────────────────────────────────────────
-    profile_text     = profile.profile_text()
-    m0, sem_baseline = pipeline._initialise_semantic_baseline(profile, local_ok, warnings)
-
-    sem_det = PageHinkleyDetector()
-    sem_det.seed(
-        sem_baseline,
-        k_std_delta=pipeline.config.ph_semantic_delta_std,
-        k_std_threshold=pipeline.config.ph_semantic_threshold_std,
-    )
-    topo_det = PageHinkleyDetector()
-    topo_det.seed([0.01, 0.02, 0.01, 0.02, 0.015])
-
-    tx_stream             = QuantitativeTransactionStream()
-    tx_amounts, tx_baseline_z = pipeline._simulate_transactions(profile, inject_anomaly=False)
-    tx_det = PageHinkleyDetector()
-    tx_det.seed(tx_baseline_z if len(tx_baseline_z) >= 3 else [0.1, 0.2, 0.15, 0.25, 0.2])
-
-    fusion = DriftFusion(
-        [
-            StreamSignal(_SEMANTIC,    sem_det,  weight=1.0),
-            StreamSignal(_TOPOLOGY,    topo_det, weight=0.8),
-            StreamSignal(_BEHAVIOURAL, tx_det,   weight=0.9),
-        ],
-        target_fwer=pipeline.config.target_fwer,
-    )
 
     triage   = RelevanceTriage(profile.all_aliases())
     resolver = EntityResolver(registry)
@@ -796,6 +804,56 @@ def invalidate_cache(company_id: int):
     with _lock:
         evicted = _cache.pop(str(company_id), None)
     return {"evicted": evicted is not None, "company_id": company_id}
+
+
+# ── Curated scenario replay (historical timelines for dashboard) ───────────────
+
+_scenario_cache: dict[str, dict] = {}
+
+
+@app.get("/api/scenarios/replay")
+def list_curated_scenarios():
+    """Return curated historical replay scenarios (same timelines as run_scenario_demo)."""
+    repo = ClientProfileRepository(_config.database_url)
+    companies = repo.list_companies()
+    scenarios = list_replay_scenarios()
+    for scenario in scenarios:
+        client = scenario["client"].lower()
+        scenario["company_id"] = next(
+            (
+                row["id"]
+                for row in companies
+                if client in row["legal_name"].lower()
+                or row["legal_name"].lower() in client
+            ),
+            None,
+        )
+    return scenarios
+
+
+@app.post("/api/scenario-replay/{scenario_id}")
+def run_curated_scenario(scenario_id: str, force_refresh: bool = False):
+    """
+    Replay a curated evidence-backed scenario and return a dashboard-compatible
+    LiveReport (includes ``events[].new_graph_nodes`` for the corporate graph).
+    """
+    with _lock:
+        if not force_refresh and scenario_id in _scenario_cache:
+            return _scenario_cache[scenario_id]
+
+    try:
+        result = replay_scenario_for_api(scenario_id, _config.database_url)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    _reset_governance_to_pending(result)
+    with _lock:
+        _scenario_cache[scenario_id] = result
+        if result.get("id"):
+            _cache[str(result["id"])] = result
+    return result
 
 
 # ── Global demo / contagion endpoints ─────────────────────────────────────────
