@@ -124,6 +124,7 @@ BASELINE_COMPANIES: list[dict] = [
             {"name": "Sam Altman",      "node_type": "PERSON", "role": "CEO",             "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
             {"name": "Greg Brockman",   "node_type": "PERSON", "role": "President",       "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
             {"name": "Microsoft",       "node_type": "COMPANY","role": "Strategic investor","ownership_pct": 49.0, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0},
+            {"name": "Sequoia Capital",   "node_type": "COMPANY","role": "Early-stage investor", "ownership_pct": None, "rel_type": "OWNS_MINORITY", "control_weight": 0.1, "at_onboarding_risk": 0.2},
         ],
     },
 
@@ -146,6 +147,7 @@ BASELINE_COMPANIES: list[dict] = [
             {"name": "Andrei Kostin",    "node_type": "PERSON", "role": "President & Chairman",    "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
             {"name": "Dmitry Pyanov",    "node_type": "PERSON", "role": "Deputy President",        "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
             {"name": "Government of Russia", "node_type": "COMPANY", "role": "Majority shareholder", "ownership_pct": 61.8, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0},
+            {"name": "Gazprom",          "node_type": "COMPANY", "role": "Energy-sector counterparty", "ownership_pct": None, "rel_type": "ASSOCIATED_WITH", "control_weight": 0.1, "at_onboarding_risk": 0.2},
         ],
     },
 
@@ -167,6 +169,7 @@ BASELINE_COMPANIES: list[dict] = [
         "topology": [
             {"name": "Andrey Akimov",   "node_type": "PERSON", "role": "Chairman of Management Board", "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
             {"name": "Gazprom",         "node_type": "COMPANY","role": "Majority shareholder",          "ownership_pct": 35.5, "rel_type": "OWNS_MAJORITY", "control_weight": 1.0},
+            {"name": "Government of Russia", "node_type": "COMPANY", "role": "Sovereign / state nexus", "ownership_pct": None, "rel_type": "ASSOCIATED_WITH", "control_weight": 0.1, "at_onboarding_risk": 0.15},
         ],
     },
 
@@ -187,6 +190,7 @@ BASELINE_COMPANIES: list[dict] = [
         "notes": "One of Russia's largest oil producers, opaque ownership. Sanctioned EU/AU/CA/UK/CH.",
         "topology": [
             {"name": "Vladimir Bogdanov", "node_type": "PERSON", "role": "CEO / General Director",  "ownership_pct": None, "rel_type": "DIRECTS",       "control_weight": 1.0},
+            {"name": "Government of Russia", "node_type": "COMPANY", "role": "Sovereign / jurisdiction nexus", "ownership_pct": None, "rel_type": "ASSOCIATED_WITH", "control_weight": 0.1, "at_onboarding_risk": 0.15},
         ],
     },
 ]

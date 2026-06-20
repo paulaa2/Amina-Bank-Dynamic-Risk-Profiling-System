@@ -78,7 +78,8 @@ Ambas se comunican únicamente a través de la base de datos SQLite.
     ├── cost/tracker.py            # contabilidad de tokens y coste por 1000 análisis
     ├── ingestion/repository.py    # acceso de solo lectura a la base de datos
     ├── pipeline.py                # orquestador de las 6 fases
-    └── run_demo.py                # CLI de demostración
+    ├── run_demo.py                # CLI demo single-client
+    └── run_global_demo.py         # CLI demo multi-cliente (orquestador global)
 ```
 
 ---
@@ -166,6 +167,169 @@ la exposición por contagio topológico con sus contribuidores, las tres
 corrientes estadísticas con sus umbrales, la decisión de alarma, el flujo de
 gobernanza de doble autorización con su traza de auditoría, el coste estimado
 y, si se supera el umbral, el informe AML redactado por el agente en la nube.
+
+---
+
+## Demos recomendadas (casos probados)
+
+Los siete clientes del seed (`scripts/seed_kyc.py`) son **empresas reales** elegidas
+por narrativa de riesgo. El motor en runtime **solo lee** `data/risk_profiling.db`;
+las APIs externas se usan al construir la base (`python -m scripts.build_database`).
+
+### Clientes disponibles
+
+| Cliente | Grupo | Historia principal |
+|---------|-------|-------------------|
+| Wirecard AG | A | Fraude contable / colapso estructural |
+| FTX Trading Ltd | A | Fraude crypto / quiebra |
+| MicroStrategy Incorporated | A | **Semantic drift**: BI software → Bitcoin treasury |
+| OpenAI | A | Escala / señales regulatorias |
+| VTB Bank | B | Sanciones + topología (Kostin, Estado ruso) |
+| Gazprombank | B | Sanciones + exposición energética (Gazprom) |
+| Surgutneftegas | B | Petrolera rusa sancionada |
+
+### Demo single-client (mejor narrativa por caso)
+
+```bash
+source .venv/bin/activate
+
+# Semantic drift — el caso más fuerte para explicar deriva de modelo de negocio
+python -m src.run_demo --company "MicroStrategy" --max-events 7
+
+# Sanciones + contagio topológico local (Kostin 1.0 desde el grafo)
+python -m src.run_demo --company "VTB" --max-events 5
+
+# Fraude estructural + opcional anomalía transaccional simulada
+python -m src.run_demo --company "Wirecard" --max-events 5 --simulate-tx-anomaly
+
+# Quiebra crypto (SBF, Caroline Ellison)
+python -m src.run_demo --company "FTX" --max-events 5
+
+# Salida JSON completa (integración / UI)
+python -m src.run_demo --company "MicroStrategy" --json
+```
+
+**Qué mirar en stderr:** `[STREAMING EVENT]`, `[GRAPH MUTATION]`, `[EARLY STOP]`.
+
+### Demo global — orquestador multi-cliente
+
+Simula varios clientes en **una cola temporal** con **memoria de amenazas compartida**
+(`shared_threat_memory`). Cada cliente tiene su ego-graph aislado; el contagio cruzado
+solo ocurre si **dos clientes comparten el mismo nombre de entidad** en su KYC.
+
+```bash
+source .venv/bin/activate
+```
+
+#### Demo estrella — cluster soberano ruso (contagio cruzado)
+
+```bash
+python -m src.run_global_demo --companies VTB Gazprombank --max-events 5
+```
+
+| Paso | Qué pasa |
+|------|----------|
+| Feb 2022, evento 1 | VTB congela (`risk≈0.85`, topology=1.0). Publica amenazas en memoria global. |
+| Mar 2022, evento 2 | Gazprombank **hereda** `Government of Russia` (0.15 → 0.90) y congela (`risk≈0.84`). |
+
+Log clave a señalar en pantalla:
+
+```text
+[GLOBAL ORCHESTRATOR] Cross-client threat inherited target=Gazprombank entity=Government of Russia risk=0.9000
+[GLOBAL ORCHESTRATOR] Early stop target=Gazprombank risk=0.8386
+```
+
+**Frase para el pitch:** VTB procesa sanciones y publica riesgo soberano. Gazprombank
+comparte esa exposición en su KYC (vínculo `ASSOCIATED_WITH`, peso bajo). En su primer
+evento relevante, hereda la señal **antes** de evaluar su propia noticia.
+
+#### Demo alternativa — inversor VC compartido
+
+```bash
+python -m src.run_global_demo --companies FTX OpenAI --max-events 5
+```
+
+| Paso | Qué pasa |
+|------|----------|
+| Nov 2022 | FTX congela en quiebra; publica `Sequoia Capital` (0.53). |
+| Jun 2026 | OpenAI hereda Sequoia (0.20 → 0.53) y congela. Salto temporal 2022→2026. |
+
+```text
+[GLOBAL ORCHESTRATOR] Cross-client threat inherited target=OpenAI entity=Sequoia Capital risk=0.5330
+```
+
+Historía distinta al cluster ruso: contagio por **mismo inversor institucional** (Sequoia
+invirtió en OpenAI y también en FTX).
+
+#### Demo triple cluster (herencia sin alarma en el tercero)
+
+```bash
+python -m src.run_global_demo --companies VTB Gazprombank Surgutneftegas --max-events 5
+```
+
+- VTB y Gazprombank: ambos con alarma (igual que la demo estrella).
+- Surgutneftegas **sí hereda** `Government of Russia` en 2025, pero sus noticias no
+  pasan triage (no mencionan el nombre de la empresa) → no llega a alarma.
+- Útil para explicar: la memoria global actualiza el grafo aunque el evento sea
+  filtrado por relevancia.
+
+#### Qué NO esperar (comportamiento correcto)
+
+| Combinación | Resultado |
+|-------------|-----------|
+| VTB + MicroStrategy | Sin contagio cruzado: no comparten entidades en KYC. MicroStrategy cae por drift/fraude propio. |
+| Kostin en MicroStrategy | **No hacerlo**: conexión artificial entre casos reales. |
+| Surgutneftegas solo en global | Suele quedar sin alarma: titulares genéricos de “sanciones a Rusia” sin alias de la empresa. |
+
+### Vínculos compartidos en el seed (contagio defendible)
+
+Definidos en `scripts/seed_kyc.py` para habilitar herencia en el orquestador global:
+
+| Entidad compartida | Clientes | Rol en KYC |
+|--------------------|----------|------------|
+| `Government of Russia` | VTB (accionista), Gazprombank, Surgutneftegas (nexus soberano) | Exposición jurisdiccional / estatal |
+| `Gazprom` | VTB (contraparte energética), Gazprombank (accionista) | Cadena energía–banca |
+| `Sequoia Capital` | FTX, OpenAI | Mismo inversor institucional |
+
+Vínculos secundarios usan `rel_type: ASSOCIATED_WITH` con `control_weight: 0.1` y
+`at_onboarding_risk` bajo (0.15–0.20): refleja lo que el banco sabía en onboarding,
+no el screening OSINT completo.
+
+### Por qué hace falta `at_onboarding_risk`
+
+El collector de topología (`scripts/collectors/topology.py`) puede calcular riesgo
+OSINT alto para una entidad (p. ej. `Government of Russia` = 0.6 en todos). La
+herencia global solo dispara si `global_risk > local_risk`. Sin baseline de onboarding
+más bajo en vínculos secundarios, **nunca** aparece `Cross-client threat inherited`.
+
+Tras reconstruir la DB de clientes modificados:
+
+```bash
+python -m scripts.build_database --company VTB
+python -m scripts.build_database --company Gazprombank
+python -m scripts.build_database --company Surgutneftegas
+python -m scripts.build_database --company OpenAI
+```
+
+### Reconstruir todo desde cero
+
+```bash
+source .venv/bin/activate
+python -m scripts.build_database --reset
+python -m src.run_global_demo --companies VTB Gazprombank --max-events 5
+python -m src.run_demo --company "MicroStrategy" --max-events 7
+```
+
+### Logs stderr útiles (global)
+
+| Log | Significado |
+|-----|-------------|
+| `[GLOBAL ORCHESTRATOR] Loaded N client pipelines` | Cola temporal montada |
+| `Shared threat published source=… entity=…` | Cliente publica entidad con risk > 0.5 |
+| `Cross-client threat inherited target=… entity=…` | **Contagio cruzado** — otro cliente hereda |
+| `Early stop target=…` | Cliente congelado; eventos futuros ignorados |
+| `skipped_client_frozen` | Simulación temporal: cliente ya cerrado |
+| `skipped_by_triage` | Evento descartado sin LLM (sin mención al cliente/grafo) |
 
 ---
 

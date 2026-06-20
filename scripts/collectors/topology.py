@@ -128,16 +128,22 @@ def build_topology(
         # 2. Sanctions screening
         sanctions_hit, sanctions_score = _sanctions_for_person(person_name)
 
-        # 3. Intrinsic risk: sanctions trumps everything, otherwise max adverse
-        intrinsic_risk = max(
+        # 3. Intrinsic risk: OSINT screen, unless seed pins onboarding baseline (Layer 2).
+        osint_risk = max(
             1.0 if sanctions_hit else 0.0,
             max_adverse,
             sanctions_score,
         )
+        onboarding_risk = entry.get("at_onboarding_risk")
+        intrinsic_risk = float(onboarding_risk) if onboarding_risk is not None else osint_risk
 
         if verbose:
             flag = " [SANCTIONS HIT]" if sanctions_hit else ""
-            print(f"    -> adverse news: {len(adverse_scores)}, max_score={max_adverse:.2f}, intrinsic_risk={intrinsic_risk:.2f}{flag}")
+            baseline_note = f" onboarding={intrinsic_risk:.2f}" if onboarding_risk is not None else ""
+            print(
+                f"    -> adverse news: {len(adverse_scores)}, max_score={max_adverse:.2f}, "
+                f"osint={osint_risk:.2f}, intrinsic_risk={intrinsic_risk:.2f}{baseline_note}{flag}"
+            )
 
         # 4. Persist node (upsert-style: delete old then insert)
         old = session.query(TopologyNode).filter_by(
