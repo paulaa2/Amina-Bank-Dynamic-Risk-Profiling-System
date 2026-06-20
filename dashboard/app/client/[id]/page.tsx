@@ -17,6 +17,11 @@ import {
   Loader2,
   RefreshCw,
   Zap,
+  Newspaper,
+  ScanSearch,
+  TriangleAlert,
+  BadgeCheck,
+  Building2 as BuildingIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -48,10 +53,59 @@ import type { GraphNode, GraphEdge, AlertLevel } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Stream phase type
+// Stream phase + terminal log types
 // ─────────────────────────────────────────────────────────────────────────────
 
 type StreamPhase = "connecting" | "streaming" | "complete" | "error";
+
+// ── Activity feed types ───────────────────────────────────────────────────────
+
+type FindingCategory = "entity" | "risk" | "score";
+type StatusCategory  = "complete" | "error";
+
+interface MetricPill {
+  label: string;
+  value: string;
+  level: "low" | "moderate" | "high";
+}
+
+interface ArticleFinding {
+  id: number;
+  category: FindingCategory;
+  title: string;
+  detail?: string;
+  metrics?: MetricPill[];
+}
+
+interface ArticleActivity {
+  id: number;
+  ts: string;
+  articleTitle: string;
+  source: string;
+  adverseScore: number;
+  findings: ArticleFinding[];
+}
+
+type FeedEntry =
+  | { type: "article"; data: ArticleActivity }
+  | { type: "status";  id: number; ts: string; category: StatusCategory; title: string; detail?: string };
+
+let _feedCounter = 0;
+
+function nowTs(): string {
+  return new Date().toLocaleTimeString("en-GB", { hour12: false });
+}
+
+const FINDING_STYLES: Record<FindingCategory, { icon: React.ElementType; iconClass: string; titleClass: string }> = {
+  entity: { icon: BuildingIcon,  iconClass: "text-violet-400", titleClass: "text-violet-300" },
+  risk:   { icon: TriangleAlert, iconClass: "text-rose-400",   titleClass: "text-rose-300"   },
+  score:  { icon: TrendingUp,    iconClass: "text-amber-400",  titleClass: "text-amber-300"  },
+};
+
+const STATUS_STYLES: Record<StatusCategory, { icon: React.ElementType; iconClass: string; titleClass: string }> = {
+  complete: { icon: BadgeCheck, iconClass: "text-emerald-400", titleClass: "text-emerald-300" },
+  error:    { icon: XCircle,    iconClass: "text-rose-500",    titleClass: "text-rose-400"    },
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
@@ -176,10 +230,19 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
   const [report,            setReport]            = useState<LiveReport | null>(null);
   const [error,             setError]             = useState<string | null>(null);
   const [actionLoading,     setActionLoading]     = useState(false);
+  const [feedEntries,       setFeedEntries]       = useState<FeedEntry[]>([]);
 
   // Holds the AbortController for the currently active stream so we can cancel
   // it if the user clicks Refresh before the stream completes.
   const controllerRef = useRef<AbortController | null>(null);
+  const logRef        = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll feed on new entries
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [feedEntries]);
 
   // ── Kick off streaming analysis ─────────────────────────────────────────────
 
@@ -199,6 +262,40 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
     setIsGeneratingReport(false);
     setReport(null);
     setError(null);
+    setFeedEntries([]);
+
+    // Helpers ─────────────────────────────────────────────────────────────────
+
+    const pushArticle = (article: Omit<ArticleActivity, "id">) =>
+      setFeedEntries((prev) => [
+        ...prev,
+        { type: "article", data: { id: _feedCounter++, ...article } },
+      ]);
+
+    // Append findings to the most-recent article entry
+    const appendFindings = (findings: ArticleFinding[]) =>
+      setFeedEntries((prev) => {
+        const updated = [...prev];
+        let lastIdx = -1;
+        for (let i = updated.length - 1; i >= 0; i--) {
+          if (updated[i].type === "article") { lastIdx = i; break; }
+        }
+        if (lastIdx < 0) return prev;
+        const entry = updated[lastIdx] as { type: "article"; data: ArticleActivity };
+        updated[lastIdx] = {
+          type: "article",
+          data: { ...entry.data, findings: [...entry.data.findings, ...findings] },
+        };
+        return updated;
+      });
+
+    const pushStatus = (category: StatusCategory, title: string, detail?: string) =>
+      setFeedEntries((prev) => [
+        ...prev,
+        { type: "status", id: _feedCounter++, ts: nowTs(), category, title, detail },
+      ]);
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     analyzeCompanyStream(
       companyId,
@@ -216,17 +313,79 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             addDynamicNodesToGraph(prev.nodes, prev.edges, evt.data.new_nodes)
           );
           setLastEventTitle(evt.data.event_title);
+          pushArticle({
+            ts: nowTs(),
+            articleTitle: evt.data.event_title,
+            source: evt.data.source,
+            adverseScore: evt.data.adverse_score,
+            findings: evt.data.new_nodes.map((n) => ({
+              id: _feedCounter++,
+              category: "entity" as FindingCategory,
+              title: n.name,
+              detail: n.relation
+                ? `Identified as: ${n.relation.replace(/_/g, " ")}`
+                : "New entity identified",
+            })),
+          });
           return;
         }
 
         if (evt.event === "risk_calculated") {
           setLiveStreams(evt.data);
           setLastEventTitle(evt.data.event_title);
-          // Update company node risk + contributor node colours
           setGraph((prev) => ({
             nodes: updateGraphNodeRisks(prev.nodes, evt.data.contributors, evt.data.r_combined),
             edges: prev.edges,
           }));
+          const rPct = Math.round(evt.data.r_combined * 100);
+          const streamLabels: Record<string, string> = {
+            semantic:      "Business Model Drift",
+            topology:      "Third-Party Exposure",
+            behavioral_tx: "Transaction Anomalies",
+          };
+          const firedAlarms = Object.entries(evt.data.alarms).filter(([, fired]) => fired);
+
+          function signalLevel(v: number, t1: number, t2: number): "low" | "moderate" | "high" {
+            return v >= t2 ? "high" : v >= t1 ? "moderate" : "low";
+          }
+          function fmtVal(v: number) { return v.toFixed(3); }
+
+          const metrics: MetricPill[] = [
+            {
+              label: "Business Drift",
+              value: fmtVal(evt.data.semantic),
+              level: signalLevel(evt.data.semantic, 0.2, 0.35),
+            },
+            {
+              label: "Network Exposure",
+              value: fmtVal(evt.data.topology),
+              level: signalLevel(evt.data.topology, 0.15, 0.4),
+            },
+            {
+              label: "Transactions",
+              value: fmtVal(evt.data.behavioral_tx),
+              level: signalLevel(evt.data.behavioral_tx, 0.3, 0.6),
+            },
+          ];
+
+          const newFindings: ArticleFinding[] = [
+            ...firedAlarms.map(([key]) => ({
+              id: _feedCounter++,
+              category: "risk" as FindingCategory,
+              title: streamLabels[key] ?? key,
+              detail: "Alert threshold exceeded — flagged for review",
+            })),
+            {
+              id: _feedCounter++,
+              category: "score" as FindingCategory,
+              title: firedAlarms.length > 0
+                ? `Combined score: ${rPct}% — alarm triggered`
+                : `Combined score: ${rPct}%`,
+              detail: firedAlarms.length > 0 ? undefined : "Within normal parameters",
+              metrics,
+            },
+          ];
+          appendFindings(newFindings);
           return;
         }
 
@@ -241,12 +400,21 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
           setReport(evt.data);
           setIsGeneratingReport(false);
           setPhase("complete");
+          const finalPct = Math.round(evt.data.decision.max_combined_risk * 100);
+          pushStatus(
+            "complete",
+            evt.data.decision.alarm_fired
+              ? "Alert triggered — compliance action required"
+              : "No issues detected",
+            `Final risk score: ${finalPct}%`,
+          );
           return;
         }
 
         if (evt.event === "error") {
           setError(evt.data.message);
           setPhase("error");
+          pushStatus("error", "Analysis could not be completed", evt.data.message);
         }
       },
       controller.signal,
@@ -414,6 +582,166 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
 
       {/* ── Body ──────────────────────────────────────────────────────────── */}
       <div className="flex-1 px-8 py-7 space-y-6">
+
+        {/* ── Graph + Live Terminal ──────────────────────────────────────── */}
+        <div className="grid grid-cols-3 gap-5 items-stretch">
+
+          {/* Corporate graph — col-span-2 */}
+          <Card className="col-span-2 border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="border-b border-slate-800 px-6 py-4">
+              <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-slate-200">
+                <Network className="h-4 w-4 text-slate-500" strokeWidth={1.75} />
+                Corporate Relationship Map
+                {isStreaming && graph.nodes.length > 0 && (
+                  <span className="text-xs font-normal text-amber-400 ml-1 animate-pulse">
+                    {graph.nodes.length} nodes · building…
+                  </span>
+                )}
+                {isComplete && (report?.topology?.circular_ownership_detected) && (
+                  <Badge variant="outline" className="ml-1 border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs">
+                    Circular Ownership Detected
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3">
+              {graph.nodes.length > 0 ? (
+                <CorporateGraph nodes={graph.nodes} edges={graph.edges} height={540} />
+              ) : (
+                <div className="flex items-center justify-center" style={{ height: 540 }}>
+                  <div className="text-center space-y-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-600 mx-auto" />
+                    <p className="text-xs text-slate-500">Loading graph…</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Activity feed — col-span-1 */}
+          <div className="col-span-1 flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 shrink-0">
+              <div className="flex items-center gap-2">
+                <ScanSearch className="h-4 w-4 text-slate-500" strokeWidth={1.75} />
+                <span className="text-sm font-semibold text-slate-200">Analysis Activity</span>
+              </div>
+              {isStreaming ? (
+                <span className="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Scanning…
+                </span>
+              ) : isComplete ? (
+                <span className="text-xs text-emerald-400 font-medium">Complete</span>
+              ) : null}
+            </div>
+
+            {/* Feed entries */}
+            <div ref={logRef} className="flex-1 overflow-y-auto">
+              {feedEntries.length === 0 && (
+                <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-600">
+                  <ScanSearch className="h-7 w-7 opacity-30" />
+                  <p className="text-xs">Waiting for analysis to start…</p>
+                </div>
+              )}
+
+              {feedEntries.map((entry) => {
+                // ── Status row (complete / error) ────────────────────────────
+                if (entry.type === "status") {
+                  const s = STATUS_STYLES[entry.category];
+                  const Icon = s.icon;
+                  return (
+                    <div key={entry.id} className="flex items-start gap-3 px-5 py-3 border-t border-slate-800/60 bg-slate-800/20">
+                      <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", s.iconClass)} strokeWidth={1.75} />
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-sm font-semibold leading-snug", s.titleClass)}>{entry.title}</p>
+                        {entry.detail && <p className="mt-0.5 text-xs text-slate-500">{entry.detail}</p>}
+                      </div>
+                      <span className="font-mono text-[10px] text-slate-600 shrink-0 mt-0.5">{entry.ts}</span>
+                    </div>
+                  );
+                }
+
+                // ── Article group ────────────────────────────────────────────
+                const { data } = entry;
+                const adverseColor = data.adverseScore >= 0.6
+                  ? "text-rose-400"
+                  : data.adverseScore >= 0.3
+                    ? "text-amber-400"
+                    : "text-slate-500";
+                const adverseLbl = data.adverseScore >= 0.6
+                  ? "High-risk"
+                  : data.adverseScore >= 0.3
+                    ? "Moderate"
+                    : "Low-risk";
+
+                return (
+                  <div key={data.id} className="border-t border-slate-800/60 px-5 pt-3.5 pb-2">
+                    {/* Article header */}
+                    <div className="flex items-start gap-3">
+                      <Newspaper className="h-4 w-4 mt-0.5 text-sky-400 shrink-0" strokeWidth={1.75} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-sky-300 leading-snug">{data.articleTitle}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {data.source}
+                          {" · "}
+                          <span className={adverseColor}>{adverseLbl}</span>
+                        </p>
+                      </div>
+                      <span className="font-mono text-[10px] text-slate-600 shrink-0 mt-0.5">{data.ts}</span>
+                    </div>
+
+                    {/* Findings threaded below, connected by a left border */}
+                    {data.findings.length > 0 && (
+                      <div className="ml-[1.35rem] mt-2 mb-0.5 pl-4 border-l-2 border-slate-700/70 space-y-2">
+                        {data.findings.map((f) => {
+                          const fs = FINDING_STYLES[f.category];
+                          const FIcon = fs.icon;
+                          return (
+                            <div key={f.id} className="flex items-start gap-2">
+                              <FIcon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", fs.iconClass)} strokeWidth={1.75} />
+                              <div className="min-w-0 flex-1">
+                                <p className={cn("text-xs font-medium leading-snug", fs.titleClass)}>{f.title}</p>
+                                {f.detail && <p className="text-[11px] text-slate-600 leading-snug">{f.detail}</p>}
+                                {f.metrics && (
+                                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                    {f.metrics.map((m) => (
+                                      <span
+                                        key={m.label}
+                                        className={cn(
+                                          "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-mono font-medium border",
+                                          m.level === "high"
+                                            ? "bg-rose-500/10 text-rose-300 border-rose-500/20"
+                                            : m.level === "moderate"
+                                              ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
+                                              : "bg-slate-800 text-slate-500 border-slate-700",
+                                        )}
+                                      >
+                                        <span className="text-slate-500 font-sans not-italic">{m.label}</span>
+                                        <span>{m.value}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {isStreaming && (
+                <div className="flex items-center gap-3 px-5 py-3 border-t border-slate-800/60">
+                  <Loader2 className="h-4 w-4 text-slate-600 animate-spin shrink-0" />
+                  <p className="text-xs text-slate-600 italic">Processing next article…</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Warnings */}
         {isComplete && report!.warnings.length > 0 && (
@@ -630,39 +958,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
           </CardContent>
         </Card>
 
-        {/* ── Corporate map (full width) ──────────────────────────────────── */}
-        <Card className="border-slate-800 bg-slate-900 shadow-none">
-          <CardHeader className="border-b border-slate-800 px-6 py-4">
-            <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-slate-200">
-              <Network className="h-4 w-4 text-slate-500" strokeWidth={1.75} />
-              Corporate Relationship Map
-              {isStreaming && graph.nodes.length > 0 && (
-                <span className="text-xs font-normal text-amber-400 ml-1 animate-pulse">
-                  {graph.nodes.length} nodes · building…
-                </span>
-              )}
-              {isComplete && topologyInfo?.circular_ownership_detected && (
-                <Badge variant="outline" className="ml-1 border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs">
-                  Circular Ownership Detected
-                </Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3">
-            {graph.nodes.length > 0 ? (
-              <CorporateGraph nodes={graph.nodes} edges={graph.edges} />
-            ) : (
-              <div className="h-[420px] flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <Loader2 className="h-6 w-6 animate-spin text-slate-600 mx-auto" />
-                  <p className="text-xs text-slate-500">Loading graph…</p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ── Drift chart + Top contributors (side by side below graph) ────── */}
+        {/* ── Drift chart + Top contributors ──────────────────────────────── */}
         <div className="grid grid-cols-5 gap-5">
           {/* Drift chart */}
           <Card className="col-span-3 border-slate-800 bg-slate-900 shadow-none">

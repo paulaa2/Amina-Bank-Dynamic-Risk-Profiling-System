@@ -101,9 +101,10 @@ function toFlowEdges(edges: GraphEdge[], highRiskIds: Set<string>): Edge[] {
 interface CorporateGraphProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  height?: number;
 }
 
-export function CorporateGraph({ nodes, edges }: CorporateGraphProps) {
+export function CorporateGraph({ nodes, edges, height = 480 }: CorporateGraphProps) {
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState<Node[]>([]);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
 
@@ -128,7 +129,7 @@ export function CorporateGraph({ nodes, edges }: CorporateGraphProps) {
   }, [edges, nodes, setFlowEdges]);
 
   return (
-    <div className="h-[480px] w-full rounded-lg border border-slate-800 overflow-hidden bg-slate-950">
+    <div style={{ height: `${height}px` }} className="w-full rounded-lg border border-slate-800 overflow-hidden bg-slate-950">
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}

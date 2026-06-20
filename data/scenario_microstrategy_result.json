@@ -5,9 +5,9 @@
   "reference_model": "Enterprise Business Intelligence software and cloud analytics.",
   "threshold": 0.5,
   "bonferroni_scale": 2.0986,
-  "alarm_event_index": 3,
-  "alarm_date": "2020-12-11",
-  "alarm_title": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin",
+  "alarm_event_index": 2,
+  "alarm_date": "2020-08-11",
+  "alarm_title": "MicroStrategy adopts Bitcoin as primary treasury reserve asset with a $250M purchase",
   "events": [
     {
       "index": 1,
@@ -16,16 +16,16 @@
       "source": "SEC 8-K / Q2 2020 earnings release",
       "url": "https://www.sec.gov/Archives/edgar/data/1050446/000156459020033897/mstr-ex991_10.htm",
       "evidence": "Company says it may invest up to $250M in alternative assets including digital assets such as bitcoin.",
-      "semantic_signal": 0.4386,
+      "semantic_signal": 0.3416,
       "topology_signal": 0.0,
       "behavioral_signal": 0.0,
-      "semantic_stat": 0.0971075615553117,
+      "semantic_stat": 0.0903317155992393,
       "topology_stat": 0.0,
       "behavioral_stat": 0.0,
-      "semantic_ratio": 0.13495169248182018,
+      "semantic_ratio": 0.19332179389677626,
       "topology_ratio": 0.0,
       "behavioral_ratio": 0.0,
-      "combined_risk": 0.135,
+      "combined_risk": 0.1933,
       "alarms": {
         "semantic": false,
         "topology": false,
@@ -43,43 +43,16 @@
       "source": "SEC 8-K / press release",
       "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312520215604/d921849dex991.htm",
       "evidence": "Company purchases 21,454 bitcoins and states Bitcoin is now the principal holding in treasury reserve strategy.",
-      "semantic_signal": 0.5627,
+      "semantic_signal": 0.4408,
       "topology_signal": 0.0,
       "behavioral_signal": 0.0,
-      "semantic_stat": 0.26718110182940913,
+      "semantic_stat": 0.24007025872262622,
       "topology_stat": 0.0,
       "behavioral_stat": 0.0,
-      "semantic_ratio": 0.3713051930616009,
+      "semantic_ratio": 0.5137820395598922,
       "topology_ratio": 0.0,
       "behavioral_ratio": 0.0,
-      "combined_risk": 0.3713,
-      "alarms": {
-        "semantic": false,
-        "topology": false,
-        "behavioral_tx": false
-      },
-      "trigger": false,
-      "triaged_in": true,
-      "extracted_fact": "MicroStrategy adquiere Bitcoin como activo principal de reserva de tesorería con un monto de $250M",
-      "new_graph_nodes": []
-    },
-    {
-      "index": 3,
-      "date": "2020-12-11",
-      "title": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin",
-      "source": "Strategy press release / SEC 8-K",
-      "url": "https://www.strategy.com/press/microstrategy-completes-650m-offering-of-convertible-senior-notes-due-2025",
-      "evidence": "Net proceeds from convertible senior notes are intended for Bitcoin purchases under the Treasury Reserve Policy.",
-      "semantic_signal": 0.5289,
-      "topology_signal": 0.0,
-      "behavioral_signal": 0.0,
-      "semantic_stat": 0.36925529838066273,
-      "topology_stat": 0.0,
-      "behavioral_stat": 0.0,
-      "semantic_ratio": 0.513159085412378,
-      "topology_ratio": 0.0,
-      "behavioral_ratio": 0.0,
-      "combined_risk": 0.5132,
+      "combined_risk": 0.5138,
       "alarms": {
         "semantic": false,
         "topology": false,
@@ -87,15 +60,17 @@
       },
       "trigger": true,
       "triaged_in": true,
-      "extracted_fact": "MicroStrategy emitió un bono convertible por $650 millones con intención de invertir los fondos en Bitcoin",
+      "extracted_fact": "MicroStrategy adquiere Bitcoin como activo principal de reserva de tesorería con un monto de $250M",
       "new_graph_nodes": []
     }
   ],
   "decision": {
     "alarm_fired": true,
-    "max_combined_risk": 0.5132,
+    "max_combined_risk": 0.5138,
     "threshold": 0.5,
-    "triggering_event": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin"
+    "triggering_event": "MicroStrategy adopts Bitcoin as primary treasury reserve asset with a $250M purchase"
   },
-  "warnings": []
+  "warnings": [
+    "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99234, Requested 858. Please try again in 1m19.488s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
+  ]
 }

@@ -230,15 +230,16 @@ def _analyze_company_streaming(
             event_text=f"{event.title} {event.summary} {fact_text}",
         )
 
-        if new_nodes:
-            # ── Event 2: extraction ───────────────────────────────────────────
-            yield {
-                "event": "extraction",
-                "data": {
-                    "event_title": event.title[:120],
-                    "new_nodes":   new_nodes,  # already list[dict]
-                },
-            }
+        # ── Event 2: extraction (fires for every article) ────────────────────
+        yield {
+            "event": "extraction",
+            "data": {
+                "event_title":   event.title[:120],
+                "source":        event.source or "Unknown source",
+                "adverse_score": round(event.adverse_score, 2),
+                "new_nodes":     new_nodes,  # may be empty list
+            },
+        }
 
         has_cycle        = graph.check_ownership_cycles(profile.company_node_id)
         company_exposure = graph.exposure_of(
@@ -251,7 +252,7 @@ def _analyze_company_streaming(
         sem_distance = pipeline._semantic_distance(
             profile_text=profile_text,
             m0=m0,
-            fact_text=fact_text,
+            embed_text=fact_text,
             event=event,
             local_ok=local_ok,
         )

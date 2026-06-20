@@ -197,6 +197,8 @@ export interface BaselineStreamData {
 
 export interface ExtractionStreamData {
   event_title: string;
+  source: string;
+  adverse_score: number;
   new_nodes: LiveNewGraphNode[];
 }
 
