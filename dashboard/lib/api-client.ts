@@ -45,6 +45,10 @@ export interface LiveEvent {
   extracted_fact: string;
   triaged_in: boolean;
   semantic_distance: number;
+  topology_signal?: number;
+  behavioral_signal?: number;
+  stream_statistics?: Record<string, number>;
+  stream_ratios?: Record<string, number>;
   combined_risk: number;
   alarms: Record<string, boolean>;
   new_graph_nodes: LiveNewGraphNode[];
@@ -99,7 +103,7 @@ export interface LiveReport {
     alarm_fired: boolean;
     max_combined_risk: number;
     threshold: number;
-    triggering_event: string;
+    triggering_event: string | null;
   };
   cost: {
     events_seen: number;
@@ -187,6 +191,17 @@ export interface SchedulerStatus {
   cached_companies: number;
 }
 
+export interface BackendCacheStatus {
+  cached_ids: string[];
+  count: number;
+}
+
+export async function getBackendCacheStatus(): Promise<BackendCacheStatus> {
+  const res = await fetch(`${API_BASE}/api/cache`);
+  if (!res.ok) throw new Error("Failed to fetch backend cache status");
+  return res.json();
+}
+
 export async function getSchedulerStatus(): Promise<SchedulerStatus> {
   const res = await fetch(`${API_BASE}/api/scheduler/status`);
   if (!res.ok) throw new Error("Failed to fetch scheduler status");
@@ -254,9 +269,13 @@ export async function analyzeCompanyStream(
   onEvent: (event: StreamEvent) => void,
   signal?: AbortSignal,
   forceRefresh = false,
+  simulateTx = false,
 ): Promise<void> {
-  const qs  = forceRefresh ? "?force_refresh=true" : "";
-  const url  = `${API_BASE}/api/analyze/${id}/stream${qs}`;
+  const params = new URLSearchParams();
+  if (forceRefresh) params.set("force_refresh", "true");
+  if (simulateTx) params.set("simulate_tx_anomaly", "true");
+  const qs = params.toString();
+  const url  = `${API_BASE}/api/analyze/${id}/stream${qs ? `?${qs}` : ""}`;
   const res  = await fetch(url, { signal });
 
   if (!res.ok) {

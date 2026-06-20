@@ -82,10 +82,18 @@ def _reset_governance_to_pending(result: dict) -> None:
     gov["compliance_approver"]        = None
 
 
-def _run_analysis_for(company_id: int, max_events: int = 5) -> dict:
+def _run_analysis_for(
+    company_id: int,
+    max_events: int = 5,
+    simulate_tx_anomaly: bool = False,
+) -> dict:
     """Run the pKYC pipeline for one company and return the serialisable result."""
     pipeline = PerpetualKYCPipeline(_config)
-    report   = pipeline.run(company_id=company_id, max_events=max_events)
+    report   = pipeline.run(
+        company_id=company_id,
+        max_events=max_events,
+        simulate_tx_anomaly=simulate_tx_anomaly,
+    )
     result   = _report_to_dict(report)
     result["id"] = str(company_id)
     _reset_governance_to_pending(result)
@@ -102,6 +110,7 @@ _BEHAVIOURAL = "behavioral_tx"
 def _analyze_company_streaming(
     company_id: int,
     max_events: int = 5,
+    simulate_tx_anomaly: bool = False,
 ) -> Generator[dict, None, None]:
     """
     Generator that mirrors PerpetualKYCPipeline.run() but yields SSE event
@@ -157,7 +166,9 @@ def _analyze_company_streaming(
     topo_det.seed(topo_baseline)
 
     tx_stream             = QuantitativeTransactionStream()
-    tx_amounts, tx_baseline_z = pipeline._simulate_transactions(profile, inject_anomaly=False)
+    tx_amounts, tx_baseline_z = pipeline._simulate_transactions(
+        profile, inject_anomaly=simulate_tx_anomaly
+    )
     tx_det = PageHinkleyDetector()
     tx_det.seed(tx_baseline_z if len(tx_baseline_z) >= 3 else [0.1, 0.2, 0.15, 0.25, 0.2])
 
@@ -656,13 +667,18 @@ def analyze_company(company_id: int, req: AnalyzeRequest = AnalyzeRequest()):
     cache_key = str(company_id)
 
     with _lock:
-        if not req.force_refresh and cache_key in _cache:
+        if not req.force_refresh and not req.simulate_tx_anomaly and cache_key in _cache:
             return _cache[cache_key]
 
     try:
-        result = _run_analysis_for(company_id, max_events=req.max_events or 5)
-        with _lock:
-            _cache[cache_key] = result
+        result = _run_analysis_for(
+            company_id,
+            max_events=req.max_events or 5,
+            simulate_tx_anomaly=req.simulate_tx_anomaly,
+        )
+        if not req.simulate_tx_anomaly:
+            with _lock:
+                _cache[cache_key] = result
         return result
 
     except LookupError as exc:
@@ -689,6 +705,7 @@ def stream_analysis(
     company_id:    int,
     max_events:    int  = 5,
     force_refresh: bool = False,
+    simulate_tx_anomaly: bool = False,
 ):
     """
     Stream the pKYC analysis as Server-Sent Events.
@@ -701,7 +718,7 @@ def stream_analysis(
     """
     cache_key = str(company_id)
 
-    if not force_refresh:
+    if not force_refresh and not simulate_tx_anomaly:
         with _lock:
             cached = _cache.get(cache_key)
         if cached:
@@ -719,7 +736,11 @@ def stream_analysis(
 
     def _live():
         try:
-            for evt in _analyze_company_streaming(company_id, max_events):
+            for evt in _analyze_company_streaming(
+                company_id,
+                max_events,
+                simulate_tx_anomaly=simulate_tx_anomaly,
+            ):
                 yield "data: " + json.dumps(evt, default=str) + "\n\n"
         except LookupError as exc:
             yield (

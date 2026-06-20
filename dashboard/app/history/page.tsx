@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ArrowRight, Clock, Inbox, WifiOff, RefreshCw } from "lucide-react";
 import {
@@ -11,10 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { GovernanceBadge } from "@/components/governance-badge";
-import { getAllCachedReports, checkHealth } from "@/lib/api-client";
-import { alertLevelFor } from "@/lib/build-from-api";
+import {
+  getAllCachedReports,
+  checkHealth,
+  getBackendCacheStatus,
+  getCachedAnalysis,
+  type LiveReport,
+} from "@/lib/api-client";
 
 function formatTs(iso: string) {
   return new Date(iso).toLocaleString("en-GB", {
@@ -38,38 +42,63 @@ interface HistoryRow {
   riskScore: number;
 }
 
+function buildRows(reports: LiveReport[]) {
+  const entries: HistoryRow[] = [];
+
+  for (const r of reports) {
+    if (!r.governance?.audit_trail) continue;
+    for (const entry of r.governance.audit_trail) {
+      entries.push({
+        timestamp:       entry.timestamp,
+        user:            entry.user,
+        action:          entry.action,
+        resultingStatus: entry.resulting_status,
+        companyId:       r.id,
+        companyName:     r.client.legal_name,
+        alertId:         r.governance.alert_id,
+        riskScore:       r.governance.risk_score,
+      });
+    }
+  }
+
+  entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return entries;
+}
+
 export default function AuditHistory() {
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
 
-  const loadData = () => {
-    checkHealth().then(setBackendOnline);
+  const loadData = useCallback(async () => {
+    const online = await checkHealth();
+    setBackendOnline(online);
 
-    const reports = getAllCachedReports();
-    const entries: HistoryRow[] = [];
-
-    for (const r of reports) {
-      if (!r.governance?.audit_trail) continue;
-      for (const entry of r.governance.audit_trail) {
-        entries.push({
-          timestamp:       entry.timestamp,
-          user:            entry.user,
-          action:          entry.action,
-          resultingStatus: entry.resulting_status,
-          companyId:       r.id,
-          companyName:     r.client.legal_name,
-          alertId:         r.governance.alert_id,
-          riskScore:       r.governance.risk_score,
-        });
+    let reports = getAllCachedReports();
+    if (online) {
+      try {
+        const cache = await getBackendCacheStatus();
+        const backendReports = (
+          await Promise.all(
+            cache.cached_ids.map((id) =>
+              getCachedAnalysis(Number(id)).catch(() => null)
+            )
+          )
+        ).filter((report): report is LiveReport => report !== null);
+        if (backendReports.length > 0) {
+          reports = backendReports;
+        }
+      } catch {
+        // Keep the session cache fallback if the backend cache endpoint is unavailable.
       }
     }
 
-    // Newest first
-    entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    setRows(entries);
-  };
+    setRows(buildRows(reports));
+  }, []);
 
-  useEffect(loadData, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
+  }, [loadData]);
 
   return (
     <div className="px-8 py-8">
@@ -134,7 +163,6 @@ export default function AuditHistory() {
             </TableHeader>
             <TableBody>
               {rows.map((row, i) => {
-                const level = alertLevelFor(row.riskScore);
                 return (
                   <TableRow key={i} className="border-b border-slate-800 hover:bg-slate-800/50">
                     <TableCell className="font-mono text-xs text-slate-500 tabular-nums whitespace-nowrap">

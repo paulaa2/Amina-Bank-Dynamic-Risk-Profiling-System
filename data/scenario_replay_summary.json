@@ -17,16 +17,16 @@
         "source": "Reuters / CoinDesk timeline",
         "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
         "evidence": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns.",
-        "semantic_signal": 0.442,
+        "semantic_signal": 0.4572,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.16829115312260134,
+        "semantic_stat": 0.18091312383245262,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.37526916004446104,
+        "semantic_ratio": 0.40341464635496843,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.3753,
+        "combined_risk": 0.4034,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -34,7 +34,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Alameda Research depende de los activos del token FTT de FTX en su balance sheet",
+        "extracted_fact": "Alameda Research depende significativamente de los activos relacionados con el token FTT de FTX en su balance sheet",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_001",
@@ -57,13 +57,13 @@
         "semantic_signal": 0.3991,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.26356146509222,
+        "semantic_stat": 0.27401966939466826,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.5877105705799688,
+        "semantic_ratio": 0.6110311163801037,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.5877,
+        "combined_risk": 0.611,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -96,7 +96,7 @@
     ],
     "decision": {
       "alarm_fired": true,
-      "max_combined_risk": 0.5877,
+      "max_combined_risk": 0.611,
       "threshold": 0.5,
       "triggering_event": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations"
     },
@@ -174,9 +174,7 @@
       "threshold": 0.5,
       "triggering_event": "Gazprombank becomes subject to EO 14024 Directive 3 restrictions on new debt and equity"
     },
-    "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99989, Requested 1604. Please try again in 22m56.351999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
-    ]
+    "warnings": []
   },
   {
     "scenario_id": "microstrategy_drift",
@@ -250,9 +248,7 @@
       "threshold": 0.5,
       "triggering_event": "MicroStrategy adopts Bitcoin as primary treasury reserve asset with a $250M purchase"
     },
-    "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99980, Requested 858. Please try again in 12m4.032s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
-    ]
+    "warnings": []
   },
   {
     "scenario_id": "openai_regulatory_drift",
@@ -693,9 +689,7 @@
       "threshold": 0.5,
       "triggering_event": "EU refined oil products ban adds revenue pressure on Surgutneftegas and Russian energy sector"
     },
-    "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99921, Requested 1600. Please try again in 21m54.144s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
-    ]
+    "warnings": []
   },
   {
     "scenario_id": "vtb_sanctions_escalation",
@@ -815,9 +809,7 @@
       "threshold": 0.5,
       "triggering_event": "US announces full blocking sanctions on VTB, Russia's second largest financial institution"
     },
-    "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99911, Requested 1583. Please try again in 21m30.816s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
-    ]
+    "warnings": []
   },
   {
     "scenario_id": "wirecard_drift",
@@ -892,7 +884,7 @@
       "triggering_event": "FT reports suspicious transactions and alleged forged/backdated contracts in Wirecard's Singapore operations"
     },
     "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99901, Requested 1602. Please try again in 21m38.592s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
+      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99991, Requested 1690. Please try again in 24m12.383999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
     ]
   }
 ]

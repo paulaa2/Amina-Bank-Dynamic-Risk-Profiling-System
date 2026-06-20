@@ -131,7 +131,11 @@ export default function ControlRoom() {
   function toggleMask(id: number) {
     setMaskedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }
@@ -149,16 +153,6 @@ export default function ControlRoom() {
   const analyzingCount = Object.values(rowStates).filter(
     (s) => s.status === "analyzing"
   ).length;
-
-  const avgResponseTime =
-    doneReports.length > 0
-      ? (
-          doneReports.reduce(
-            (sum, r) => sum + (r.governance?.audit_trail.length ?? 0) * 0.4,
-            0
-          ) / doneReports.length
-        ).toFixed(1)
-      : "—";
 
   // ── Render ────────────────────────────────────────────────────────────────
 

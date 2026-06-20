@@ -4,6 +4,8 @@ import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Flag,
   Network,
   TrendingUp,
@@ -32,6 +34,7 @@ import { Separator } from "@/components/ui/separator";
 import { AlertBadge } from "@/components/alert-badge";
 import { GovernanceBadge } from "@/components/governance-badge";
 import { DriftChart } from "@/components/drift-chart";
+import { ScenarioRiskPath } from "@/components/scenario-risk-path";
 import { CorporateGraph } from "@/components/corporate-graph";
 import { ComplianceReport } from "@/components/compliance-report";
 import {
@@ -41,6 +44,7 @@ import {
   getCachedAnalysis,
   replayScenario,
   type LiveReport,
+  type LiveEvent,
   type GovernanceAction,
   type BaselineStreamData,
   type RiskStreamData,
@@ -54,7 +58,7 @@ import {
   addDynamicNodesToGraph,
   updateGraphNodeRisks,
 } from "@/lib/build-from-api";
-import type { GraphNode, GraphEdge, AlertLevel } from "@/lib/mock-data";
+import type { GraphNode, GraphEdge } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,6 +125,52 @@ const STATUS_STYLES: Record<StatusCategory, { icon: React.ElementType; iconClass
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
 
+function eventStatistic(event: LiveEvent | undefined, key: string, fallback = 0): number {
+  return event?.stream_statistics?.[key] ?? fallback;
+}
+
+function buildScenarioSnapshot(report: LiveReport, stepIndex: number): LiveReport {
+  const safeIndex = Math.max(-1, Math.min(stepIndex, report.events.length - 1));
+  const visibleEvents = safeIndex >= 0 ? report.events.slice(0, safeIndex + 1) : [];
+  const current = report.events[safeIndex];
+  const threshold = report.decision.threshold;
+  const triggeringEvent =
+    visibleEvents.find((event) => event.combined_risk > threshold)?.title ?? null;
+
+  return {
+    ...report,
+    events: visibleEvents,
+    streams: {
+      ...report.streams,
+      semantic: {
+        ...report.streams.semantic,
+        last_statistic: current ? eventStatistic(current, "semantic", current.semantic_distance) : 0,
+      },
+      topology: {
+        ...report.streams.topology,
+        last_statistic: current ? eventStatistic(current, "topology", current.topology_signal ?? 0) : 0,
+        observed_exposure: current?.topology_signal ?? 0,
+      },
+      behavioral_tx: {
+        ...report.streams.behavioral_tx,
+        last_statistic: current ? eventStatistic(current, "behavioral_tx", current.behavioral_signal ?? 0) : 0,
+      },
+    },
+    decision: {
+      ...report.decision,
+      alarm_fired: triggeringEvent !== null,
+      max_combined_risk: current?.combined_risk ?? 0,
+      triggering_event: triggeringEvent,
+    },
+  };
+}
+
+function scenarioStepLabel(event: LiveEvent): string {
+  if (!event.triaged_in) return "Triage skipped";
+  if (Object.values(event.alarms).some(Boolean)) return "Stream alarm";
+  return `${Math.round(event.combined_risk * 100)}% risk`;
+}
+
 function formatTs(iso: string) {
   return new Date(iso).toLocaleString("en-GB", {
     day: "2-digit", month: "short", year: "numeric",
@@ -135,6 +185,8 @@ function StreamGauge({
   statistic: number; threshold: number; triggered: boolean;
 }) {
   const pct = Math.min(100, (statistic / Math.max(threshold * 1.5, 0.01)) * 100);
+  const scorePct = Math.round(statistic * 100);
+  const thresholdPct = Math.round(threshold * 100);
   return (
     <div className={cn(
       "flex flex-col gap-3 rounded-xl border p-5",
@@ -146,22 +198,22 @@ function StreamGauge({
           <p className="mt-0.5 text-xs text-slate-500 leading-snug">{description}</p>
         </div>
         {triggered ? (
-          <Badge variant="outline" className="shrink-0 border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs font-semibold">⚠ Alarm</Badge>
+          <Badge variant="outline" className="shrink-0 border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs font-semibold">Alarm</Badge>
         ) : (
-          <Badge variant="outline" className="shrink-0 border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs">✓ Normal</Badge>
+          <Badge variant="outline" className="shrink-0 border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs">Normal</Badge>
         )}
       </div>
       <p className={cn("text-3xl font-bold tabular-nums tracking-tight leading-none font-mono", triggered ? "text-rose-400" : "text-emerald-400")}>
-        {statistic.toFixed(3)}
+        {scorePct}%
       </p>
       <Progress
         value={pct}
         className="[&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-track]]:bg-emerald-500 [&_[data-slot=progress-indicator]]:bg-rose-500 [&_[data-slot=progress-indicator]]:transition-all [&_[data-slot=progress-indicator]]:duration-700"
       />
       <p className="font-mono text-xs text-slate-600 tabular-nums">
-        Score <span className="font-medium text-slate-400">{statistic.toFixed(3)}</span>
+        Score <span className="font-medium text-slate-400">{scorePct}%</span>
         {" · "}
-        Threshold <span className="font-medium text-slate-400">{threshold.toFixed(3)}</span>
+        Threshold <span className="font-medium text-slate-400">{thresholdPct}%</span>
       </p>
     </div>
   );
@@ -244,6 +296,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
   const [feedEntries,       setFeedEntries]       = useState<FeedEntry[]>([]);
   const [curatedScenario,   setCuratedScenario]   = useState<ReplayScenarioItem | null>(null);
   const [analysisMode,      setAnalysisMode]      = useState<AnalysisMode>("live");
+  const [scenarioStepIndex, setScenarioStepIndex] = useState<number | null>(null);
 
   // Holds the AbortController for the currently active stream so we can cancel
   // it if the user clicks Refresh before the stream completes.
@@ -269,6 +322,33 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
     setReport(null);
     setError(null);
     setFeedEntries([]);
+    setScenarioStepIndex(null);
+  }
+
+  function applyScenarioStep(nextIndex: number, sourceReport = report) {
+    if (!sourceReport || sourceReport.events.length === 0) return;
+
+    const safeIndex = Math.max(-1, Math.min(nextIndex, sourceReport.events.length - 1));
+    const snapshot = buildScenarioSnapshot(sourceReport, safeIndex);
+    const current = sourceReport.events[safeIndex];
+
+    setScenarioStepIndex(safeIndex);
+    setGraph(buildGraphFromReport(snapshot));
+    if (!current) {
+      setLiveStreams(null);
+      setLastEventTitle(null);
+      return;
+    }
+    setLiveStreams({
+      event_title: current.title,
+      semantic: current.semantic_distance,
+      topology: current.topology_signal ?? snapshot.topology.company_exposure,
+      behavioral_tx: current.behavioral_signal ?? 0,
+      r_combined: current.combined_risk,
+      alarms: current.alarms,
+      contributors: snapshot.topology.top_contributors,
+    });
+    setLastEventTitle(current.title);
   }
 
   async function displayScenarioReport(
@@ -308,8 +388,9 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
       } as LiveReport);
       setGraph(kycGraph);
 
-      for (const ev of report.events.filter((e) => e.triaged_in)) {
+      for (const [eventIndex, ev] of report.events.entries()) {
         await sleep(900);
+        setScenarioStepIndex(eventIndex);
 
         if (ev.new_graph_nodes?.length) {
           setGraph((prev) =>
@@ -320,8 +401,8 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
         setLiveStreams({
           event_title: ev.title,
           semantic: ev.semantic_distance,
-          topology: report.topology.company_exposure,
-          behavioral_tx: 0,
+          topology: ev.topology_signal ?? report.topology.company_exposure,
+          behavioral_tx: ev.behavioral_signal ?? 0,
           r_combined: ev.combined_risk,
           alarms: ev.alarms,
           contributors: report.topology.top_contributors,
@@ -339,6 +420,14 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
               source: report.scenario?.scenario_id ?? "curated replay",
               adverseScore: ev.semantic_distance,
               findings: [
+                ...(!ev.triaged_in
+                  ? [{
+                      id: _feedCounter++,
+                      category: "risk" as FindingCategory,
+                      title: "Triage skipped",
+                      detail: "Recorded in the scenario timeline but not sent into downstream scoring.",
+                    }]
+                  : []),
                 ...(ev.new_graph_nodes ?? []).map((n) => ({
                   id: _feedCounter++,
                   category: "entity" as FindingCategory,
@@ -359,6 +448,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
 
     setGraph(buildGraphFromReport(report));
     setReport(report);
+    applyScenarioStep(animate ? Math.max(0, report.events.length - 1) : -1, report);
     setPhase("complete");
     setFeedEntries((prev) => [
       ...prev,
@@ -370,7 +460,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
         title: report.decision.alarm_fired
           ? "Scenario alarm triggered"
           : "Scenario replay complete",
-        detail: `${report.events.filter((e) => e.triaged_in).length} events · ${report.events.reduce((n, e) => n + (e.new_graph_nodes?.length ?? 0), 0)} graph mutations`,
+        detail: `${report.events.length} events · ${report.events.reduce((n, e) => n + (e.new_graph_nodes?.length ?? 0), 0)} graph mutations`,
       },
     ]);
   }
@@ -692,25 +782,37 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
 
   const isComplete    = phase === "complete";
   const isStreaming   = phase === "streaming";
+  const scenarioStep =
+    isComplete && analysisMode === "scenario" && report && report.events.length > 0
+      ? Math.min(scenarioStepIndex ?? report.events.length - 1, report.events.length - 1)
+      : null;
+  const displayReport =
+    scenarioStep !== null && report
+      ? buildScenarioSnapshot(report, scenarioStep)
+      : report;
+  const selectedScenarioEvent =
+    scenarioStep !== null && scenarioStep >= 0 && report
+      ? report.events[scenarioStep]
+      : null;
 
   // Derive display values from whichever data source is available
-  const clientInfo    = report?.client    ?? baseline?.client;
-  const securityInfo  = report?.security  ?? baseline?.security;
-  const topologyInfo  = report?.topology  ?? baseline?.topology;
-  const governance    = report?.governance ?? null;
+  const clientInfo    = displayReport?.client    ?? baseline?.client;
+  const securityInfo  = displayReport?.security  ?? baseline?.security;
+  const topologyInfo  = displayReport?.topology  ?? baseline?.topology;
+  const governance    = displayReport?.governance ?? null;
 
   const rCombined   = isComplete
-    ? report!.decision.max_combined_risk
+    ? displayReport!.decision.max_combined_risk
     : (liveStreams?.r_combined ?? 0);
   const riskPct     = Math.round(rCombined * 100);
   const level       = alertLevelFor(rCombined);
   const gaugeColor  = riskPct >= 75 ? "#fb7185" : riskPct >= 50 ? "#fbbf24" : "#34d399";
-  const alarmFired  = isComplete ? report!.decision.alarm_fired : (liveStreams ? Object.values(liveStreams.alarms).some(Boolean) : false);
+  const alarmFired  = isComplete ? displayReport!.decision.alarm_fired : (liveStreams ? Object.values(liveStreams.alarms).some(Boolean) : false);
 
   // Streams display — use real thresholds from report (complete) or from the
   // calibrated baseline event (streaming). Never derive threshold from statistic.
   const streams = isComplete
-    ? report!.streams
+    ? displayReport!.streams
     : {
         bonferroni_scale: liveThresholds?.bonferroni_scale ?? 1,
         semantic:      { last_statistic: liveStreams?.semantic      ?? 0, threshold: liveThresholds?.semantic      ?? 0.5 },
@@ -719,10 +821,10 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
       };
 
   const contributors = isComplete
-    ? report!.topology.top_contributors
+    ? displayReport!.topology.top_contributors
     : (liveStreams?.contributors ?? topologyInfo?.top_contributors ?? []);
 
-  const driftData = isComplete ? buildDriftSeries(report!) : null;
+  const driftData = isComplete ? buildDriftSeries(displayReport!) : null;
 
   // ── Governance actions ───────────────────────────────────────────────────────
 
@@ -782,7 +884,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                 variant="outline"
                 className="gap-1.5 border-violet-500/30 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20"
                 onClick={() => startScenarioReplay(isComplete && analysisMode === "scenario")}
-                disabled={phase === "connecting" || phase === "streaming"}
+                disabled={phase === "streaming"}
               >
                 <History className="h-3.5 w-3.5" />
                 Curated replay
@@ -817,14 +919,14 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
       <div className="flex-1 px-8 py-7 space-y-6">
 
         {/* ── Graph + Live Terminal ──────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-5 items-stretch">
+        <div className="grid grid-cols-4 gap-5 items-stretch">
 
-          {/* Corporate graph — col-span-2 */}
-          <Card className="col-span-2 border-slate-800 bg-slate-900 shadow-none">
-            <CardHeader className="border-b border-slate-800 px-6 py-4">
+          {/* Corporate graph */}
+          <Card className="col-span-3 border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="border-b border-slate-800 px-6 py-4 space-y-3">
               <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-slate-200">
-                <Network className="h-4 w-4 text-slate-500" strokeWidth={1.75} />
-                Corporate Relationship Map
+                <Network className="h-4 w-4 text-violet-300" strokeWidth={1.75} />
+                Relationship graph
                 {isStreaming && graph.nodes.length > 0 && (
                   <span className="text-xs font-normal text-amber-400 ml-1 animate-pulse">
                     {graph.nodes.length} nodes · building…
@@ -836,12 +938,34 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                   </Badge>
                 )}
               </CardTitle>
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: "Client risk", value: `${riskPct}%`, tone: gaugeColor },
+                  { label: "Visible nodes", value: String(graph.nodes.length), tone: "#cbd5e1" },
+                  { label: "Visible links", value: String(graph.edges.length), tone: "#cbd5e1" },
+                  {
+                    label: "New in replay",
+                    value: String(graph.nodes.filter((node) => node.discoveredDuringRun).length),
+                    tone: "#fbbf24",
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{item.label}</p>
+                    <p className="mt-0.5 font-mono text-lg font-bold" style={{ color: item.tone }}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500">
+                <span><span className="text-violet-300">Center node</span> = selected client risk</span>
+                <span><span className="text-amber-300">Yellow/dashed</span> = added by selected replay step</span>
+                <span>Other node percentages = intrinsic risk of that entity</span>
+              </div>
             </CardHeader>
             <CardContent className="p-3">
               {graph.nodes.length > 0 ? (
-                <CorporateGraph nodes={graph.nodes} edges={graph.edges} height={540} />
+                <CorporateGraph nodes={graph.nodes} edges={graph.edges} height={620} />
               ) : (
-                <div className="flex items-center justify-center" style={{ height: 540 }}>
+                <div className="flex items-center justify-center" style={{ height: 620 }}>
                   <div className="text-center space-y-2">
                     <Loader2 className="h-6 w-6 animate-spin text-slate-600 mx-auto" />
                     <p className="text-xs text-slate-500">Loading graph…</p>
@@ -851,7 +975,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             </CardContent>
           </Card>
 
-          {/* Activity feed — col-span-1 */}
+          {/* Activity feed */}
           <div className="col-span-1 flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 shrink-0">
@@ -976,12 +1100,137 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
+        {isComplete && analysisMode === "scenario" && report && scenarioStep !== null && (
+          <Card className="border-violet-500/20 bg-slate-900 shadow-none">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-violet-300">
+                    Scenario timeline
+                  </p>
+                  <h2 className="mt-1 text-base font-semibold text-slate-200 leading-snug">
+                    {scenarioStep < 0 ? "Baseline" : `Event ${scenarioStep + 1} of ${report.events.length}`}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-400 leading-relaxed line-clamp-2">
+                    {selectedScenarioEvent?.title ?? "Original KYC graph before the curated scenario starts."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 w-9 p-0 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                    onClick={() => applyScenarioStep(scenarioStep - 1)}
+                    disabled={scenarioStep <= -1}
+                    title="Previous scenario step"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 w-9 p-0 border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                    onClick={() => applyScenarioStep(scenarioStep + 1)}
+                    disabled={scenarioStep >= report.events.length - 1}
+                    title="Next scenario step"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: "Step risk", value: `${Math.round((selectedScenarioEvent?.combined_risk ?? 0) * 100)}%` },
+                  { label: "Semantic", value: selectedScenarioEvent ? `${Math.round(selectedScenarioEvent.semantic_distance * 100)}%` : "0%" },
+                  { label: "New graph nodes", value: String(selectedScenarioEvent?.new_graph_nodes?.length ?? 0) },
+                  { label: "Triage", value: selectedScenarioEvent ? (selectedScenarioEvent.triaged_in ? "Processed" : "Skipped") : "Not started" },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{item.label}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-200">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-start gap-2 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  onClick={() => applyScenarioStep(-1)}
+                  className={cn(
+                    "min-w-[180px] rounded-lg border px-3 py-2 text-left transition-colors",
+                    scenarioStep < 0
+                      ? "border-violet-400 bg-violet-500/10"
+                      : "border-slate-800 bg-slate-950 hover:border-slate-700",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={cn("text-xs font-semibold", scenarioStep < 0 ? "text-violet-200" : "text-slate-400")}>
+                      Start
+                    </span>
+                    <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
+                      Baseline
+                    </span>
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-xs leading-snug text-slate-300">
+                    Original onboarding graph
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">No replay mutations yet</p>
+                </button>
+                {report.events.map((event, index) => {
+                  const isActive = index === scenarioStep;
+                  const hasAlarm = event.combined_risk > report.decision.threshold;
+                  const newNodes = event.new_graph_nodes?.length ?? 0;
+                  return (
+                    <button
+                      key={`${event.title}-${index}`}
+                      type="button"
+                      onClick={() => applyScenarioStep(index)}
+                      className={cn(
+                        "min-w-[180px] rounded-lg border px-3 py-2 text-left transition-colors",
+                        isActive
+                          ? "border-violet-400 bg-violet-500/10"
+                          : "border-slate-800 bg-slate-950 hover:border-slate-700",
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={cn(
+                          "text-xs font-semibold",
+                          isActive ? "text-violet-200" : "text-slate-400",
+                        )}>
+                          #{index + 1}
+                        </span>
+                        <span className={cn(
+                          "rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                          hasAlarm
+                            ? "bg-rose-500/10 text-rose-300"
+                            : event.triaged_in
+                              ? "bg-amber-500/10 text-amber-300"
+                              : "bg-slate-800 text-slate-500",
+                        )}>
+                          {scenarioStepLabel(event)}
+                        </span>
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-xs leading-snug text-slate-300">
+                        {event.title}
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {newNodes > 0 ? `${newNodes} graph mutation${newNodes === 1 ? "" : "s"}` : "No graph mutation"}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Warnings */}
-        {isComplete && report!.warnings.length > 0 && (
+        {isComplete && displayReport!.warnings.length > 0 && (
           <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-5 py-4 flex items-start gap-3">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
             <div className="space-y-1">
-              {report!.warnings.map((w, i) => (
+              {displayReport!.warnings.map((w, i) => (
                 <p key={i} className="text-sm font-medium text-amber-300">{w}</p>
               ))}
             </div>
@@ -1037,7 +1286,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-amber-400" />
                   <p className="text-lg font-medium text-amber-200 leading-relaxed">
-                    {report!.decision.triggering_event}
+                    {displayReport!.decision.triggering_event}
                   </p>
                 </div>
               )}
@@ -1147,15 +1396,15 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
           </Card>
         )}
 
-        {/* ── Detection Streams ──────────────────────────────────────────── */}
+        {/* ── Current event signals ──────────────────────────────────────── */}
         <Card className="border-slate-800 bg-slate-900 shadow-none">
           <CardHeader className="border-b border-slate-800 px-6 py-4">
             <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-slate-200">
               <ShieldAlert className="h-4 w-4 text-slate-500" strokeWidth={1.75} />
-              Detection Streams
+              Current Event Signals
               <span className="ml-1 text-sm font-normal text-slate-500">
                 {isComplete
-                  ? `Bonferroni correction ${streams.bonferroni_scale.toFixed(2)}×`
+                  ? "Signals used for the selected step"
                   : "Live — updating…"}
               </span>
               {isStreaming && (
@@ -1169,21 +1418,21 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
           <CardContent className="px-6 py-5 grid grid-cols-3 gap-5">
             <StreamGauge
               label="Business Model Drift"
-              description="Semantic distance from expected business model over time"
+              description="How far this event moves the client away from its expected business model"
               statistic={streams.semantic.last_statistic}
               threshold={streams.semantic.threshold}
               triggered={liveStreams?.alarms?.["semantic"] ?? (streams.semantic.last_statistic >= streams.semantic.threshold)}
             />
             <StreamGauge
               label="Third-Party Exposure"
-              description="Risk contagion from directors, shareholders, and subsidiaries"
+              description="Risk imported through owners, directors, counterparties, or new graph links"
               statistic={streams.topology.last_statistic}
               threshold={streams.topology.threshold}
               triggered={liveStreams?.alarms?.["topology"] ?? (streams.topology.last_statistic >= streams.topology.threshold)}
             />
             <StreamGauge
               label="Transaction Anomalies"
-              description="Abnormal patterns in transaction volume and frequency"
+              description="Synthetic behavioural pressure when a transaction anomaly is enabled"
               statistic={streams.behavioral_tx.last_statistic}
               threshold={streams.behavioral_tx.threshold}
               triggered={liveStreams?.alarms?.["behavioral_tx"] ?? (streams.behavioral_tx.last_statistic >= streams.behavioral_tx.threshold)}
@@ -1198,14 +1447,16 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             <CardHeader className="border-b border-slate-800 px-6 py-4">
               <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-slate-200">
                 <TrendingUp className="h-4 w-4 text-slate-500" strokeWidth={1.75} />
-                Business Model Drift — 30d
+                {analysisMode === "scenario" ? "Scenario Risk Path" : "Business Model Drift — 30d"}
               </CardTitle>
             </CardHeader>
             <CardContent className="px-3 py-4">
-              {isComplete && driftData ? (
+              {isComplete && analysisMode === "scenario" && report && scenarioStep !== null ? (
+                <ScenarioRiskPath report={report} selectedIndex={scenarioStep} />
+              ) : isComplete && driftData ? (
                 <DriftChart data={driftData} />
               ) : (
-                <div className="h-[160px] flex items-center justify-center">
+                <div className="h-[220px] flex items-center justify-center">
                   <p className="text-xs text-slate-500">Available after analysis completes</p>
                 </div>
               )}
@@ -1248,7 +1499,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
 
         {/* ── Agent Forensic Report ──────────────────────────────────────── */}
         {isComplete && !isGeneratingReport ? (
-          <ComplianceReport markdown={report!.report_markdown} />
+          <ComplianceReport markdown={displayReport!.report_markdown} />
         ) : (
           <Card className="border-slate-800 bg-slate-900 shadow-none">
             <CardHeader className="border-b border-slate-800 px-6 py-4">

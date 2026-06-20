@@ -17,7 +17,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { cn } from "@/lib/utils";
-import type { GraphNode, GraphEdge, NodeType } from "@/lib/mock-data";
+import type { GraphNode, GraphEdge } from "@/lib/mock-data";
 
 // ── Node colour palette (dark) ────────────────────────────────────────────────
 
@@ -34,6 +34,7 @@ function RiskNode({ data }: NodeProps) {
   const isHighRisk  = data.intrinsicRisk >= 0.75;
   const isDiscovered = Boolean(data.discoveredDuringRun);
   const isNewDiscovery = Boolean(data.isNewDiscovery);
+  const isClient = data.nodeId === "node_company";
 
   return (
     <>
@@ -52,11 +53,12 @@ function RiskNode({ data }: NodeProps) {
           transition: "border-color 1s ease, box-shadow 1s ease",
         }}
       >
-        {isDiscovered && (
-          <p className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-400">
-            {isNewDiscovery ? "New entity" : "New link"}
-          </p>
-        )}
+        <p className={cn(
+          "mb-0.5 text-[9px] font-semibold uppercase tracking-wide",
+          isClient ? "text-violet-300" : isDiscovered ? "text-amber-400" : "text-slate-500",
+        )}>
+          {isClient ? "Client risk" : isDiscovered ? (isNewDiscovery ? "New entity" : "New link") : "Entity risk"}
+        </p>
         <p className="text-[11px] font-semibold text-slate-200 leading-tight break-words">
           {data.label}
         </p>
@@ -82,6 +84,7 @@ function toFlowNodes(nodes: GraphNode[]): Node[] {
     type:     "riskNode",
     position: n.position,
     data: {
+      nodeId:        n.id,
       label:         n.label,
       intrinsicRisk: n.intrinsicRisk,
       nodeType:      n.type,
