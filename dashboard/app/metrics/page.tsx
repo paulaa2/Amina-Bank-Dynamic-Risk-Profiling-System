@@ -25,9 +25,7 @@ import {
   ShieldAlert,
   Info,
   ArrowRight,
-  TrendingDown,
   Building,
-  Maximize2,
   Activity,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -89,6 +87,13 @@ interface ScenarioSummary {
     topology_ratio?: number;
     behavioral_ratio?: number;
   }>;
+}
+
+type ActiveTab = "scenarios" | "lead-time" | "efficiency" | "matrix";
+type ChartRow = Record<string, string | number | null>;
+
+interface MetricsPayload {
+  cases?: Case[];
 }
 
 const fallbackCases: Case[] = [
@@ -242,8 +247,9 @@ export default function ComparativeMetrics() {
     try {
       const res = await fetch(`${basePath}/api_cache/evaluation_lead_time.json`);
       if (res.ok) {
-        const payload = await res.json();
-        if (payload.cases && Array.isArray(payload.cases)) {
+        const payload = (await res.json()) as MetricsPayload;
+        const payloadCases = payload.cases;
+        if (payloadCases && Array.isArray(payloadCases)) {
           const labelMap: Record<string, string> = {
             "Wirecard AG": "Wirecard",
             "FTX Trading Ltd": "FTX",
@@ -254,7 +260,7 @@ export default function ComparativeMetrics() {
             "OpenAI": "OpenAI",
           };
 
-          const mapped: Case[] = payload.cases.map((c: any) => {
+          const mapped: Case[] = payloadCases.map((c) => {
             const shortName = labelMap[c.label] || c.company || c.label;
             let earliestAdverseLeadDays = 0;
             let adverseArticlesCount = 0;
@@ -312,7 +318,7 @@ export default function ComparativeMetrics() {
   }, []);
 
   useEffect(() => {
-    void loadMetricsData();
+    void Promise.resolve().then(loadMetricsData);
   }, [loadMetricsData]);
 
   // General metrics calculations
@@ -328,7 +334,7 @@ export default function ComparativeMetrics() {
   const maxEvents = Math.max(...scenarios.map(s => s.events?.length || 0), 1);
   const riskPathChartData = Array.from({ length: maxEvents }, (_, stepIdx) => {
     const step = stepIdx + 1;
-    const row: Record<string, any> = { name: `Event ${step}` };
+    const row: ChartRow = { name: `Event ${step}` };
     scenarios.forEach(s => {
       const ev = s.events?.find(e => e.index === step);
       if (ev) {
@@ -337,13 +343,6 @@ export default function ComparativeMetrics() {
     });
     return row;
   });
-
-  // Triage efficiency chart data
-  const triageChartData = cases.map(c => ({
-    name: c.company,
-    "Passed Triage": c.events_passed_triage,
-    "Filtered Noise": c.events_seen - c.events_passed_triage
-  }));
 
   // Clean, muted color palette mapping for scenarios (LineChart)
   const clientColorMap: Record<string, string> = {
@@ -360,8 +359,14 @@ export default function ComparativeMetrics() {
     return clientColorMap[clientName] || "#cbd5e1";
   };
 
-  const [activeTab, setActiveTab] = useState<"scenarios" | "lead-time" | "efficiency" | "matrix">("scenarios");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("scenarios");
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>("microstrategy_drift");
+  const tabs: Array<{ id: ActiveTab; label: string }> = [
+    { id: "scenarios", label: "Scenario Risk Paths" },
+    { id: "lead-time", label: "Lead Time Analysis" },
+    { id: "efficiency", label: "Detection & Triage Efficiency" },
+    { id: "matrix", label: "Audit Evaluation Matrix" },
+  ];
 
   // Selected scenario details for the stacked fusion ratio bar chart
   const selectedScenario = scenarios.find(s => s.scenario_id === selectedScenarioId);
@@ -408,22 +413,6 @@ export default function ComparativeMetrics() {
       };
     })
     .sort((a, b) => a["Earliest Adverse in DB"] - b["Earliest Adverse in DB"]);
-
-  // Detection status bar chart data
-  const statusCountsData = [
-    { name: "Same day", value: cases.filter(c => c.status === "same_day").length, fill: "#10b981" },
-    { name: "Drifted", value: cases.filter(c => c.status === "late").length, fill: "#f59e0b" },
-    { name: "No alarm", value: cases.filter(c => c.status === "no_alarm").length, fill: "#ef4444" },
-  ];
-
-  // Early-stop efficiency bar chart data
-  const earlyStopEfficiencyData = [...cases]
-    .map(c => ({
-      name: c.company,
-      "Events seen": c.events_seen,
-      "Passed triage / LLM path": c.events_passed_triage,
-    }))
-    .sort((a, b) => b["Events seen"] - a["Events seen"]);
 
   // Max combined risk horizontal chart data
   const maxRiskChartData = cases
@@ -534,15 +523,10 @@ export default function ComparativeMetrics() {
 
       {/* Tabs navigation */}
       <div className="flex border-b border-slate-800 space-x-6">
-        {[
-          { id: "scenarios", label: "Scenario Risk Paths" },
-          { id: "lead-time", label: "Lead Time Analysis" },
-          { id: "efficiency", label: "Detection & Triage Efficiency" },
-          { id: "matrix", label: "Audit Evaluation Matrix" },
-        ].map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => setActiveTab(tab.id)}
             className={`pb-3 text-sm font-semibold relative transition-colors ${
               activeTab === tab.id
                 ? "text-indigo-400 border-b-2 border-indigo-500"
@@ -568,7 +552,7 @@ export default function ComparativeMetrics() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[360px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <LineChart
                   data={riskPathChartData}
                   margin={{ top: 10, right: 20, left: -20, bottom: 5 }}
@@ -579,7 +563,7 @@ export default function ComparativeMetrics() {
                   <Tooltip
                     contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
                     labelClassName="font-medium text-slate-300 text-xs"
-                    formatter={(value: any, name: any) => [`${(Number(value) * 100).toFixed(1)}%`, name]}
+                    formatter={(value: unknown, name: unknown) => [`${(Number(value) * 100).toFixed(1)}%`, String(name)]}
                   />
                   <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8", paddingTop: "15px" }} />
                   
@@ -638,7 +622,7 @@ export default function ComparativeMetrics() {
             </CardHeader>
             <CardContent className="h-[280px] pt-4">
               {fusionChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={fusionChartData} margin={{ top: 10, right: 20, left: -20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
@@ -674,7 +658,7 @@ export default function ComparativeMetrics() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[280px] pt-4">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={scenarioFreezeData} margin={{ top: 15, right: 10, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
@@ -682,8 +666,8 @@ export default function ComparativeMetrics() {
                     <Tooltip
                       contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
                       labelClassName="font-medium text-slate-300 text-xs"
-                      formatter={(value: any, name: any, props: any) => {
-                        const label = props.payload.statusLabel;
+                      formatter={(_value: unknown, _name: unknown, props: { payload?: Record<string, unknown> }) => {
+                        const label = typeof props.payload?.statusLabel === "string" ? props.payload.statusLabel : "watchlist";
                         return [label, "Trigger Event"];
                       }}
                     />
@@ -714,7 +698,7 @@ export default function ComparativeMetrics() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-[280px] pt-4">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={riskStepData} margin={{ top: 15, right: 10, left: -25, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
@@ -722,7 +706,7 @@ export default function ComparativeMetrics() {
                     <Tooltip
                       contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
                       labelClassName="font-medium text-slate-300 text-xs"
-                      formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`]}
+                      formatter={(value: unknown) => [`${(Number(value) * 100).toFixed(1)}%`]}
                     />
                     <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8" }} />
                     <ReferenceLine y={0.5} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4 4" />
@@ -749,7 +733,7 @@ export default function ComparativeMetrics() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[380px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart
                   data={leadTimeChartData}
                   layout="vertical"
@@ -761,8 +745,8 @@ export default function ComparativeMetrics() {
                   <Tooltip
                     contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
                     labelClassName="font-medium text-slate-300 text-xs"
-                    formatter={(value: any, name: any, props: any) => {
-                      const leadDays = props.payload.leadDays;
+                    formatter={(_value: unknown, _name: unknown, props: { payload?: Record<string, unknown> }) => {
+                      const leadDays = props.payload?.leadDays;
                       return [leadDays === null ? "No Alarm" : `${leadDays} days`, "Lead Time"];
                     }}
                   />
@@ -788,7 +772,7 @@ export default function ComparativeMetrics() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[380px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart
                   data={osintVsEngineData}
                   layout="vertical"
@@ -887,7 +871,7 @@ export default function ComparativeMetrics() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[280px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={maxRiskChartData} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
                   <XAxis type="number" domain={[0, 1.0]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
@@ -895,7 +879,7 @@ export default function ComparativeMetrics() {
                   <Tooltip
                     contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
                     labelClassName="font-medium text-slate-300 text-xs"
-                    formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`, "Peak Risk"]}
+                    formatter={(value: unknown) => [`${(Number(value) * 100).toFixed(1)}%`, "Peak Risk"]}
                   />
                   <ReferenceLine x={0.5} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4 4" label={{ value: "0.50", fill: "#ef4444", fontSize: 9, position: "insideTopRight" }} />
                   <Bar dataKey="maxRisk" radius={[0, 4, 4, 0]}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -620,7 +620,7 @@ export default function DemoStudioPage() {
     [globalResult, selectedContagionEvent],
   );
 
-  async function loadReplay(forceRefresh = false) {
+  const loadReplay = useCallback(async (forceRefresh = false) => {
     if (!selectedReplayId) return;
     setLoadingReplay(true);
     setError(null);
@@ -631,9 +631,9 @@ export default function DemoStudioPage() {
     } finally {
       setLoadingReplay(false);
     }
-  }
+  }, [selectedReplayId]);
 
-  async function loadGlobal(forceRefresh = false) {
+  const loadGlobal = useCallback(async (forceRefresh = false) => {
     if (!selectedGlobalId) return;
     setLoadingGlobal(true);
     setError(null);
@@ -646,31 +646,31 @@ export default function DemoStudioPage() {
     } finally {
       setLoadingGlobal(false);
     }
-  }
+  }, [selectedGlobalId]);
 
   useEffect(() => {
     if (selectedReplayId) {
       const localCached = getStoredScenarioReport(selectedReplayId);
       const isCachedInBackend = replays.find((item) => item.scenario_id === selectedReplayId)?.is_cached;
       if (localCached || isCachedInBackend) {
-        loadReplay(false);
+        void Promise.resolve().then(() => loadReplay(false));
       } else {
-        setReplayReport(null);
+        void Promise.resolve().then(() => setReplayReport(null));
       }
     }
-  }, [selectedReplayId, replays]);
+  }, [loadReplay, selectedReplayId, replays]);
 
   useEffect(() => {
     if (selectedGlobalId) {
       const localCached = getStoredGlobalScenario(selectedGlobalId);
       const isCachedInBackend = globalScenarios.find((item) => item.id === selectedGlobalId)?.is_cached;
       if (localCached || isCachedInBackend) {
-        loadGlobal(false);
+        void Promise.resolve().then(() => loadGlobal(false));
       } else {
-        setGlobalResult(null);
+        void Promise.resolve().then(() => setGlobalResult(null));
       }
     }
-  }, [selectedGlobalId, globalScenarios]);
+  }, [loadGlobal, selectedGlobalId, globalScenarios]);
 
   return (
     <div className="risk-workspace min-h-screen space-y-5 px-7 py-6">

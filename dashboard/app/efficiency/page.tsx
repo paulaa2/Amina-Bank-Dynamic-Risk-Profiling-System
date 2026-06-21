@@ -21,9 +21,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { KpiCard } from "@/components/kpi-card";
@@ -52,6 +49,11 @@ interface CompanyReport {
   cost?: CostStats;
 }
 
+interface CachedCompanyReport {
+  client: CompanyReport["client"];
+  cost?: CostStats;
+}
+
 export default function PipelineEfficiency() {
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState<CompanyReport[]>([]);
@@ -68,9 +70,9 @@ export default function PipelineEfficiency() {
     try {
       const res = await fetch(`${basePath}/api_cache/analysis.json`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as Record<string, CachedCompanyReport>;
         // data is a record where keys are company ids
-        const list = Object.entries(data).map(([id, val]: [string, any]) => ({
+        const list = Object.entries(data).map(([id, val]) => ({
           id: Number(id),
           client: val.client,
           cost: val.cost,
@@ -85,13 +87,12 @@ export default function PipelineEfficiency() {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    void Promise.resolve().then(loadData);
   }, [loadData]);
 
   // Aggregate metrics
   let totalSeen = 0;
   let totalPassed = 0;
-  let totalEmbedded = 0;
   let localPrompt = 0;
   let localCompletion = 0;
   let cloudPrompt = 0;
@@ -102,7 +103,6 @@ export default function PipelineEfficiency() {
     if (!r.cost) return;
     totalSeen += r.cost.events_seen || 0;
     totalPassed += r.cost.events_passed_triage || 0;
-    totalEmbedded += r.cost.events_embedded || 0;
 
     if (r.cost.local_tokens) {
       localPrompt += r.cost.local_tokens.prompt || 0;
@@ -118,7 +118,6 @@ export default function PipelineEfficiency() {
   // Pricing constants (USD per 1M tokens)
   const CLOUD_PROMPT_PRICE = 0.59; // e.g. Llama-3.3-70b cloud price
   const CLOUD_COMPLETION_PRICE = 0.79;
-  const EMBEDDING_PRICE_PER_1K = 0.0001; // sentence-transformers local is $0, but let's assume cloud embeddings comparison
 
   // If we processed everything on the cloud (no local sentence-transformers, no local Qwen 8B)
   const totalLocalTokens = localPrompt + localCompletion;
@@ -316,7 +315,7 @@ export default function PipelineEfficiency() {
             </CardDescription>
           </CardHeader>
           <CardContent className="h-72 pt-4">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <LineChart
                 data={costAccumulationData}
                 margin={{ top: 10, right: 10, left: -20, bottom: 5 }}

@@ -364,17 +364,6 @@ The pipeline is staged to avoid unnecessary expensive model calls:
 
 This matches the challenge requirement to demonstrate lightweight versus heavy model usage and estimate cost per workflow.
 
-## Recommended Presentation Script
-
-1. **Open with the problem:** periodic KYC misses slow business drift and public-domain warning signals.
-2. **Show the dashboard overview:** monitored clients and current alert state.
-3. **Open Demo Studio:** select Wirecard, FTX, or MicroStrategy.
-4. **Step through events:** show how each public event changes the graph and risk curve.
-5. **Open full evidence:** show source title, summary, extracted fact, URL, and risk effect.
-6. **Show governance:** analyst decision is not automatic; the system proposes and records human actions.
-7. **Run Network Contagion:** show one client publishing a threat and another inheriting it through a shared entity.
-8. **Close with compliance:** explain masking, cost-aware routing, auditability, and clear real-vs-simulated boundaries.
-
 ## Validation Commands
 
 ```bash
@@ -385,9 +374,3 @@ npm run lint
 npm run build
 ```
 
-## Notes For Reviewers
-
-- The most polished user-facing experience is the Next.js dashboard, especially `/demos`.
-- The strongest technical evidence is in the scenario runners and graph-based contagion logic.
-- The project is optimized for a live hackathon presentation, so curated replay scenarios are included to avoid depending on live news availability during judging.
-- The backend can still run live analysis from the SQLite database and current event store.
