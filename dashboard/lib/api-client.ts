@@ -140,6 +140,7 @@ export interface ReplayScenarioItem {
   reference_model: string;
   event_count: number;
   company_id: number | null;
+  is_cached?: boolean;
 }
 
 export interface GlobalScenarioItem {
@@ -149,6 +150,7 @@ export interface GlobalScenarioItem {
   companies: string[];
   expected_contagion: string;
   max_events: number;
+  is_cached?: boolean;
 }
 
 export interface GlobalContagionEvent {
@@ -255,7 +257,7 @@ function putScenarioReport(scenarioId: string, report: LiveReport): void {
   writeStorage("scenario", scenarioId, report);
 }
 
-function getStoredScenarioReport(scenarioId: string): LiveReport | null {
+export function getStoredScenarioReport(scenarioId: string): LiveReport | null {
   return readStorage<LiveReport>("scenario", scenarioId);
 }
 
@@ -264,7 +266,7 @@ function putGlobalScenario(scenarioId: string, result: GlobalDemoResult): void {
   writeStorage("global", scenarioId, result);
 }
 
-function getStoredGlobalScenario(scenarioId: string): GlobalDemoResult | null {
+export function getStoredGlobalScenario(scenarioId: string): GlobalDemoResult | null {
   const inMemory = _globalScenarioCache.get(scenarioId);
   if (inMemory) return inMemory;
   const stored = readStorage<GlobalDemoResult>("global", scenarioId);

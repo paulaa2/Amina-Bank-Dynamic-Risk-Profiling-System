@@ -27,6 +27,8 @@ import {
   listReplayScenarios,
   replayScenario,
   runGlobalScenario,
+  getStoredScenarioReport,
+  getStoredGlobalScenario,
   type GlobalContagionEvent,
   type GlobalDemoResult,
   type GlobalScenarioItem,
@@ -648,15 +650,27 @@ export default function DemoStudioPage() {
 
   useEffect(() => {
     if (selectedReplayId) {
-      loadReplay(false);
+      const localCached = getStoredScenarioReport(selectedReplayId);
+      const isCachedInBackend = replays.find((item) => item.scenario_id === selectedReplayId)?.is_cached;
+      if (localCached || isCachedInBackend) {
+        loadReplay(false);
+      } else {
+        setReplayReport(null);
+      }
     }
-  }, [selectedReplayId]);
+  }, [selectedReplayId, replays]);
 
   useEffect(() => {
     if (selectedGlobalId) {
-      loadGlobal(false);
+      const localCached = getStoredGlobalScenario(selectedGlobalId);
+      const isCachedInBackend = globalScenarios.find((item) => item.id === selectedGlobalId)?.is_cached;
+      if (localCached || isCachedInBackend) {
+        loadGlobal(false);
+      } else {
+        setGlobalResult(null);
+      }
     }
-  }, [selectedGlobalId]);
+  }, [selectedGlobalId, globalScenarios]);
 
   return (
     <div className="risk-workspace min-h-screen space-y-5 px-7 py-6">

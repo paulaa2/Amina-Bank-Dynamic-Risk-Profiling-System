@@ -20,8 +20,11 @@ from typing import Any
 from scripts.collectors.base import adverse_media_score
 
 from .config import DATA_DIR, load_config
-from .ingestion import NewsEvent
-from .pipeline import PerpetualKYCPipeline
+from .ingestion import ClientProfileRepository, NewsEvent
+from .pipeline import EngineReport, PerpetualKYCPipeline
+from .run_demo import _report_to_dict
+
+SCENARIOS_DIR = DATA_DIR / "scenarios"
 
 _SEMANTIC = "semantic"
 _TOPOLOGY = "topology"
@@ -78,7 +81,36 @@ def _order_scenario_events(events: list[dict[str, Any]], replay_order: str) -> l
     return _chronological_scenario_events(events)
 
 
-def replay_scenario(path: Path) -> dict[str, Any]:
+def find_scenario_path(scenario_id: str, scenario_dir: Path | None = None) -> Path:
+    """Resolve a scenario JSON path by ``scenario_id`` or filename stem."""
+    root = scenario_dir or SCENARIOS_DIR
+    for path in sorted(root.glob("*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("scenario_id") == scenario_id or path.stem == scenario_id:
+            return path
+    raise LookupError(f"Unknown scenario '{scenario_id}' under {root}")
+
+
+def list_replay_scenarios(scenario_dir: Path | None = None) -> list[dict[str, Any]]:
+    """Return metadata for every curated replay scenario (for API / dashboard)."""
+    root = scenario_dir or SCENARIOS_DIR
+    scenarios: list[dict[str, Any]] = []
+    for path in sorted(root.glob("*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        scenarios.append(
+            {
+                "scenario_id": str(data.get("scenario_id") or path.stem),
+                "client": str(data.get("client") or ""),
+                "description": str(data.get("description") or ""),
+                "reference_model": str(data.get("reference_model") or ""),
+                "event_count": len(data.get("events") or []),
+            }
+        )
+    return scenarios
+
+
+def run_scenario_engine(path: Path) -> tuple[dict[str, Any], EngineReport]:
+    """Execute one scenario through the pKYC pipeline and return raw scenario + report."""
     scenario = json.loads(path.read_text(encoding="utf-8"))
     replay_order = str(scenario.get("replay_order") or "chronological")
     news = _scenario_events_as_news(scenario)
@@ -92,7 +124,59 @@ def replay_scenario(path: Path) -> dict[str, Any]:
         events_override=stream,
         burn_in_events=burn_in or None,
     )
+    return scenario, report
 
+
+def replay_scenario_for_api(
+    scenario_id: str,
+    database_url: str | None = None,
+) -> dict[str, Any]:
+    """Run a curated scenario and return a dashboard-compatible LiveReport payload."""
+    path = find_scenario_path(scenario_id)
+    scenario, report = run_scenario_engine(path)
+    result = _report_to_dict(report)
+    replay_order = str(scenario.get("replay_order") or "chronological")
+    scenario_events = _order_scenario_events(
+        [event for event in scenario["events"] if not event.get("burn_in")],
+        replay_order,
+    )
+    for index, (source_event, output_event) in enumerate(
+        zip(scenario_events, result.get("events", [])),
+        start=1,
+    ):
+        output_event["scenario_index"] = index
+        output_event["date"] = source_event.get("date")
+        output_event["source"] = source_event.get("source")
+        output_event["url"] = source_event.get("url")
+        output_event["evidence"] = source_event.get("evidence")
+    result["scenario"] = {
+        "scenario_id": str(scenario.get("scenario_id") or path.stem),
+        "description": scenario.get("description"),
+        "reference_model": scenario.get("reference_model"),
+        "curated_event_count": len(scenario_events),
+        "processed_event_count": len(result.get("events", [])),
+    }
+
+    config = load_config()
+    db_url = database_url or config.database_url
+    repo = ClientProfileRepository(db_url)
+    client_name = str(scenario["client"])
+    matched_id = next(
+        (
+            row["id"]
+            for row in repo.list_companies()
+            if client_name.lower() in row["legal_name"].lower()
+            or row["legal_name"].lower() in client_name.lower()
+        ),
+        None,
+    )
+    if matched_id is not None:
+        result["id"] = str(matched_id)
+    return result
+
+
+def replay_scenario(path: Path) -> dict[str, Any]:
+    scenario, report = run_scenario_engine(path)
     threshold = float(report.decision["threshold"])
     rows: list[dict[str, Any]] = []
     alarm_row: dict[str, Any] | None = None

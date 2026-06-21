@@ -883,6 +883,7 @@ def list_curated_scenarios():
             ),
             None,
         )
+        scenario["is_cached"] = scenario["scenario_id"] in _scenario_cache
     return scenarios
 
 
@@ -918,7 +919,12 @@ def run_curated_scenario(scenario_id: str, force_refresh: bool = False):
 @app.get("/api/scenarios")
 def list_scenarios():
     """Return the pre-defined multi-client contagion demonstration scenarios."""
-    return list(SCENARIOS.values())
+    results = []
+    for scenario in SCENARIOS.values():
+        s = dict(scenario)
+        s["is_cached"] = s["id"] in _global_cache
+        results.append(s)
+    return results
 
 
 class ScenarioRunRequest(BaseModel):

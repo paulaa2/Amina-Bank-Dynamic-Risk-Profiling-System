@@ -7,6 +7,7 @@ import {
   Line,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,6 +15,7 @@ import {
   Legend,
   ResponsiveContainer,
   ReferenceLine,
+  LabelList,
 } from "recharts";
 import {
   TrendingUp,
@@ -31,6 +33,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { KpiCard } from "@/components/kpi-card";
+
+const SHORT_LABEL_MAP: Record<string, string> = {
+  "Wirecard AG": "Wirecard",
+  "FTX Trading Ltd": "FTX",
+  "MicroStrategy Incorporated": "MicroStrategy",
+  "VTB Bank": "VTB",
+  "Gazprombank": "Gazprombank",
+  "Surgutneftegas": "Surgut",
+  "OpenAI": "OpenAI",
+};
 
 interface Case {
   company: string;
@@ -64,12 +76,18 @@ interface ScenarioSummary {
   description: string;
   reference_model: string;
   threshold: number;
+  alarm_event_index: number | null;
+  alarm_date: string | null;
+  alarm_title: string | null;
   events: Array<{
     index: number;
     date: string;
     title: string;
     combined_risk: number;
     trigger: boolean;
+    semantic_ratio?: number;
+    topology_ratio?: number;
+    behavioral_ratio?: number;
   }>;
 }
 
@@ -342,6 +360,126 @@ export default function ComparativeMetrics() {
     return clientColorMap[clientName] || "#cbd5e1";
   };
 
+  const [activeTab, setActiveTab] = useState<"scenarios" | "lead-time" | "efficiency" | "matrix">("scenarios");
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>("microstrategy_drift");
+
+  // Selected scenario details for the stacked fusion ratio bar chart
+  const selectedScenario = scenarios.find(s => s.scenario_id === selectedScenarioId);
+  const fusionChartData = selectedScenario?.events.map(ev => ({
+    name: `Event ${ev.index}`,
+    "Semantic ratio": ev.semantic_ratio || 0,
+    "Topology ratio": ev.topology_ratio || 0,
+    "Behavioral ratio": ev.behavioral_ratio || 0,
+  })) || [];
+
+  // Lead Time chart data preparation
+  const leadTimeChartData = cases
+    .map(c => {
+      const val = c.lead_days;
+      const plotVal = val === null ? 0 : Math.max(-30, Math.min(30, val));
+      return {
+        name: c.company,
+        label: c.label,
+        leadDays: val,
+        leadDaysPlot: plotVal,
+        status: c.status,
+      };
+    })
+    .sort((a, b) => a.leadDaysPlot - b.leadDaysPlot);
+
+  const getLeadTimeColor = (status: string) => {
+    if (status === "same_day") return "#10b981"; // green-500
+    if (status === "late") return "#f59e0b"; // amber-500
+    return "#ef4444"; // red-500
+  };
+
+  // OSINT vs Engine alarm comparison chart data
+  const osintVsEngineData = cases
+    .map(c => {
+      const osintVal = c.earliest_adverse_lead_days ?? null;
+      const engineVal = c.lead_days;
+      const osintPlot = osintVal === null ? 0 : Math.max(-60, Math.min(120, osintVal));
+      const enginePlot = engineVal === null ? 0 : Math.max(-60, Math.min(120, engineVal));
+      return {
+        name: c.company,
+        label: c.label,
+        "Earliest Adverse in DB": osintPlot,
+        "Engine Alarm": enginePlot,
+      };
+    })
+    .sort((a, b) => a["Earliest Adverse in DB"] - b["Earliest Adverse in DB"]);
+
+  // Detection status bar chart data
+  const statusCountsData = [
+    { name: "Same day", value: cases.filter(c => c.status === "same_day").length, fill: "#10b981" },
+    { name: "Drifted", value: cases.filter(c => c.status === "late").length, fill: "#f59e0b" },
+    { name: "No alarm", value: cases.filter(c => c.status === "no_alarm").length, fill: "#ef4444" },
+  ];
+
+  // Early-stop efficiency bar chart data
+  const earlyStopEfficiencyData = [...cases]
+    .map(c => ({
+      name: c.company,
+      "Events seen": c.events_seen,
+      "Passed triage / LLM path": c.events_passed_triage,
+    }))
+    .sort((a, b) => b["Events seen"] - a["Events seen"]);
+
+  // Max combined risk horizontal chart data
+  const maxRiskChartData = cases
+    .map(c => ({
+      name: c.company,
+      maxRisk: c.max_combined_risk,
+      status: c.status,
+    }))
+    .sort((a, b) => a.maxRisk - b.maxRisk);
+
+  const getMaxRiskColor = (status: string) => {
+    return status === "no_alarm" ? "#ef4444" : "#3b82f6";
+  };
+
+  // Event number where each scenario freezes
+  const scenarioFreezeData = scenarios.map((s) => {
+    const alarmIdx = s.alarm_event_index;
+    const shortLabel = SHORT_LABEL_MAP[s.client] || s.client;
+    return {
+      name: shortLabel,
+      alarmEventIndex: alarmIdx === null || alarmIdx === undefined ? 0 : alarmIdx,
+      statusLabel: alarmIdx === null || alarmIdx === undefined ? "watchlist" : `E${alarmIdx}`,
+    };
+  });
+
+  // Risk step immediately before and at freeze
+  const riskStepData = scenarios.map((s) => {
+    const alarmIdx = s.alarm_event_index;
+    const events = s.events || [];
+    const shortLabel = SHORT_LABEL_MAP[s.client] || s.client;
+    
+    let riskBefore = 0;
+    let riskAt = 0;
+    
+    if (alarmIdx !== null && alarmIdx !== undefined) {
+      // Alarm fired
+      const beforeEv = events.find(e => e.index === alarmIdx - 1);
+      const atEv = events.find(e => e.index === alarmIdx);
+      riskBefore = beforeEv ? beforeEv.combined_risk : 0;
+      riskAt = atEv ? atEv.combined_risk : 0;
+    } else {
+      // No alarm (watchlist)
+      const finalEv = events[events.length - 1];
+      riskBefore = finalEv ? finalEv.combined_risk : 0;
+      
+      const maxRisk = events.reduce((max, e) => Math.max(max, e.combined_risk), 0);
+      riskAt = maxRisk;
+    }
+    
+    return {
+      name: shortLabel,
+      "Risk before alarm / final": riskBefore,
+      "Risk at alarm / peak": riskAt,
+    };
+  });
+
   return (
     <div className="px-7 py-5 space-y-6">
       {/* Title */}
@@ -394,99 +532,422 @@ export default function ComparativeMetrics() {
         />
       </div>
 
-      {/* Scenario Risk Path (All Scenarios) */}
-      <Card className="border border-slate-800 bg-slate-900">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-indigo-400" />
-            Scenario Risk Path (Historical Battery)
-          </CardTitle>
-          <CardDescription className="text-xs text-slate-500">
-            Evolution of the combined risk score (0-1) across chronological events. Dashed line denotes freeze threshold (0.50).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="h-[360px] pt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={riskPathChartData}
-              margin={{ top: 10, right: 20, left: -20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 1.0]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
-              <Tooltip
-                contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
-                labelClassName="font-medium text-slate-300 text-xs"
-                formatter={(value: any, name: any) => [`${(Number(value) * 100).toFixed(1)}%`, name]}
-              />
-              <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8", paddingTop: "15px" }} />
-              
-              {/* Alert Freeze Threshold reference line */}
-              <ReferenceLine
-                y={0.5}
-                stroke="#f43f5e"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                label={{
-                  value: "Freeze Threshold (0.50)",
-                  fill: "#f43f5e",
-                  fontSize: 10,
-                  position: "top",
-                }}
-              />
-              {scenarios.map((s) => (
-                <Line
-                  key={s.scenario_id}
-                  type="monotone"
-                  dataKey={s.client}
-                  stroke={getClientColor(s.client)}
-                  strokeWidth={2.4}
-                  dot={{ r: 3, strokeWidth: 1 }}
-                  activeDot={{ r: 5 }}
-                  name={s.client}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Tabs navigation */}
+      <div className="flex border-b border-slate-800 space-x-6">
+        {[
+          { id: "scenarios", label: "Scenario Risk Paths" },
+          { id: "lead-time", label: "Lead Time Analysis" },
+          { id: "efficiency", label: "Detection & Triage Efficiency" },
+          { id: "matrix", label: "Audit Evaluation Matrix" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`pb-3 text-sm font-semibold relative transition-colors ${
+              activeTab === tab.id
+                ? "text-indigo-400 border-b-2 border-indigo-500"
+                : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Triage Noise Filtration */}
-        <Card className="border border-slate-800 bg-slate-900 lg:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
-              <Filter className="h-4 w-4 text-emerald-400" />
-              Triage Filtration Rate
-            </CardTitle>
-            <CardDescription className="text-xs text-slate-500">
-              Noise skipped (triage out) vs Risk compiled (triage in)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-72 pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={triageChartData}
-                stackOffset="expand"
-                margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+      {/* Tab Content */}
+      {activeTab === "scenarios" && (
+        <div className="space-y-6">
+          <Card className="border border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-indigo-400" />
+                Scenario Risk Path (Historical Battery)
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                Evolution of the combined risk score (0-1) across chronological events. Dashed line denotes freeze threshold (0.50).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[360px] pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={riskPathChartData}
+                  margin={{ top: 10, right: 20, left: -20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 1.0]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    labelClassName="font-medium text-slate-300 text-xs"
+                    formatter={(value: any, name: any) => [`${(Number(value) * 100).toFixed(1)}%`, name]}
+                  />
+                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8", paddingTop: "15px" }} />
+                  
+                  {/* Alert Freeze Threshold reference line */}
+                  <ReferenceLine
+                    y={0.5}
+                    stroke="#f43f5e"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    label={{
+                      value: "Freeze Threshold (0.50)",
+                      fill: "#f43f5e",
+                      fontSize: 10,
+                      position: "top",
+                    }}
+                  />
+                  {scenarios.map((s) => (
+                    <Line
+                      key={s.scenario_id}
+                      type="monotone"
+                      dataKey={s.client}
+                      stroke={getClientColor(s.client)}
+                      strokeWidth={2.4}
+                      dot={{ r: 3, strokeWidth: 1 }}
+                      activeDot={{ r: 5 }}
+                      name={s.client}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-blue-400" />
+                  Computed Fusion Components Before Freeze
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Weighted exceedance ratio used by DriftFusion across events.
+                </CardDescription>
+              </div>
+              <select
+                value={selectedScenarioId}
+                onChange={(e) => setSelectedScenarioId(e.target.value)}
+                className="bg-slate-800 text-slate-200 border border-slate-700 text-xs px-2 py-1 rounded focus:outline-none"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
-                  labelClassName="font-medium text-slate-300 text-xs"
-                />
-                <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8" }} />
-                <Bar dataKey="Passed Triage" stackId="a" fill="#3b82f6" name="Passed (Risk)" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Filtered Noise" stackId="a" fill="#10b981" name="Filtered (Noise)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+                {scenarios.map((s) => (
+                  <option key={s.scenario_id} value={s.scenario_id}>
+                    {s.client}
+                  </option>
+                ))}
+              </select>
+            </CardHeader>
+            <CardContent className="h-[280px] pt-4">
+              {fusionChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={fusionChartData} margin={{ top: 10, right: 20, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                      labelClassName="font-medium text-slate-300 text-xs"
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8", paddingTop: "10px" }} />
+                    <Bar dataKey="Semantic ratio" stackId="a" fill="#3b82f6" name="Semantic" />
+                    <Bar dataKey="Topology ratio" stackId="a" fill="#fb923c" name="Topology" />
+                    <Bar dataKey="Behavioral ratio" stackId="a" fill="#10b981" name="Behavioral" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-xs text-slate-500">Select a scenario to view components</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Detailed Benchmark Summary Table */}
-        <Card className="border border-slate-800 bg-slate-900 lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Event number where each scenario freezes */}
+            <Card className="border border-slate-800 bg-slate-900 shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-blue-400" />
+                  Event Number Where Each Scenario Freezes
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Chronological event index where combined risk breaches the freeze threshold. Watchlists stay active.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[280px] pt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={scenarioFreezeData} margin={{ top: 15, right: 10, left: -25, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 6]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                      labelClassName="font-medium text-slate-300 text-xs"
+                      formatter={(value: any, name: any, props: any) => {
+                        const label = props.payload.statusLabel;
+                        return [label, "Trigger Event"];
+                      }}
+                    />
+                    <Bar dataKey="alarmEventIndex" radius={[4, 4, 0, 0]}>
+                      {scenarioFreezeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.alarmEventIndex === 0 ? "#475569" : "#3b82f6"} />
+                      ))}
+                      <LabelList
+                        dataKey="statusLabel"
+                        position="top"
+                        style={{ fill: "#cbd5e1", fontSize: 10, fontWeight: "bold" }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Risk step immediately before and at freeze */}
+            <Card className="border border-slate-800 bg-slate-900 shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-emerald-400" />
+                  Risk Step Immediately Before and at Freeze
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Combined risk score at the triggering event compared to the preceding event. Watchlists show final vs peak risk.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[280px] pt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={riskStepData} margin={{ top: 15, right: 10, left: -25, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 1.0]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                      labelClassName="font-medium text-slate-300 text-xs"
+                      formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`]}
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8" }} />
+                    <ReferenceLine y={0.5} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4 4" />
+                    <Bar dataKey="Risk before alarm / final" fill="#475569" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Risk at alarm / peak" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "lead-time" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-emerald-400" />
+                Alert Lead Time vs Public Reference Date
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                Lead time in days (positive = alarm preceded reference date, negative = alarm occurred after). Truncated at ±30 days.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[380px] pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={leadTimeChartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                  <XAxis type="number" domain={[-32, 32]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    labelClassName="font-medium text-slate-300 text-xs"
+                    formatter={(value: any, name: any, props: any) => {
+                      const leadDays = props.payload.leadDays;
+                      return [leadDays === null ? "No Alarm" : `${leadDays} days`, "Lead Time"];
+                    }}
+                  />
+                  <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={1.5} />
+                  <Bar dataKey="leadDaysPlot" radius={[0, 4, 4, 0]}>
+                    {leadTimeChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getLeadTimeColor(entry.status)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-indigo-400" />
+                Available OSINT Signal vs Actual Engine Alarm
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                Lead days vs reference date. Positive = earlier than reference. Clipped to [-60, 120] days.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[380px] pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={osintVsEngineData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                  <XAxis type="number" domain={[-70, 130]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    labelClassName="font-medium text-slate-300 text-xs"
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8", paddingTop: "10px" }} />
+                  <ReferenceLine x={0} stroke="#94a3b8" strokeWidth={1.2} />
+                  <Bar dataKey="Earliest Adverse in DB" fill="#475569" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="Engine Alarm" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "efficiency" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Detection Status by Case */}
+          <Card className="border border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-emerald-400" />
+                Detection Status by Case
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                Number of client cases grouped by alarm reaction time.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[280px] pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusCountsData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    labelClassName="font-medium text-slate-300 text-xs"
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {statusCountsData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Maximum Combined Risk by Client */}
+          <Card className="border border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-blue-400" />
+                Maximum Combined Risk by Client
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                Highest risk score calculated for each client dossier. Dashed line represents alert threshold (0.50).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[280px] pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={maxRiskChartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                  <XAxis type="number" domain={[0, 1.0]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    labelClassName="font-medium text-slate-300 text-xs"
+                    formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`, "Max Risk"]}
+                  />
+                  <ReferenceLine x={0.5} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4 4" />
+                  <Bar dataKey="maxRisk" radius={[0, 4, 4, 0]}>
+                    {maxRiskChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getMaxRiskColor(entry.status)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Triage Filtration Rate */}
+          <Card className="border border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                <Filter className="h-4 w-4 text-emerald-400" />
+                Triage Filtration Rate
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                Noise skipped (triage out) vs Risk compiled (triage in).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[280px] pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={triageChartData}
+                  stackOffset="expand"
+                  margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    labelClassName="font-medium text-slate-300 text-xs"
+                  />
+                  <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8" }} />
+                  <Bar dataKey="Passed Triage" stackId="a" fill="#3b82f6" name="Passed (Risk)" />
+                  <Bar dataKey="Filtered Noise" stackId="a" fill="#10b981" name="Filtered (Noise)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Early-Stop and Triage Efficiency */}
+          <Card className="border border-slate-800 bg-slate-900 shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
+                <Info className="h-4 w-4 text-slate-400" />
+                Early-Stop and Triage Efficiency
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                Comparison of total events processed vs events passed triage for downstream LLM analysis.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[280px] pt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={earlyStopEfficiencyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    labelClassName="font-medium text-slate-300 text-xs"
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8", paddingTop: "10px" }} />
+                  <Bar dataKey="Events seen" fill="#64748b" name="Events seen" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Passed triage / LLM path" fill="#10b981" name="Passed triage / LLM path" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "matrix" && (
+        <Card className="border border-slate-800 bg-slate-900 shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
               <Info className="h-4 w-4 text-slate-400" />
@@ -576,7 +1037,7 @@ export default function ComparativeMetrics() {
             </Table>
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 }
