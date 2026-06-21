@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AMINA pKYC Dashboard
 
-## Getting Started
+Next.js analyst dashboard for the AMINA Bank Dynamic Risk Profiling System.
 
-First, run the development server:
+The dashboard is designed for the hackathon demo: it connects to the FastAPI backend, visualizes pKYC risk analysis, replays curated historical scenarios step by step, and shows network contagion across related clients.
+
+## Requirements
+
+- Node.js compatible with Next.js 16
+- Python API running at `http://localhost:8000` unless `NEXT_PUBLIC_API_URL` is set
+
+## Setup
+
+```bash
+npm install
+```
+
+Optional environment override:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Production Build
 
-## Learn More
+```bash
+npm run lint
+npm run build
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Main Routes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Route | Purpose |
+|---|---|
+| `/` | Monitoring overview |
+| `/client` | Company list |
+| `/client/[id]` | Client dossier with graph, drift metrics, evidence, and governance |
+| `/demos` | Demo Studio for curated replays and network contagion |
+| `/history` | Cached analysis history |
+| `/metrics` | Comparative evaluation and lead-time analytics |
+| `/efficiency` | Cost-efficiency and scaling simulator |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Persistence
 
-## Deploy on Vercel
+The frontend stores reports, curated scenario replays, and global contagion results in browser `localStorage`. This means closing and reopening the page does not force recomputation.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The backend also persists API-side cache files under `data/api_cache/`, so demos survive API restarts as well.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Use the dashboard refresh/re-run controls or backend `force_refresh` options when you intentionally want to recompute.

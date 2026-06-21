@@ -1,473 +1,393 @@
-# Amina Bank — Dynamic Risk Profiling System
+# AMINA Bank Dynamic Risk Profiling System
 
-Motor de **Perpetual KYC (pKYC)** para el reto AMINA Bank en **SwissHacks 2026**.
+Hackathon project for the **AMINA Bank Dynamic Risk Profiling System - Real-Time Intelligence** challenge at **SwissHacks 2026**.
 
-Combina inteligencia pública en tiempo real (Layer 1) con perfiles internos de KYC (Layer 2) para detectar **KYC Drift**: desviaciones estructurales, semánticas y transaccionales respecto al onboarding original del cliente.
+This repository implements a working **Perpetual KYC (pKYC)** engine and analyst dashboard. The system combines public intelligence signals with simulated internal KYC profiles to detect **KYC drift**: material changes in a client's activity, structure, counterparties, or risk context that invalidate the assumptions made at onboarding.
 
----
+The core idea is simple: traditional KYC reviews are periodic, but risk does not wait for a calendar review. This project turns KYC into a continuous monitoring loop.
 
-## Problema que resuelve
+## What The System Does
 
-Los sistemas KYC tradicionales revisan clientes de forma calendarizada (p. ej. cada 3 años). Eso deja al banco ciego ante cambios de modelo de negocio, reestructuraciones societarias y señales adversas en el dominio público que aparecen meses antes de una alerta AML transaccional.
+The platform monitors corporate clients across three risk streams:
 
-Este motor monitoriza de forma continua tres dimensiones de riesgo:
+| Stream | What it detects | Example |
+|---|---|---|
+| Semantic drift | Public evidence that the client is no longer operating as described during onboarding | A software company becoming a Bitcoin treasury vehicle |
+| Topological drift | New or changing graph relationships, ownership links, sanctioned directors, risky counterparties, and cross-client contagion | A bank inheriting sovereign risk through a shared state-linked entity |
+| Behavioural drift | Transactional anomalies against the expected activity profile | Dormant entity activation or abnormal transfer volume |
 
-| Dimensión | Qué detecta |
+Those streams are fused into a single **combined risk score** with auditable evidence, graph mutations, event-level explanations, and a human governance workflow.
+
+## Why It Matters For The Challenge
+
+The challenge asks for an AI system that is intelligent, cost-aware, explainable, secure, and usable by compliance teams. This implementation addresses those requirements directly:
+
+| Judging area | Implementation response |
 |---|---|
-| **Semántica** | Cambio de modelo de negocio (noticias, web, registros) |
-| **Topológica** | Cambios en directores, accionistas, bucles de propiedad, contagio desde entidades sancionadas |
-| **Transaccional** | Anomalías cuantitativas en flujos de fondos (Z-Score) |
+| AI intelligence quality | Multi-stage pKYC pipeline with event triage, semantic extraction, graph contagion, Page-Hinkley drift detection, and curated historical replay |
+| Cost efficiency | Cheap local filtering first; local Ollama extraction and embeddings; cloud LLM report generation only after a confirmed alert |
+| UX and explainability | Next.js dashboard with client dossiers, graph evolution, event replay, full evidence modal, global contagion visualization, and light/dark themes |
+| Compliance and safety | Data separation, masking proxy, source citations, audit trail, four-eyes workflow, and deterministic fallback reports |
+| Engineering and architecture | Modular Python engine, FastAPI integration layer, persistent API cache, reproducible scenario runners, and typed frontend API client |
 
----
+## Demo Highlights
 
-## Arquitectura
+The best live demonstration flow is:
 
-```
-Layer 1 (público)          Layer 2 (interno)
-     │                            │
-     └──────────┬─────────────────┘
-                ▼
-     [Enmascaramiento GDPR]
-                ▼
-     [Resolución de entidades]
-                ▼
-     ┌──────────┴──────────┐
-     ▼                     ▼
- [Drift semántico]   [Grafo topológico]
- Page-Hinkley         NetworkX + contagio
-     └──────────┬──────────┘
-                ▼
-     [Fusión multicorriente + Bonferroni]
-                ▼
-     [Informe AML + doble autorización]
-```
+1. Start the backend and dashboard.
+2. Open the dashboard.
+3. Use **Demo Studio** to replay curated historical scenarios.
+4. Step through the graph event by event.
+5. Show how risk accumulates before the final insolvency, sanctions, or governance shock.
+6. Run a **Network Contagion** demo to show cross-client propagation through shared entities.
 
-**Stack principal:** Page-Hinkley (concept drift) · NetworkX (contagio dirigido) · embeddings + distancia coseno · LLM solo en casos de alto riesgo.
+Recommended scenarios:
 
----
+| Demo | What it shows |
+|---|---|
+| Wirecard historical replay | Gradual accounting-risk drift before insolvency |
+| FTX rapid deterioration | Fast-moving liquidity and governance collapse |
+| MicroStrategy drift | Business model drift from enterprise software to Bitcoin treasury exposure |
+| VTB and Gazprombank contagion | Sovereign and sanctions risk propagation through shared Russian-state exposure |
+| FTX and OpenAI contagion | Shared investor exposure through Sequoia Capital |
 
-## Estructura del repositorio
+## Repository Structure
 
-El repositorio separa de forma estricta la **capa de datos** (recolección
-desde fuentes públicas / APIs) del **motor de inteligencia** (la lógica pKYC).
-Ambas se comunican únicamente a través de la base de datos SQLite.
-
-```
+```text
 .
-├── README.md
-├── requirements.txt
-├── data/
-│   ├── risk_profiling.db          # base de datos generada por la capa de datos
-│   └── scenarios/                 # timelines históricos curados (replay)
-├── docu/
-│   ├── final_implementation.md    # especificación técnica completa
-│   └── info_challenge.md          # descripción oficial del reto
-├── scripts/                       # CAPA DE DATOS (Layer 1 + Layer 2)
-│   ├── collectors/                # Google News RSS, OpenSanctions, GLEIF, RDAP...
-│   ├── models.py · db.py          # esquema SQLAlchemy + sesión
-│   ├── seed_kyc.py                # perfiles KYC base (Layer 2)
-│   └── build_database.py          # construye risk_profiling.db
-└── src/                           # MOTOR pKYC (lógica de riesgo, sin tocar APIs)
-    ├── config.py                  # configuración desde .env
-    ├── security/anonymizer.py     # proxy de enmascarado GDPR / secreto bancario
-    ├── detectors/                 # Page-Hinkley, Z-Score transaccional, fusión Bonferroni
-    ├── graph/contagion.py         # contagio topológico dirigido (NetworkX)
-    ├── entities/resolver.py       # resolución de entidades (fuzz.ratio, anti-layering)
-    ├── triage/ner.py              # triaje de relevancia local (Stage 1, sin coste)
-    ├── llm/                       # agentes: Sentinel (Ollama) + AML-Synthesizer (Groq)
-    ├── governance/workflow.py     # máquina de estados de doble autorización (four-eyes)
-    ├── cost/tracker.py            # contabilidad de tokens y coste por 1000 análisis
-    ├── ingestion/repository.py    # acceso de solo lectura a la base de datos
-    ├── pipeline.py                # orquestador de las 6 fases
-    ├── run_demo.py                # CLI demo single-client
-    ├── run_scenario_demo.py       # replay de escenarios drift curados
-    └── run_global_demo.py         # CLI demo multi-cliente (orquestador global)
+|-- README.md                         # Main delivery guide
+|-- requirements.txt                  # Python dependencies
+|-- .env.example                      # Environment template without secrets
+|-- data/
+|   |-- risk_profiling.db             # SQLite database used by the engine
+|   |-- scenarios/                    # Curated historical replay timelines
+|   |-- scenario_replay_*.json/csv    # Precomputed replay outputs for presentation
+|   |-- scenario_microstrategy_*      # Single-scenario replay output
+|   `-- ppt_figures/                  # Generated figures for slides
+|-- dashboard/                        # Next.js analyst dashboard
+|   |-- app/                          # Dashboard routes
+|   |-- components/                   # UI components
+|   |-- lib/api-client.ts             # Typed API client and browser persistence
+|   `-- README.md                     # Frontend-specific instructions
+|-- docu/
+|   |-- info_challenge.md             # Challenge statement
+|   |-- final_implementation.md       # Technical design notes
+|   `-- prompts.md                    # Prompt and agent notes
+|-- notebooks/                        # Evaluation notebooks
+|-- scripts/                          # Data collection and DB construction layer
+|   |-- collectors/                   # News, sanctions, registry, domain, funding collectors
+|   |-- build_database.py             # Builds the SQLite database
+|   |-- seed_kyc.py                   # Simulated internal KYC profiles
+|   `-- export_dashboard_cache.py     # Optional cache export helper
+`-- src/                              # pKYC engine and API
+    |-- api.py                        # FastAPI backend
+    |-- pipeline.py                   # Main pKYC orchestration pipeline
+    |-- run_demo.py                   # Single-client CLI demo
+    |-- run_scenario_demo.py          # Curated historical replay runner
+    |-- run_global_demo.py            # Multi-client contagion runner
+    |-- detectors/                    # Page-Hinkley, transaction anomaly, fusion
+    |-- graph/                        # Directed contagion graph logic
+    |-- governance/                   # Four-eyes workflow
+    |-- llm/                          # Ollama and Groq agent clients
+    |-- security/                     # Data masking
+    |-- triage/                       # Low-cost local event filtering
+    `-- ingestion/                    # Read-only repository access to the DB
 ```
 
----
+The folder layout is intentionally kept stable for delivery. Python imports and Next.js routes depend on this structure, so no functional code has been moved.
 
-## Instalación
+## System Architecture
+
+```text
+Public intelligence layer                    Simulated bank layer
+News, registries, sanctions, domains         Onboarding KYC, graph, expected activity
+                  |                                         |
+                  +------------------+----------------------+
+                                     |
+                              Masking proxy
+                                     |
+                          Entity and event triage
+                                     |
+                 +-------------------+-------------------+
+                 |                   |                   |
+          Semantic drift       Topology drift      Behaviour drift
+          embeddings + PH      directed graph      z-score anomaly
+                 |                   |                   |
+                 +-------------------+-------------------+
+                                     |
+                        Multi-stream risk fusion
+                                     |
+                         Alert, report, governance
+                                     |
+                              Analyst dashboard
+```
+
+### Main Components
+
+- **Data layer (`scripts/`)** builds the SQLite database from public sources and seeded KYC profiles.
+- **Risk engine (`src/pipeline.py`)** runs the staged pKYC analysis.
+- **API (`src/api.py`)** exposes health, company list, analysis, streaming analysis, curated scenario replay, global contagion demos, and governance actions.
+- **Dashboard (`dashboard/`)** provides the analyst-facing UI.
+- **Scenario runners (`src/run_scenario_demo.py`, `src/run_global_demo.py`)** make the strongest demos reproducible.
+
+## Installation
+
+### 1. Python Environment
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate            # Windows: .venv\Scripts\Activate.ps1
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# macOS/Linux
+source .venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
-### Infraestructura de inferencia
+### 2. Local Models
 
-El motor usa inferencia **local** (coste cero, datos sensibles enmascarados) y
-**en la nube** solo para el informe final de una alarma confirmada.
+The system uses Ollama for local extraction and embeddings.
 
 ```bash
-# Inferencia local (Ollama): extracción de hechos + embeddings semánticos
 ollama pull qwen3:8b
 ollama pull nomic-embed-text
-
-# Inferencia en la nube (Groq) para el informe AML final (Stage 4)
-# Configura la clave en .env (ver más abajo).
 ```
 
-`.env` (raíz del proyecto):
+### 3. Environment Variables
+
+Create a local `.env` file from `.env.example`.
+
+```bash
+# macOS/Linux
+cp .env.example .env
+
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+Minimum configuration:
 
 ```env
-GROQ_API_KEY="gsk_..."
-OLLAMA_HOST="http://localhost:11434"
-OLLAMA_EXTRACTOR_MODEL="qwen3:8b"
-OLLAMA_EMBEDDING_MODEL="nomic-embed-text"
-GROQ_REPORT_MODEL="llama-3.3-70b-versatile"
-TARGET_FWER=0.05
-COMBINED_RISK_THRESHOLD=0.5
-MAX_EVENTS_PER_RUN=6      # eventos máximos analizados por ejecución
-USE_LLM_BURN_IN=false     # calibración semántica determinista por defecto
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_EXTRACTOR_MODEL=qwen3:8b
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+GROQ_REPORT_MODEL=llama-3.3-70b-versatile
+GROQ_API_KEY=
 ```
 
-> Stack de inferencia local: `qwen3:8b` (extracción de hechos, conforme a la
-> especificación) y `nomic-embed-text` (embeddings semánticos). El motor
-> desactiva el modo "thinking" de qwen3 (`think=False`) para obtener JSON
-> determinista y baja latencia, agrupa todas las llamadas por modelo para que
-> cada uno se cargue una sola vez, y los mantiene residentes (`keep_alive`).
-> Cualquier modelo de Ollama es configurable vía `.env`.
->
-> **Calibración semántica.** El cold-start del detector Page-Hinkley se
-> construye de forma determinista a partir del perfil de onboarding (solo
-> embeddings, sin coste de chat). Como las distancias coseno viven en una
-> escala comprimida, la corriente semántica usa multiplicadores más sensibles
-> (`PH_SEMANTIC_DELTA_STD`, `PH_SEMANTIC_THRESHOLD_STD`) que las corrientes
-> topológica y transaccional. Para usar titulares sintéticos generados por el
-> LLM (mayor fidelidad a la especificación, una llamada extra), exporta
-> `USE_LLM_BURN_IN=true`.
+`GROQ_API_KEY` is optional for core detection. If it is missing, the system still runs and uses deterministic fallback reporting instead of cloud-generated EDD text.
 
----
-
-## Uso del motor pKYC
-
-Primero genera la base de datos (capa de datos) y después ejecuta el motor:
+### 4. Frontend Dependencies
 
 ```bash
-# 1. Construir / poblar la base de datos (Layer 1 + Layer 2)
-python -m scripts.build_database
+cd dashboard
+npm install
+cd ..
+```
 
-# 2. Listar los clientes disponibles
+## Running The Project
+
+Use three terminals for the full demo.
+
+### Terminal 1 - API
+
+```bash
+python -m src.api
+```
+
+Default API URL: `http://localhost:8000`
+
+Useful health check:
+
+```bash
+curl http://localhost:8000/api/health
+```
+
+### Terminal 2 - Preload Curated Scenarios
+
+```bash
+python -m src.run_scenario_demo --all --push-to-api
+```
+
+This computes all curated replay scenarios and pushes them to the API cache for a faster dashboard demo.
+
+### Terminal 3 - Dashboard
+
+```bash
+cd dashboard
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Main routes:
+
+| Route | Purpose |
+|---|---|
+| `/` | Overview and monitored entities |
+| `/client` | Client list |
+| `/client/[id]` | Analyst dossier for one client |
+| `/demos` | Demo Studio: curated replays and global contagion |
+| `/history` | Previously cached analyses |
+| `/metrics` | Comparative evaluation and lead-time charts |
+| `/efficiency` | Pipeline cost-efficiency simulator |
+
+## CLI Demo Commands
+
+### List Available Clients
+
+```bash
 python -m src.run_demo --list
-
-# 3. Analizar un cliente (deriva semántica de modelo de negocio)
-python -m src.run_demo --company "MicroStrategy" --max-events 7
-
-# 4. Cliente sancionado (contagio topológico desde un director sancionado)
-python -m src.run_demo --company "VTB"
-
-# 5. Simular además una anomalía transaccional (dormancy break / layering)
-python -m src.run_demo --company "Wirecard" --simulate-tx-anomaly
-
-# 6. Salida JSON completa (para integración / UI)
-python -m src.run_demo --company "OpenAI" --json
 ```
 
-Cada ejecución produce: el perfil de cliente, el enmascarado de identidades,
-la exposición por contagio topológico con sus contribuidores, las tres
-corrientes estadísticas con sus umbrales, la decisión de alarma, el flujo de
-gobernanza de doble autorización con su traza de auditoría, el coste estimado
-y, si se supera el umbral, el informe AML redactado por el agente en la nube.
-
----
-
-## Demos recomendadas (casos probados)
-
-Los siete clientes del seed (`scripts/seed_kyc.py`) son **empresas reales** elegidas
-por narrativa de riesgo. El motor en runtime **solo lee** `data/risk_profiling.db`;
-las APIs externas se usan al construir la base (`python -m scripts.build_database`).
-
-### Clientes disponibles
-
-| Cliente | Grupo | Historia principal |
-|---------|-------|-------------------|
-| Wirecard AG | A | Fraude contable / colapso estructural |
-| FTX Trading Ltd | A | Fraude crypto / quiebra |
-| MicroStrategy Incorporated | A | **Semantic drift**: BI software → Bitcoin treasury |
-| OpenAI | A | Escala / señales regulatorias |
-| VTB Bank | B | Sanciones + topología (Kostin, Estado ruso) |
-| Gazprombank | B | Sanciones + exposición energética (Gazprom) |
-| Surgutneftegas | B | Petrolera rusa sancionada |
-
-### Demo single-client (mejor narrativa por caso)
+### Single-Client Analysis
 
 ```bash
-source .venv/bin/activate
-
-# Shock / litigation detection sobre el snapshot OSINT actual
 python -m src.run_demo --company "MicroStrategy" --max-events 7
-
-# Sanciones + contagio topológico local (Kostin 1.0 desde el grafo)
-python -m src.run_demo --company "VTB" --max-events 5
-
-# Fraude estructural + opcional anomalía transaccional simulada
-python -m src.run_demo --company "Wirecard" --max-events 5 --simulate-tx-anomaly
-
-# Quiebra crypto (SBF, Caroline Ellison)
+python -m src.run_demo --company "Wirecard" --max-events 5
 python -m src.run_demo --company "FTX" --max-events 5
-
-# Salida JSON completa (integración / UI)
-python -m src.run_demo --company "MicroStrategy" --json
+python -m src.run_demo --company "VTB" --max-events 5
 ```
 
-**Qué mirar en stderr:** `[STREAMING EVENT]`, `[GRAPH MUTATION]`, `[EARLY STOP]`.
+### Optional Transaction Anomaly Simulation
 
-### Demo de drift gradual — MicroStrategy replay
+```bash
+python -m src.run_demo --company "Wirecard" --max-events 5 --simulate-tx-anomaly
+```
 
-La evaluación retrospectiva sobre la DB live detecta muchos **shocks** (FTX
-bankruptcy, sanciones VTB, insolvencia Wirecard). Para evitar depender de lo que
-Google News devuelva hoy, usa un replay histórico: el JSON aporta hechos
-fechados y verificables, pero por defecto las señales las calcula el mismo
-pipeline que `run_demo`.
+This flag injects a simulated behavioural anomaly into the transaction stream. It is useful to demonstrate the behavioural detector, but it is not real bank transaction data.
+
+### Curated Historical Replay
 
 ```bash
 python -m src.run_scenario_demo
+python -m src.run_scenario_demo --all
+python -m src.run_scenario_demo --all --push-to-api
 ```
 
-Este escenario está en `data/scenarios/microstrategy_drift.json` y usa hitos
-públicos reales con fecha y URL (SEC/Strategy/CNBC):
-
-| Evento | Fecha | Señal |
-|--------|-------|-------|
-| E1 | 2020-07-28 | Capital allocation menciona activos digitales |
-| E2 | 2020-08-11 | Bitcoin pasa a ser treasury reserve asset |
-| E3 | 2020-12-11 | Deuda convertible para comprar Bitcoin |
-| E4 | 2021-02-24 | Compra adicional >$1B, estrategia ya material |
-| E5 | 2022-03-29 | Préstamo colateralizado con Bitcoin |
-| E6 | 2022-08-02 | Impairment $917.8M y cambio CEO/Chairman |
-
-Salida esperada (señales calculadas por el pipeline, no hardcoded en el JSON):
-
-```text
-idx | date       | semantic | topology | tx     | combined | trigger
-  1 | 2020-07-28 | 0.439    | 0.000    | 0.000  | 0.1350   | FALSE
-  2 | 2020-08-11 | 0.563    | 0.000    | 0.000  | 0.3713   | FALSE
-  3 | 2020-12-11 | 0.529    | 0.000    | 0.000  | 0.5132   | TRUE
-```
-
-**Mensaje clave para jurado técnico:** los eventos son hechos públicos curados
-(titular, fecha, URL, fuente). El JSON **no** incluye señales de riesgo: las
-calcula el mismo pipeline que `run_demo`. El replay:
-
-- procesa eventos **en orden cronológico** por `date` (igual que la BD live);
-- parte del **KYC de onboarding** (`at_onboarding_risk`), no del OSINT enriquecido de hoy;
-- calibra los detectores Page-Hinkley desde ese baseline (sin inyectar riesgo a mano).
-
-Los escenarios pueden marcar algunos hitos con `"burn_in": true` (p. ej. lanzamientos
-de producto benignos en OpenAI): solo calibran el detector semántico **antes** del
-stream; no cuentan como evento de alarma en la curva.
-
-El runner escribe:
+Outputs:
 
 ```text
 data/scenario_microstrategy_result.json
 data/scenario_microstrategy_result.csv
-```
-
-El notebook `notebooks/retro_lead_time_evaluation.ipynb` incluye dos gráficas
-adicionales para este replay: curva de riesgo acumulado y componentes de
-DriftFusion.
-
-#### Batería completa de escenarios curados
-
-Para evaluación / PowerPoint, ejecuta los 7 escenarios históricos con señales
-calculadas:
-
-```bash
-python -m src.run_scenario_demo --all
-```
-
-Genera:
-
-```text
+data/scenario_replay_summary.json
 data/scenario_replay_summary.csv
 data/scenario_replay_events.csv
-data/scenario_replay_summary.json
 ```
 
-Escenarios incluidos:
-
-| Escenario | Cliente | Tipo |
-|-----------|---------|------|
-| `wirecard_drift` | Wirecard | Fraude contable gradual |
-| `ftx_rapid_deterioration` | FTX | Deterioro rápido de liquidez/gobernanza |
-| `microstrategy_drift` | MicroStrategy | Drift estratégico real |
-| `openai_regulatory_drift` | OpenAI | Drift regulatorio/gobernanza |
-| `vtb_sanctions_escalation` | VTB | Escalada de sanciones |
-| `gazprombank_sanctions_escalation` | Gazprombank | Exposición energía/sanciones |
-| `surgutneftegas_sanctions_escalation` | Surgutneftegas | Escalada sectorial petróleo/sanciones |
-
-Resultado esperado tras `--all` (última batería con Ollama activo):
-
-| Cliente | Alarma | Pre-alarm | Riesgo al disparar |
-|---------|--------|-----------|-------------------|
-| MicroStrategy | E3 | 2 | 0.51 |
-| FTX | E4 | 3 | 0.53 |
-| Gazprombank | E4 | 3 | 0.60 |
-| OpenAI | — | 9 | 0.29 (peak E1) |
-| VTB | E5 | 4 | 0.55 |
-| Surgutneftegas | E5 | 4 | 0.52 |
-| Wirecard | E6 | 5 | 0.56 |
-
-La mayoría muestran **acumulación gradual** (2–5 eventos por debajo del umbral).
-OpenAI es el **ejemplo watchlist** (sin alarma en esta ventana): orden
-cronológico estricto, 4 hitos comerciales en `burn_in`, Italia en E1 sube a ~0.29
-pero no cruza 0.5. Sirve para mostrar drift absorbido por baseline comercial.
-**Sequoia/FTX no entra aquí** — es solo en la demo global:
-`run_global_demo --companies FTX OpenAI` (contagio cruzado vía inversor compartido
-en el grafo KYC).
-Las transacciones del stream comportamental siguen siendo **simuladas**.
-
-**Umbral `COMBINED_RISK_THRESHOLD=0.5`:** las alarmas caen en la banda 0.51–0.60.
-Subir a 0.55 haría fallar FTX, MicroStrategy y Surgut en esta batería curada;
-0.5 es adecuado para la demo de lead time. En producción se subiría tras backtesting
-con el feed completo (p. ej. 0.55–0.65).
-
-**Qué es real vs. ingeniería del motor:**
-
-| Real | Ingeniería / simulación |
-|------|-------------------------|
-| Titulares, fechas, URLs de escenarios | Subconjunto curado de hitos (no feed completo) |
-| Señales semántica / topología / fusión | Transacciones simuladas |
-| Mismo pipeline que `run_demo` | Grafo que muta según extracción LLM del titular |
-| Orden cronológico por `date` | Estado inicial = onboarding, no “as-of” histórico exacto |
-
-### Demo global — orquestador multi-cliente
-
-Simula varios clientes en **una cola temporal** con **memoria de amenazas compartida**
-(`shared_threat_memory`). Cada cliente tiene su ego-graph aislado; el contagio cruzado
-solo ocurre si **dos clientes comparten el mismo nombre de entidad** en su KYC.
-
-```bash
-source .venv/bin/activate
-```
-
-#### Demo estrella — cluster soberano ruso (contagio cruzado)
+### Global Contagion Demo
 
 ```bash
 python -m src.run_global_demo --companies VTB Gazprombank --max-events 5
-```
-
-| Paso | Qué pasa |
-|------|----------|
-| Feb 2022, evento 1 | VTB congela (`risk≈0.85`, topology=1.0). Publica amenazas en memoria global. |
-| Mar 2022, evento 2 | Gazprombank **hereda** `Government of Russia` (0.15 → 0.90) y congela (`risk≈0.84`). |
-
-Log clave a señalar en pantalla:
-
-```text
-[GLOBAL ORCHESTRATOR] Cross-client threat inherited target=Gazprombank entity=Government of Russia risk=0.9000
-[GLOBAL ORCHESTRATOR] Early stop target=Gazprombank risk=0.8386
-```
-
-**Frase para el pitch:** VTB procesa sanciones y publica riesgo soberano. Gazprombank
-comparte esa exposición en su KYC (vínculo `ASSOCIATED_WITH`, peso bajo). En su primer
-evento relevante, hereda la señal **antes** de evaluar su propia noticia.
-
-#### Demo alternativa — inversor VC compartido
-
-```bash
 python -m src.run_global_demo --companies FTX OpenAI --max-events 5
-```
-
-| Paso | Qué pasa |
-|------|----------|
-| Nov 2022 | FTX congela en quiebra; publica `Sequoia Capital` (0.53). |
-| Jun 2026 | OpenAI hereda Sequoia (0.20 → 0.53) y congela. Salto temporal 2022→2026. |
-
-```text
-[GLOBAL ORCHESTRATOR] Cross-client threat inherited target=OpenAI entity=Sequoia Capital risk=0.5330
-```
-
-Historía distinta al cluster ruso: contagio por **mismo inversor institucional** (Sequoia
-invirtió en OpenAI y también en FTX).
-
-#### Demo triple cluster (herencia sin alarma en el tercero)
-
-```bash
 python -m src.run_global_demo --companies VTB Gazprombank Surgutneftegas --max-events 5
 ```
 
-- VTB y Gazprombank: ambos con alarma (igual que la demo estrella).
-- Surgutneftegas **sí hereda** `Government of Russia` en 2025, pero sus noticias no
-  pasan triage (no mencionan el nombre de la empresa) → no llega a alarma.
-- Útil para explicar: la memoria global actualiza el grafo aunque el evento sea
-  filtrado por relevancia.
+What to watch in the logs:
 
-#### Qué NO esperar (comportamiento correcto)
-
-| Combinación | Resultado |
-|-------------|-----------|
-| VTB + MicroStrategy | Sin contagio cruzado: no comparten entidades en KYC. MicroStrategy cae por drift/fraude propio. |
-| Kostin en MicroStrategy | **No hacerlo**: conexión artificial entre casos reales. |
-| Surgutneftegas solo en global | Suele quedar sin alarma: titulares genéricos de “sanciones a Rusia” sin alias de la empresa. |
-
-### Vínculos compartidos en el seed (contagio defendible)
-
-Definidos en `scripts/seed_kyc.py` para habilitar herencia en el orquestador global:
-
-| Entidad compartida | Clientes | Rol en KYC |
-|--------------------|----------|------------|
-| `Government of Russia` | VTB (accionista), Gazprombank, Surgutneftegas (nexus soberano) | Exposición jurisdiccional / estatal |
-| `Gazprom` | VTB (contraparte energética), Gazprombank (accionista) | Cadena energía–banca |
-| `Sequoia Capital` | FTX, OpenAI | Mismo inversor institucional |
-
-Vínculos secundarios usan `rel_type: ASSOCIATED_WITH` con `control_weight: 0.1` y
-`at_onboarding_risk` bajo (0.15–0.20): refleja lo que el banco sabía en onboarding,
-no el screening OSINT completo.
-
-### Por qué hace falta `at_onboarding_risk`
-
-El collector de topología (`scripts/collectors/topology.py`) puede calcular riesgo
-OSINT alto para una entidad (p. ej. `Government of Russia` = 0.6 en todos). La
-herencia global solo dispara si `global_risk > local_risk`. Sin baseline de onboarding
-más bajo en vínculos secundarios, **nunca** aparece `Cross-client threat inherited`.
-
-Tras reconstruir la DB de clientes modificados:
-
-```bash
-python -m scripts.build_database --company VTB
-python -m scripts.build_database --company Gazprombank
-python -m scripts.build_database --company Surgutneftegas
-python -m scripts.build_database --company OpenAI
+```text
+[GLOBAL ORCHESTRATOR] Shared threat published ...
+[GLOBAL ORCHESTRATOR] Cross-client threat inherited ...
+[GLOBAL ORCHESTRATOR] Early stop ...
 ```
 
-### Reconstruir todo desde cero
+## API Overview
 
-```bash
-source .venv/bin/activate
-python -m scripts.build_database --reset
-python -m src.run_global_demo --companies VTB Gazprombank --max-events 5
-python -m src.run_demo --company "MicroStrategy" --max-events 7
-```
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/health` | Backend health check |
+| GET | `/api/companies` | List monitored companies |
+| GET | `/api/cache` | Show cached analysis IDs |
+| POST | `/api/analyze/{company_id}` | Run a full pKYC analysis |
+| GET | `/api/analyze/{company_id}` | Return cached analysis |
+| GET | `/api/analyze/{company_id}/stream` | Stream analysis milestones via SSE |
+| POST | `/api/analyze/{company_id}/action` | Apply a governance action |
+| DELETE | `/api/analyze/{company_id}` | Invalidate one cached analysis |
+| GET | `/api/scenarios/replay` | List curated replay scenarios |
+| POST | `/api/scenario-replay/{scenario_id}` | Run a curated scenario |
+| GET | `/api/scenarios` | List global contagion scenarios |
+| POST | `/api/global-demo/scenario/{scenario_id}` | Run a global contagion scenario |
 
-### Logs stderr útiles (global)
+## Dashboard Persistence
 
-| Log | Significado |
-|-----|-------------|
-| `[GLOBAL ORCHESTRATOR] Loaded N client pipelines` | Cola temporal montada |
-| `Shared threat published source=… entity=…` | Cliente publica entidad con risk > 0.5 |
-| `Cross-client threat inherited target=… entity=…` | **Contagio cruzado** — otro cliente hereda |
-| `Early stop target=…` | Cliente congelado; eventos futuros ignorados |
-| `skipped_client_frozen` | Simulación temporal: cliente ya cerrado |
-| `skipped_by_triage` | Evento descartado sin LLM (sin mención al cliente/grafo) |
+The dashboard and API are designed for live demos:
 
----
+- Browser persistence uses `localStorage` for reports, curated scenarios, and global demos.
+- Backend persistence uses `data/api_cache/` for API-side cache files.
+- Cached results survive page refreshes, browser close/reopen, and API restarts.
+- Re-running with `force_refresh` recomputes the result.
+- `data/api_cache/` is ignored by git because it is runtime cache, not source code.
 
-## Documentación
+## Data, Reality, And Simulation Boundaries
 
-| Documento | Contenido |
+This is a hackathon prototype. The boundaries are explicit:
+
+| Real or evidence-backed | Simulated or engineered |
 |---|---|
-| [`docu/final_implementation.md`](docu/final_implementation.md) | Marco matemático, pipeline de agentes, esquemas JSON, código Python de referencia |
-| [`docu/info_challenge.md`](docu/info_challenge.md) | Enunciado del reto, casos de uso y criterios de evaluación AMINA Bank |
+| Public company names used for demonstration | Simulated internal KYC profiles seeded in `scripts/seed_kyc.py` |
+| Curated historical scenario events with source URLs | Simulated bank transaction stream |
+| Public adverse-media style narratives | Curated subset of historical events, not a complete historical feed |
+| OpenSanctions/GLEIF/news-style collector layer | Initial graph state approximates onboarding, not a legally complete as-of historical ownership database |
+| Semantic, topology, and fusion calculations | Synthetic transaction anomaly option for detector demonstration |
 
-> **Nota:** Las fórmulas LaTeX del documento técnico requieren preview con soporte matemático (`markdown.math.enabled: true` en VS Code/Cursor) o visualizarse en GitHub.
+There is **no real AMINA Bank customer data** in this repository.
 
----
+## Security And Governance Design
 
-## Reto
+The system includes:
 
-**Dynamic Risk Profiling System (Real-Time Intelligence)** — SwissHacks 2026 / AMINA Bank Challenge.
+- Separation between public intelligence and internal KYC profile data.
+- Local masking proxy before LLM processing.
+- Local inference for extraction and embeddings.
+- Cloud LLM use only for final report drafting after confirmed alerts.
+- Source citations and event-level evidence.
+- Explainable risk stream metrics.
+- Four-eyes governance workflow with audit trail.
+- Persistent but local API cache for demo continuity.
 
-Enfoque en eficiencia de costes (~95 % de eventos sin LLM), explicabilidad matemática auditable y gobernanza reguladora suiza (GDPR, four-eyes, audit trail).
+## Cost-Aware AI Pipeline
+
+The pipeline is staged to avoid unnecessary expensive model calls:
+
+1. Cheap local triage removes irrelevant events.
+2. Local extraction produces structured facts.
+3. Local embeddings calculate semantic distance.
+4. Statistical detectors evaluate drift.
+5. Graph contagion updates topology risk.
+6. Cloud report generation runs only if the fused risk crosses the alert threshold.
+
+This matches the challenge requirement to demonstrate lightweight versus heavy model usage and estimate cost per workflow.
+
+## Recommended Presentation Script
+
+1. **Open with the problem:** periodic KYC misses slow business drift and public-domain warning signals.
+2. **Show the dashboard overview:** monitored clients and current alert state.
+3. **Open Demo Studio:** select Wirecard, FTX, or MicroStrategy.
+4. **Step through events:** show how each public event changes the graph and risk curve.
+5. **Open full evidence:** show source title, summary, extracted fact, URL, and risk effect.
+6. **Show governance:** analyst decision is not automatic; the system proposes and records human actions.
+7. **Run Network Contagion:** show one client publishing a threat and another inheriting it through a shared entity.
+8. **Close with compliance:** explain masking, cost-aware routing, auditability, and clear real-vs-simulated boundaries.
+
+## Validation Commands
+
+```bash
+python -m compileall -q src scripts
+
+cd dashboard
+npm run lint
+npm run build
+```
+
+## Notes For Reviewers
+
+- The most polished user-facing experience is the Next.js dashboard, especially `/demos`.
+- The strongest technical evidence is in the scenario runners and graph-based contagion logic.
+- The project is optimized for a live hackathon presentation, so curated replay scenarios are included to avoid depending on live news availability during judging.
+- The backend can still run live analysis from the SQLite database and current event store.
