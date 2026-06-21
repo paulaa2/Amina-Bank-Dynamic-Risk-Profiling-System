@@ -813,132 +813,96 @@ export default function ComparativeMetrics() {
       )}
 
       {activeTab === "efficiency" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Detection Status by Case */}
-          <Card className="border border-slate-800 bg-slate-900 shadow-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-emerald-400" />
-                Detection Status by Case
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-500">
-                Number of client cases grouped by alarm reaction time.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[280px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={statusCountsData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
-                    labelClassName="font-medium text-slate-300 text-xs"
-                  />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {statusCountsData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        <div className="space-y-6">
+          {/* Per-client summary table */}
+          <div className="border border-slate-800 bg-slate-900 rounded-lg overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-800 flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-emerald-400" />
+              <h2 className="text-base font-semibold text-slate-200">Detection &amp; Triage Summary</h2>
+              <span className="text-xs text-slate-500 ml-1">per dossier</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-800">
+                    <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Dossier</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Type</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right">Peak Risk</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Risk</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right">Triage</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cases.map((c, i) => {
+                    const riskPct = c.max_combined_risk * 100;
+                    const triageRate = c.events_seen > 0 ? (c.events_passed_triage / c.events_seen) * 100 : 0;
+                    const riskColor = riskPct >= 75 ? "#fb7185" : riskPct >= 50 ? "#fbbf24" : "#34d399";
+                    return (
+                      <tr key={c.company} className={`hover:bg-slate-800/30 transition-colors ${i < cases.length - 1 ? "border-b border-slate-800/60" : ""}`}>
+                        <td className="px-5 py-3.5 font-semibold text-slate-200">{c.label}</td>
+                        <td className="px-4 py-3.5 text-xs text-slate-400 capitalize">{c.case_type}</td>
+                        <td className="px-4 py-3.5 text-right">
+                          <span className="font-mono text-sm font-bold" style={{ color: riskColor }}>
+                            {c.alarm_fired ? `${riskPct.toFixed(0)}%` : "—"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 w-28">
+                          <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${riskPct}%`, background: riskColor }} />
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-mono text-xs text-slate-400">
+                          {c.events_passed_triage}/{c.events_seen}
+                          <span className="text-slate-600 ml-1">({triageRate.toFixed(0)}%)</span>
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                            c.status === "same_day"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                              : c.status === "late"
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                              : "bg-slate-700/50 text-slate-400 border-slate-700"
+                          }`}>
+                            {c.status === "same_day" ? "Same Day" : c.status === "late" ? "Drifted" : "No Alarm"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-          {/* Maximum Combined Risk by Client */}
+          {/* Peak Risk chart */}
           <Card className="border border-slate-800 bg-slate-900 shadow-none">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-blue-400" />
-                Maximum Combined Risk by Client
+                Peak Risk Score by Client
               </CardTitle>
               <CardDescription className="text-xs text-slate-500">
-                Highest risk score calculated for each client dossier. Dashed line represents alert threshold (0.50).
+                Highest combined risk score reached per dossier. Dashed line = alert threshold (0.50).
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[280px] pt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={maxRiskChartData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
-                >
+                <BarChart data={maxRiskChartData} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
                   <XAxis type="number" domain={[0, 1.0]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
                   <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
                     labelClassName="font-medium text-slate-300 text-xs"
-                    formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`, "Max Risk"]}
+                    formatter={(value: any) => [`${(Number(value) * 100).toFixed(1)}%`, "Peak Risk"]}
                   />
-                  <ReferenceLine x={0.5} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4 4" />
+                  <ReferenceLine x={0.5} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="4 4" label={{ value: "0.50", fill: "#ef4444", fontSize: 9, position: "insideTopRight" }} />
                   <Bar dataKey="maxRisk" radius={[0, 4, 4, 0]}>
                     {maxRiskChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getMaxRiskColor(entry.status)} />
                     ))}
                   </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Triage Filtration Rate */}
-          <Card className="border border-slate-800 bg-slate-900 shadow-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
-                <Filter className="h-4 w-4 text-emerald-400" />
-                Triage Filtration Rate
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-500">
-                Noise skipped (triage out) vs Risk compiled (triage in).
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[280px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={triageChartData}
-                  stackOffset="expand"
-                  margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v * 100).toFixed(0)}%`} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
-                    labelClassName="font-medium text-slate-300 text-xs"
-                  />
-                  <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8" }} />
-                  <Bar dataKey="Passed Triage" stackId="a" fill="#3b82f6" name="Passed (Risk)" />
-                  <Bar dataKey="Filtered Noise" stackId="a" fill="#10b981" name="Filtered (Noise)" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Early-Stop and Triage Efficiency */}
-          <Card className="border border-slate-800 bg-slate-900 shadow-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
-                <Info className="h-4 w-4 text-slate-400" />
-                Early-Stop and Triage Efficiency
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-500">
-                Comparison of total events processed vs events passed triage for downstream LLM analysis.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-[280px] pt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={earlyStopEfficiencyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
-                    labelClassName="font-medium text-slate-300 text-xs"
-                  />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: "11px", color: "#94a3b8", paddingTop: "10px" }} />
-                  <Bar dataKey="Events seen" fill="#64748b" name="Events seen" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Passed triage / LLM path" fill="#10b981" name="Passed triage / LLM path" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

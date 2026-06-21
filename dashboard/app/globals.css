@@ -136,6 +136,69 @@
   fill: #ffffff !important;
 }
 
+/* ── ReactFlow Controls — dark slate theme ───────────────────────────────── */
+
+.react-flow__controls {
+  background: #0f172a !important;
+  border: 1px solid #334155 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: #0f172a !important;
+  border: none !important;
+  border-bottom: 1px solid #1e293b !important;
+  color: #94a3b8 !important;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 4px !important;
+  transition: background 0.15s, color 0.15s;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button:hover {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor !important;
+  stroke: none;
+  max-width: 14px;
+  max-height: 14px;
+}
+
+/* ── Custom scrollbar — slate dark ───────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+
 /* ── Corporate graph node entrance animation ─────────────────────────────── */
 
 @keyframes graphNodeEnter {
@@ -245,7 +308,8 @@ html.light .app-shell {
 .app-shell.bg-slate-900,
 .app-shell .bg-slate-900,
 .app-shell.bg-slate-900\/80,
-.app-shell .bg-slate-900\/80 {
+.app-shell .bg-slate-900\/80,
+.app-shell [data-slot="card"] {
   background-color: var(--surface-panel) !important;
 }
 

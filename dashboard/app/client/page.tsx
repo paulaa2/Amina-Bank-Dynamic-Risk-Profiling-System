@@ -228,7 +228,7 @@ export default function ClientDossiers() {
                       {riskPct !== null ? (
                         <div className="text-right">
                           <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-0.5">
-                            Current Risk
+                            Peak Risk
                           </p>
                           <p className={cn("text-2xl font-bold tabular-nums leading-none font-mono", riskColor(riskPct))}>
                             {riskPct}%

@@ -55,7 +55,7 @@ interface CompanyReport {
 export default function PipelineEfficiency() {
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState<CompanyReport[]>([]);
-  
+
   // Simulation states
   const [simCompanies, setSimCompanies] = useState<number>(500);
   const [simEvents, setSimEvents] = useState<number>(120); // articles/events per company per month
@@ -103,7 +103,7 @@ export default function PipelineEfficiency() {
     totalSeen += r.cost.events_seen || 0;
     totalPassed += r.cost.events_passed_triage || 0;
     totalEmbedded += r.cost.events_embedded || 0;
-    
+
     if (r.cost.local_tokens) {
       localPrompt += r.cost.local_tokens.prompt || 0;
       localCompletion += r.cost.local_tokens.completion || 0;
@@ -123,26 +123,26 @@ export default function PipelineEfficiency() {
   // If we processed everything on the cloud (no local sentence-transformers, no local Qwen 8B)
   const totalLocalTokens = localPrompt + localCompletion;
   const totalCloudTokens = cloudPrompt + cloudCompletion;
-  
+
   // Let's assume each seen article requires ~250 tokens for screening
   // Under Staged model, Stage 1 (Embeddings) filters out noise articles.
   // Stage 2 (Local LLM resolution & masking) runs on passed articles.
   // Stage 3 (Cloud LLM forensic summary) runs ONLY on flagged alerts.
-  
+
   // Calculate simulated legacy cloud cost for these runs:
   // - Screening all seen articles using cloud LLM: totalSeen * 250 tokens * cloud price
   // - Resolution & masking using cloud LLM: totalPassed * 1200 tokens * cloud price
   // - Report generation using cloud LLM: cloudCostActual
-  const legacyCloudCost = (totalSeen * 250 * (CLOUD_PROMPT_PRICE / 1_000_000)) + 
-                          (totalPassed * 1200 * ((CLOUD_PROMPT_PRICE + CLOUD_COMPLETION_PRICE) / 2 / 1_000_000)) +
-                          ((cloudPrompt * (CLOUD_PROMPT_PRICE / 1_000_000)) + (cloudCompletion * (CLOUD_COMPLETION_PRICE / 1_000_000)));
+  const legacyCloudCost = (totalSeen * 250 * (CLOUD_PROMPT_PRICE / 1_000_000)) +
+    (totalPassed * 1200 * ((CLOUD_PROMPT_PRICE + CLOUD_COMPLETION_PRICE) / 2 / 1_000_000)) +
+    ((cloudPrompt * (CLOUD_PROMPT_PRICE / 1_000_000)) + (cloudCompletion * (CLOUD_COMPLETION_PRICE / 1_000_000)));
 
   const actualStagedCost = cloudCostActual; // Qwen & Embeddings are local ($0.0)
-  
+
   // Realized Savings
   const noiseReductionPct = totalSeen > 0 ? ((totalSeen - totalPassed) / totalSeen) * 100 : 0;
-  const localProcessingShare = (totalLocalTokens + totalCloudTokens) > 0 
-    ? (totalLocalTokens / (totalLocalTokens + totalCloudTokens)) * 100 
+  const localProcessingShare = (totalLocalTokens + totalCloudTokens) > 0
+    ? (totalLocalTokens / (totalLocalTokens + totalCloudTokens)) * 100
     : 100;
 
   const realizedSavingsUsd = Math.max(0.12, legacyCloudCost - actualStagedCost);
@@ -169,14 +169,14 @@ export default function PipelineEfficiency() {
   //   Alert generation prompt + completion = ~2500 tokens * cloud prices = $0.0017 per alert
   const alertRate = 0.15; // 15% alert rate
   const simStagedMonthlyCost = simCompanies * simEvents * 0.05 * alertRate * 2500 * ((CLOUD_PROMPT_PRICE + CLOUD_COMPLETION_PRICE) / 2 / 1_000_000);
-  
+
   // Pure Cloud: 
   // - Every single event is run through a cloud model for classification (~400 tokens)
   // - Every matched event resolved in cloud (~1200 tokens)
   // - Every alert generated in cloud (~2500 tokens)
-  const simPureCloudMonthlyCost = (simCompanies * simEvents * 400 * (CLOUD_PROMPT_PRICE / 1_000_000)) + 
-                                  (simCompanies * simEvents * 0.40 * 1200 * ((CLOUD_PROMPT_PRICE + CLOUD_COMPLETION_PRICE) / 2 / 1_000_000)) + 
-                                  (simCompanies * alertRate * 2500 * ((CLOUD_PROMPT_PRICE + CLOUD_COMPLETION_PRICE) / 2 / 1_000_000));
+  const simPureCloudMonthlyCost = (simCompanies * simEvents * 400 * (CLOUD_PROMPT_PRICE / 1_000_000)) +
+    (simCompanies * simEvents * 0.40 * 1200 * ((CLOUD_PROMPT_PRICE + CLOUD_COMPLETION_PRICE) / 2 / 1_000_000)) +
+    (simCompanies * alertRate * 2500 * ((CLOUD_PROMPT_PRICE + CLOUD_COMPLETION_PRICE) / 2 / 1_000_000));
 
   const simSavings = Math.max(0, simPureCloudMonthlyCost - simStagedMonthlyCost);
   const simSavingsMultiplier = simPureCloudMonthlyCost > 0 ? (simSavings / simPureCloudMonthlyCost) * 100 : 0;
@@ -234,82 +234,74 @@ export default function PipelineEfficiency() {
       </div>
 
       {/* Pipeline Stage Architecture Visualizer */}
-      <Card className="border border-slate-800 bg-slate-900">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-slate-200 flex items-center gap-2">
-            <Layers className="h-4 w-4 text-sky-400" />
-            Hybrid Local-Cloud Orchestration Pipeline
-          </CardTitle>
-          <CardDescription className="text-xs text-slate-500">
-            staged processing chain optimized for Swiss GDPR compliance and 95%+ operational cost savings.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4 pb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-            
-            {/* Stage 1 */}
-            <div className="relative flex flex-col justify-between p-4 border border-slate-800 bg-slate-950/40 rounded-lg">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    STAGE 1 (FILTER)
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">100% of inputs</span>
-                </div>
-                <h3 className="text-sm font-semibold text-slate-200">Local Vector Embeddings</h3>
-                <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
-                  Scrapes adverse OSINT articles, web content, and watchlist records. Generates semantic representations locally.
-                </p>
+      <div className="border border-slate-800 bg-slate-900 rounded-lg p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Layers className="h-4 w-4 text-sky-400" />
+          <h2 className="text-base font-semibold text-slate-200">Hybrid Local-Cloud Orchestration Pipeline</h2>
+        </div>
+        <p className="text-xs text-slate-500 mb-5">
+          Staged processing chain optimized for Swiss GDPR compliance and 95%+ operational cost savings.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Stage 1 */}
+          <div className="flex flex-col justify-between p-4 border border-slate-800 rounded-lg" style={{ background: "#111417" }}>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  STAGE 1 (FILTER)
+                </span>
+                <span className="text-xs text-slate-500 font-medium">100% of inputs</span>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
-                <span>Model: Sentence-Transformers</span>
-                <span className="font-semibold text-emerald-400">$0.00 / 1M</span>
-              </div>
+              <h3 className="text-sm font-semibold text-slate-200">Local Vector Embeddings</h3>
+              <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
+                Scrapes adverse OSINT articles, web content, and watchlist records. Generates semantic representations locally.
+              </p>
             </div>
-
-            {/* Stage 2 */}
-            <div className="relative flex flex-col justify-between p-4 border border-slate-800 bg-slate-950/40 rounded-lg">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                    STAGE 2 (RESOLVE &amp; MASK)
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">~35% of inputs</span>
-                </div>
-                <h3 className="text-sm font-semibold text-slate-200">Local LLM Masking Proxy</h3>
-                <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
-                  Resolves entities against KYC graph, strips real Swiss names, and replaces them with anonymous cryptographic tokens.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
-                <span>Model: Ollama Qwen3-8B (Local)</span>
-                <span className="font-semibold text-amber-400">$0.00 / Local</span>
-              </div>
+            <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
+              <span>Model: nomic-embed-text</span>
+              <span className="font-semibold text-emerald-400">$0.00 / 1M</span>
             </div>
-
-            {/* Stage 3 */}
-            <div className="relative flex flex-col justify-between p-4 border border-slate-800 bg-slate-950/40 rounded-lg">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    STAGE 3 (REPORT)
-                  </span>
-                  <span className="text-xs text-slate-500 font-medium">~10% of inputs</span>
-                </div>
-                <h3 className="text-sm font-semibold text-slate-200">Cloud Forensic Reasoning</h3>
-                <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
-                  Triggered only on confirmed threshold breach. Unmasks tokens in secure proxy, compiling a structured, cited AML forensic audit report.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
-                <span>Model: Groq Llama-3.3-70B</span>
-                <span className="font-semibold text-rose-400">Cloud Pay-per-use</span>
-              </div>
-            </div>
-            
           </div>
-        </CardContent>
-      </Card>
+          {/* Stage 2 */}
+          <div className="flex flex-col justify-between p-4 border border-slate-800 rounded-lg" style={{ background: "#111417" }}>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  STAGE 2 (RESOLVE &amp; MASK)
+                </span>
+                <span className="text-xs text-slate-500 font-medium">~35% of inputs</span>
+              </div>
+              <h3 className="text-sm font-semibold text-slate-200">Local LLM Masking Proxy</h3>
+              <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
+                Resolves entities against KYC graph, strips real Swiss names, and replaces them with anonymous cryptographic tokens.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
+              <span>Model: Ollama Qwen3-8B (Local)</span>
+              <span className="font-semibold text-amber-400">$0.00 / Local</span>
+            </div>
+          </div>
+          {/* Stage 3 */}
+          <div className="flex flex-col justify-between p-4 border border-slate-800 rounded-lg" style={{ background: "#111417" }}>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                  STAGE 3 (REPORT)
+                </span>
+                <span className="text-xs text-slate-500 font-medium">~10% of inputs</span>
+              </div>
+              <h3 className="text-sm font-semibold text-slate-200">Cloud Forensic Reasoning</h3>
+              <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">
+                Triggered only on confirmed threshold breach. Unmasks tokens in secure proxy, compiling a structured, cited AML forensic audit report.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
+              <span>Model: Groq Llama-3.3-70B</span>
+              <span className="font-semibold text-rose-400">Cloud Pay-per-use</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Cost Accumulation Chart */}
@@ -402,13 +394,13 @@ export default function PipelineEfficiency() {
 
             {/* Simulation Results Grid */}
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800/80">
-              <div className="p-3 bg-slate-950/40 border border-slate-800 rounded-md">
+              <div className="p-3 border border-slate-800 rounded-md" style={{ background: "#111417" }}>
                 <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Legacy Cloud Pipeline</p>
                 <p className="mt-1 text-lg font-bold text-rose-400 font-mono">${simPureCloudMonthlyCost.toFixed(2)}<span className="text-xs font-normal text-slate-500">/mo</span></p>
                 <p className="text-[9px] text-slate-600 mt-0.5">100% processing in cloud APIs</p>
               </div>
-              
-              <div className="p-3 bg-slate-950/40 border border-slate-800 rounded-md">
+
+              <div className="p-3 border border-slate-800 rounded-md" style={{ background: "#111417" }}>
                 <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Amina Staged Pipeline</p>
                 <p className="mt-1 text-lg font-bold text-emerald-400 font-mono">${simStagedMonthlyCost.toFixed(2)}<span className="text-xs font-normal text-slate-500">/mo</span></p>
                 <p className="text-[9px] text-slate-600 mt-0.5">Staged local vectoring + Qwen 8B</p>
@@ -427,7 +419,7 @@ export default function PipelineEfficiency() {
                 </span>
               </div>
             </div>
-            
+
           </CardContent>
         </Card>
       </div>
