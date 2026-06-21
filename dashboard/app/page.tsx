@@ -33,6 +33,7 @@ import {
   listCompanies,
   analyzeCompany,
   getCachedReport,
+  getCachedAnalysis,
   checkHealth,
   getSchedulerStatus,
   type CompanyListItem,
@@ -76,11 +77,6 @@ export default function ControlRoom() {
       const online = await checkHealth();
       setBackendOnline(online);
 
-      if (!online) {
-        setLoading(false);
-        return;
-      }
-
       try {
         const [list, sched] = await Promise.all([
           listCompanies(),
@@ -96,6 +92,25 @@ export default function ControlRoom() {
           initial[c.id] = cached ? { status: "done", report: cached } : { status: "idle" };
         }
         setRowStates(initial);
+
+        // Automatically fetch already-calculated reports from backend or static cache in background
+        await Promise.all(
+          list.map(async (c) => {
+            if (!initial[c.id] || initial[c.id].status === "idle") {
+              try {
+                const report = await getCachedAnalysis(c.id);
+                if (report) {
+                  setRowStates((prev) => ({
+                    ...prev,
+                    [c.id]: { status: "done", report },
+                  }));
+                }
+              } catch (err) {
+                console.debug(`No cached analysis for client ${c.id}:`, err);
+              }
+            }
+          })
+        );
       } catch (err) {
         console.error("Failed to load companies:", err);
       } finally {

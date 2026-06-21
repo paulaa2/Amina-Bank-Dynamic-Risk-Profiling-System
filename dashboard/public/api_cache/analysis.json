@@ -1,0 +1,1094 @@
+{
+  "2": {
+    "client": {
+      "legal_name": "FTX Trading Ltd",
+      "country": "BS",
+      "jurisdiction": "BS",
+      "baseline_risk_rating": "HIGH",
+      "expected_business_model": "Centralised crypto-asset exchange and custody.",
+      "known_graph_nodes": 4
+    },
+    "security": {
+      "masked_entities": 8,
+      "company_token": "MASKED_COMPANY_001",
+      "note": "All Layer-1 text is processed locally on masked tokens."
+    },
+    "topology": {
+      "company_exposure": 0.0,
+      "circular_ownership_detected": false,
+      "top_contributors": [
+        {
+          "name": "Binance",
+          "type": "COMPANY",
+          "relation": "OWNS_MAJORITY",
+          "intrinsic_risk": 0.35,
+          "contributed": 0.175
+        },
+        {
+          "name": "Alameda Research",
+          "type": "COMPANY",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 0.35,
+          "contributed": 0.017
+        },
+        {
+          "name": "CoinDesk",
+          "type": "COMPANY",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 0.35,
+          "contributed": 0.017
+        },
+        {
+          "name": "Sequoia Capital",
+          "type": "COMPANY",
+          "relation": "OWNS_MINORITY",
+          "intrinsic_risk": 0.2,
+          "contributed": 0.01
+        },
+        {
+          "name": "Sam Bankman-Fried",
+          "type": "PERSON",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 0.0,
+          "contributed": 0.0
+        },
+        {
+          "name": "Caroline Ellison",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.0,
+          "contributed": 0.0
+        },
+        {
+          "name": "Ryan Salame",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.0,
+          "contributed": 0.0
+        }
+      ]
+    },
+    "streams": {
+      "bonferroni_scale": 2.0986,
+      "semantic": {
+        "last_statistic": 0.2465,
+        "threshold": 0.7799
+      },
+      "topology": {
+        "last_statistic": 0.0,
+        "threshold": 0.0563,
+        "observed_exposure": 0.0
+      },
+      "behavioral_tx": {
+        "last_statistic": 0.0,
+        "threshold": 6.6029
+      }
+    },
+    "decision": {
+      "alarm_fired": false,
+      "max_combined_risk": 0.316,
+      "threshold": 0.5,
+      "triggering_event": "FTX files for Chapter 11 bankruptcy and Sam Bankman-Fried resigns"
+    },
+    "cost": {
+      "events_seen": 6,
+      "events_passed_triage": 6,
+      "events_embedded": 11,
+      "cloud_reports_generated": 0,
+      "local_tokens": {
+        "prompt": 1623,
+        "completion": 504,
+        "cost_usd": 0.0
+      },
+      "cloud_tokens": {
+        "prompt": 0,
+        "completion": 0,
+        "cost_usd": 0.0
+      },
+      "projected_cloud_cost_per_1000_analyses_usd": 0.0,
+      "stage_calls": {
+        "embedding_profile": 1,
+        "sentinel_extract": 6
+      }
+    },
+    "governance": null,
+    "warnings": [],
+    "events": [
+      {
+        "title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
+        "masked_title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
+        "extracted_fact": "Alameda Research's balance sheet is heavily reliant on the FTX token (FTT).",
+        "triaged_in": true,
+        "semantic_distance": 0.377,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.03547597000933794,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.04548532687194936,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.0455,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_001",
+            "name": "Alameda Research",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": true
+          }
+        ],
+        "scenario_index": 1,
+        "date": "2022-11-02",
+        "source": "Reuters / CoinDesk timeline",
+        "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+        "evidence": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns."
+      },
+      {
+        "title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
+        "masked_title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
+        "extracted_fact": "Binance plans to liquidate its remaining FTT holdings linked to FTX following revelations by CoinDesk.",
+        "triaged_in": true,
+        "semantic_distance": 0.4067,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.07009716059608573,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.08987470283882987,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.0899,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_002",
+            "name": "Binance",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": true
+          },
+          {
+            "node_id": "DYN_COMPANY_003",
+            "name": "CoinDesk",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": true
+          }
+        ],
+        "scenario_index": 2,
+        "date": "2022-11-06",
+        "source": "Reuters",
+        "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+        "evidence": "Public counterparty action accelerates market pressure and begins a bank-run dynamic."
+      },
+      {
+        "title": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal",
+        "masked_title": "FTX faces withdrawal pressure and announces non-binding MASKED_COMPANY_007 rescue deal",
+        "extracted_fact": "FTX is facing pressure to withdraw from its non-binding rescue deal with MASKED_COMPANY_007.",
+        "triaged_in": true,
+        "semantic_distance": 0.4866,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.15166057898122767,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.19445080731363973,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.1945,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_002",
+            "name": "Binance",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": false
+          }
+        ],
+        "scenario_index": 3,
+        "date": "2022-11-08",
+        "source": "CoinDesk timeline",
+        "url": "https://www.coindesk.com/markets/2022/11/12/the-epic-collapse-of-sam-bankman-frieds-ftx-exchange-a-crypto-markets-timeline",
+        "evidence": "FTX withdrawal stress and bailout discussions show acute liquidity deterioration."
+      },
+      {
+        "title": "Binance walks away from FTX rescue after due diligence",
+        "masked_title": "MASKED_COMPANY_007 walks away from FTX rescue after due diligence",
+        "extracted_fact": "MASKED_COMPANY_007 decided to withdraw from participating in the rescue of FTX after completing due diligence.",
+        "triaged_in": true,
+        "semantic_distance": 0.5033,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.2225157833651884,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.28529743197633145,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.2853,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_002",
+            "name": "Binance",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "OWNS_MAJORITY",
+            "control_weight": 1.0,
+            "is_new": false
+          }
+        ],
+        "scenario_index": 4,
+        "date": "2022-11-09",
+        "source": "Reuters / CoinDesk",
+        "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+        "evidence": "Failed acquisition removes last-resort support and exposes severe financial issues."
+      },
+      {
+        "title": "FTX halts withdrawals and faces severe liquidity crisis",
+        "masked_title": "FTX halts withdrawals and faces severe liquidity crisis",
+        "extracted_fact": "FTX has halted withdrawals due to a severe liquidity crisis.",
+        "triaged_in": true,
+        "semantic_distance": 0.4287,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.20425677507783033,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.26188674130065703,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.2619,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [],
+        "scenario_index": 5,
+        "date": "2022-11-10",
+        "source": "Reuters",
+        "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+        "evidence": "Withdrawal halt is the material pre-bankruptcy failure event."
+      },
+      {
+        "title": "FTX files for Chapter 11 bankruptcy and Sam Bankman-Fried resigns",
+        "masked_title": "FTX files for Chapter 11 bankruptcy and MASKED_PERSON_002 resigns",
+        "extracted_fact": "FTX has initiated Chapter 11 bankruptcy proceedings.",
+        "triaged_in": true,
+        "semantic_distance": 0.5082,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.6129,
+        "stream_statistics": {
+          "semantic": 0.24646267555153623,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.3160008128388323,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.316,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [
+          {
+            "node_id": "89fd42ada90a4dd2",
+            "name": "Sam Bankman-Fried",
+            "type": "PERSON",
+            "intrinsic_risk": 0.0,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": false
+          }
+        ],
+        "scenario_index": 6,
+        "date": "2022-11-11",
+        "source": "Reuters",
+        "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+        "evidence": "Formal bankruptcy filing confirms the collapse."
+      }
+    ],
+    "report_markdown": null,
+    "scenario": {
+      "scenario_id": "ftx_rapid_deterioration",
+      "description": "Evidence-backed rapid deterioration replay: not slow KYC drift, but a multi-day liquidity and governance collapse before bankruptcy.",
+      "reference_model": "Centralised crypto-asset exchange and custody.",
+      "curated_event_count": 6,
+      "processed_event_count": 6
+    },
+    "id": "2"
+  },
+  "5": {
+    "client": {
+      "legal_name": "VTB Bank",
+      "country": "RU",
+      "jurisdiction": "RU",
+      "baseline_risk_rating": "HIGH",
+      "expected_business_model": "State-owned commercial and investment bank.",
+      "known_graph_nodes": 4
+    },
+    "security": {
+      "masked_entities": 6,
+      "company_token": "MASKED_COMPANY_001",
+      "note": "Global demo keeps each client ego graph isolated."
+    },
+    "topology": {
+      "company_exposure": 0.9,
+      "circular_ownership_detected": false,
+      "top_contributors": [
+        {
+          "name": "Government of Russia",
+          "type": "COMPANY",
+          "relation": "OWNS_MAJORITY",
+          "intrinsic_risk": 0.9,
+          "contributed": 0.45
+        },
+        {
+          "name": "Dmitry Pyanov",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.6,
+          "contributed": 0.3
+        },
+        {
+          "name": "Andrei Kostin",
+          "type": "PERSON",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.05
+        },
+        {
+          "name": "Gazprom",
+          "type": "COMPANY",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.05
+        },
+        {
+          "name": "Head of VTB Bank",
+          "type": "PERSON",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.05
+        }
+      ]
+    },
+    "streams": {
+      "bonferroni_scale": 2.0986,
+      "semantic": {
+        "last_statistic": 0.203,
+        "threshold": 0.778
+      },
+      "topology": {
+        "last_statistic": 0.0,
+        "threshold": 0.5475,
+        "observed_exposure": 0.9
+      },
+      "behavioral_tx": {
+        "last_statistic": 0.0,
+        "threshold": 28.9749
+      }
+    },
+    "decision": {
+      "alarm_fired": false,
+      "max_combined_risk": 0.2609,
+      "threshold": 0.5,
+      "triggering_event": "Russia’s VTB Bank chief charged with US sanctions violations - Banking Dive"
+    },
+    "cost": {
+      "events_seen": 5,
+      "events_passed_triage": 4,
+      "events_embedded": 9,
+      "cloud_reports_generated": 0,
+      "local_tokens": {
+        "prompt": 1105,
+        "completion": 377,
+        "cost_usd": 0.0
+      },
+      "cloud_tokens": {
+        "prompt": 0,
+        "completion": 0,
+        "cost_usd": 0.0
+      },
+      "projected_cloud_cost_per_1000_analyses_usd": 0.0,
+      "stage_calls": {
+        "embedding_profile": 1,
+        "sentinel_extract": 4
+      }
+    },
+    "governance": null,
+    "warnings": [],
+    "events": [
+      {
+        "title": "VTB Bank Georgia Hit with Int’l Sanctions - Civil Georgia",
+        "masked_title": "MASKED_COMPANY_001 Georgia Hit with Int’l Sanctions - Civil Georgia",
+        "extracted_fact": "MASKED_COMPANY_001 is subject to international sanctions due to its involvement in activities linked to Georgia.",
+        "triaged_in": true,
+        "semantic_distance": 0.4283,
+        "combined_risk": 0.0904,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [],
+        "date": "2022-02-25T08:00:00+00:00",
+        "source": "Civil Georgia",
+        "url": "https://news.google.com/rss/articles/CBMiR0FVX3lxTE9JMzRZZ1NycWlLSUpmWHBISVFwTk5oZHFwQmVjdS15UXNvTkJLekduRlVPLWtIMnZ4LUZTRkY5OG9TYkdzTUU00gFMQVVfeXFMTVpNdlhBWjBmaWswb3k2bDIxUm0yOU9XM1ZxQ3dRaXFxNnhXMlNmdWI1Z2lCcmo2Q2wyU19mWGRva2NLeUUxTFRycndNdg?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMiR0FVX3lxTE9JMzRZZ1NycWlLSUpmWHBISVFwTk5oZHFwQmVjdS15UXNvTkJLekduRlVPLWtIMnZ4LUZTRkY5OG9TYkdzTUU00gFMQVVfeXFMTVpNdlhBWjBmaWswb3k2bDIxUm0yOU9XM1ZxQ3dRaXFxNnhXMlNmdWI1Z2lCcmo2Q2wyU19mWGRva2NLeUUxTFRycndNdg?oc=5\" target=\"_blank\">VTB Bank Georgia Hit with Int’l Sanctions</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Civil Georgia</font>",
+        "topology_signal": 1.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.07030294963549652,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.09036567865233786,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        }
+      },
+      {
+        "title": "Russian bankers shuffled personal wealth offshore long before latest sanctions, Pandora Papers show - International Consortium of Investigative Journalists - ICIJ",
+        "masked_title": "",
+        "extracted_fact": "",
+        "triaged_in": false,
+        "semantic_distance": 0.0,
+        "combined_risk": 0.0,
+        "alarms": {},
+        "new_graph_nodes": [],
+        "date": "2022-04-11T07:00:00+00:00",
+        "source": "International Consortium of Investigative Journalists - ICIJ",
+        "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPelRZZHF2QmRqNmFMN0ZxMUJKazU1U2dsT3JjX05FOGlmdE1mNnVpajJNbEFWbVJDTDJXdFM4SHVSSHFBNWZWc2U3SEhzWEQyNWt5clM4dkRnSy1yMFRody1ONjR4blN4QmVJVzRhOUR5RUFNMktBWmppbl9uQ1NyME5pUFoxQVFUajBKSU5iQzVwLTlIYTlhRA?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMimAFBVV95cUxPelRZZHF2QmRqNmFMN0ZxMUJKazU1U2dsT3JjX05FOGlmdE1mNnVpajJNbEFWbVJDTDJXdFM4SHVSSHFBNWZWc2U3SEhzWEQyNWt5clM4dkRnSy1yMFRody1ONjR4blN4QmVJVzRhOUR5RUFNMktBWmppbl9uQ1NyME5pUFoxQVFUajBKSU5iQzVwLTlIYTlhRA?oc=5\" target=\"_blank\">Russian bankers shuffled personal wealth offshore long before latest sanctions, Pandora Papers show</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">International Consortium of Investigative Journalists - ICIJ</font>",
+        "topology_signal": 1.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {},
+        "stream_ratios": {}
+      },
+      {
+        "title": "Sanctioned VTB Bank and Putin Ally Andrei Kostin Behind Luxury Austrian Hotel - Organized Crime and Corruption Reporting Project | OCCRP",
+        "masked_title": "Sanctioned MASKED_COMPANY_001 and Putin Ally MASKED_PERSON_002 Behind Luxury Austrian Hotel - Organized Crime and Corruption Reporting Project | OCCRP",
+        "extracted_fact": "The Luxury Austrian Hotel is linked to sanctioned entity MASKED_COMPANY_001 and Putin ally MASKED_PERSON_002 through organized crime and corruption activities.",
+        "triaged_in": true,
+        "semantic_distance": 0.3953,
+        "combined_risk": 0.1042,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [
+          {
+            "node_id": "91eb3a2184372d63",
+            "name": "Andrei Kostin",
+            "type": "PERSON",
+            "intrinsic_risk": 1.0,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": false
+          }
+        ],
+        "date": "2022-07-28T07:00:00+00:00",
+        "source": "Organized Crime and Corruption Reporting Project | OCCRP",
+        "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOdU0yNWhwWkR6UnFKWkl5T3ZITGhWOGtYZmdNZWZFdFRoUF9CRDk3b2VaZVNCell6cnhKS1NCaURiUEVMcjZfbXhjb3VXRlliNFhkUGtoN1NienliQUpZUUl6eDUzcXdGRkM1T3YzNTA5aTlrTXlLWXdIa05EaXdVejF0aDlhNjhwZDMtd3FJUTVaTHpieGR1c0xLTVY1N0RHbkppaGk0Wmx1TnBxSk1OeHR5WDVLNFRmNUpJaFRwQ3dHZXM4dWFsdFBYa3Q?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMizAFBVV95cUxOdU0yNWhwWkR6UnFKWkl5T3ZITGhWOGtYZmdNZWZFdFRoUF9CRDk3b2VaZVNCell6cnhKS1NCaURiUEVMcjZfbXhjb3VXRlliNFhkUGtoN1NienliQUpZUUl6eDUzcXdGRkM1T3YzNTA5aTlrTXlLWXdIa05EaXdVejF0aDlhNjhwZDMtd3FJUTVaTHpieGR1c0xLTVY1N0RHbkppaGk0Wmx1TnBxSk1OeHR5WDVLNFRmNUpJaFRwQ3dHZXM4dWFsdFBYa3Q?oc=5\" target=\"_blank\">Sanctioned VTB Bank and Putin Ally Andrei Kostin Behind Luxury Austrian Hotel</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Organized Crime and Corruption Reporting Project | OCCRP</font>",
+        "topology_signal": 0.85,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.08106762982687554,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.10420233324525113,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        }
+      },
+      {
+        "title": "US charges head of Russia's VTB Bank for sanctions violations - Reuters",
+        "masked_title": "US charges head of Russia's MASKED_COMPANY_001 for sanctions violations - Reuters",
+        "extracted_fact": "The head of Russia's MASKED_COMPANY_001 has been charged by the US for violating sanctions.",
+        "triaged_in": true,
+        "semantic_distance": 0.4892,
+        "combined_risk": 0.1981,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_PERSON_001",
+            "name": "Head of VTB Bank",
+            "type": "PERSON",
+            "intrinsic_risk": 1.0,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": true
+          }
+        ],
+        "date": "2024-02-22T08:00:00+00:00",
+        "source": "Reuters",
+        "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxPZjE0N3REZ25WVHhQaGI0aHNiV3Fhb0UwUDhvZWdGWEs4dmlvaWtVdmN4YzgtdUkxWVF3MVc1YVBSUTBnX0YyV01PSWN1dzJXRUdNdENFYUtLU0NOYkJlX0h5cEx0THF1WDJ2MUFoNXczdGt2U0FOYUUtOUptUlZEOXpwczY4eGozNmU5VV82ZFdWODNDeWN6UlpEMDhnLUpUbGQzTDZkbVkzUQ?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMiqgFBVV95cUxPZjE0N3REZ25WVHhQaGI0aHNiV3Fhb0UwUDhvZWdGWEs4dmlvaWtVdmN4YzgtdUkxWVF3MVc1YVBSUTBnX0YyV01PSWN1dzJXRUdNdENFYUtLU0NOYkJlX0h5cEx0THF1WDJ2MUFoNXczdGt2U0FOYUUtOUptUlZEOXpwczY4eGozNmU5VV82ZFdWODNDeWN6UlpEMDhnLUpUbGQzTDZkbVkzUQ?oc=5\" target=\"_blank\">US charges head of Russia's VTB Bank for sanctions violations</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Reuters</font>",
+        "topology_signal": 0.9,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.15413008543240103,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.19811501285586655,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        }
+      },
+      {
+        "title": "Russia’s VTB Bank chief charged with US sanctions violations - Banking Dive",
+        "masked_title": "Russia’s MASKED_COMPANY_001 chief charged with US sanctions violations - Banking Dive",
+        "extracted_fact": "The chief executive of MASKED_COMPANY_001 has been charged with violating US sanctions.",
+        "triaged_in": true,
+        "semantic_distance": 0.4896,
+        "combined_risk": 0.2609,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [],
+        "date": "2024-02-23T08:00:00+00:00",
+        "source": "Banking Dive",
+        "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxNeWxjSm5sR3ZqNC02YVB1cUs2WHhYS0MxT0dHeVBqMk9HX1FmeEVWRUF0eHEybnF3d0lMRjhMalJrSXFsRFRTU0RGeDRpNmpNODQ4aTI4bXFnYUhpNVFablVjWWtMZ01MRG51RnRpUVhaVGs0N1ZYN3NrTGgybW9UUGdBcHlTdXZnU1VqX3NiUnlneTdNWGhwR1JRbWUyY3FmNHljWHNSNlNieGlRMnBhUzBYOUNXX3NvSHdTb3VIN2dXb2VrT3BsekpkMVdXUFY0WUFJUDZrYw?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMi1wFBVV95cUxNeWxjSm5sR3ZqNC02YVB1cUs2WHhYS0MxT0dHeVBqMk9HX1FmeEVWRUF0eHEybnF3d0lMRjhMalJrSXFsRFRTU0RGeDRpNmpNODQ4aTI4bXFnYUhpNVFablVjWWtMZ01MRG51RnRpUVhaVGs0N1ZYN3NrTGgybW9UUGdBcHlTdXZnU1VqX3NiUnlneTdNWGhwR1JRbWUyY3FmNHljWHNSNlNieGlRMnBhUzBYOUNXX3NvSHdTb3VIN2dXb2VrT3BsekpkMVdXUFY0WUFJUDZrYw?oc=5\" target=\"_blank\">Russia’s VTB Bank chief charged with US sanctions violations</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Banking Dive</font>",
+        "topology_signal": 0.9,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.2029571975348784,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.2608761792742147,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        }
+      }
+    ],
+    "report_markdown": null,
+    "id": "5"
+  },
+  "6": {
+    "client": {
+      "legal_name": "Gazprombank",
+      "country": "RU",
+      "jurisdiction": "RU",
+      "baseline_risk_rating": "HIGH",
+      "expected_business_model": "Large private/state-linked commercial bank.",
+      "known_graph_nodes": 3
+    },
+    "security": {
+      "masked_entities": 4,
+      "company_token": "MASKED_COMPANY_001",
+      "note": "Global demo keeps each client ego graph isolated."
+    },
+    "topology": {
+      "company_exposure": 0.945,
+      "circular_ownership_detected": false,
+      "top_contributors": [
+        {
+          "name": "Gazprom",
+          "type": "COMPANY",
+          "relation": "OWNS_MAJORITY",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.5
+        },
+        {
+          "name": "Andrey Akimov",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.8,
+          "contributed": 0.4
+        },
+        {
+          "name": "Government of Russia",
+          "type": "COMPANY",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 0.9,
+          "contributed": 0.045
+        }
+      ]
+    },
+    "streams": {
+      "bonferroni_scale": 2.0986,
+      "semantic": {
+        "last_statistic": 0.1736,
+        "threshold": 0.7135
+      },
+      "topology": {
+        "last_statistic": 0.0,
+        "threshold": 0.4977,
+        "observed_exposure": 0.945
+      },
+      "behavioral_tx": {
+        "last_statistic": 0.0,
+        "threshold": 4.4724
+      }
+    },
+    "decision": {
+      "alarm_fired": false,
+      "max_combined_risk": 0.2432,
+      "threshold": 0.5,
+      "triggering_event": "Opening Gazprombank Accounts May Be Breach of Sanctions - EU - Albanian Daily News"
+    },
+    "cost": {
+      "events_seen": 5,
+      "events_passed_triage": 2,
+      "events_embedded": 7,
+      "cloud_reports_generated": 0,
+      "local_tokens": {
+        "prompt": 553,
+        "completion": 163,
+        "cost_usd": 0.0
+      },
+      "cloud_tokens": {
+        "prompt": 0,
+        "completion": 0,
+        "cost_usd": 0.0
+      },
+      "projected_cloud_cost_per_1000_analyses_usd": 0.0,
+      "stage_calls": {
+        "embedding_profile": 1,
+        "sentinel_extract": 2
+      }
+    },
+    "governance": null,
+    "warnings": [],
+    "events": [
+      {
+        "title": "Gazprombank: The Big Russian Lender That Dodged Western Sanctions - WSJ",
+        "masked_title": "MASKED_COMPANY_001: The Big Russian Lender That Dodged Western Sanctions - WSJ",
+        "extracted_fact": "MASKED_COMPANY_001 continued its operations despite being linked to Russian entities and facing potential Western sanctions exposure.",
+        "triaged_in": true,
+        "semantic_distance": 0.4006,
+        "combined_risk": 0.1004,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [],
+        "date": "2022-03-12T08:00:00+00:00",
+        "source": "WSJ",
+        "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOZkFTUHF0T3hWeTlXRmV0eTYzcDVsV001OFNvUlhiY0ZFMnZNR2hsOVBDZmQ1b00xaUc2M09lMXNaXzJWbTl1TUdBTXUzU0FrRXp3X1AtWWM3dG9YY3Q4Mjc3N1lqcktBd0dMaVBueF9GVWpieUIzdHFtbUxDcTBScHU1NGc1RHByRUNJY3BkRWpwbHpacFFzaEo1Zzc3c09pbkVPclUzeHBhSzVCT1kxTlh3?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMisgFBVV95cUxOZkFTUHF0T3hWeTlXRmV0eTYzcDVsV001OFNvUlhiY0ZFMnZNR2hsOVBDZmQ1b00xaUc2M09lMXNaXzJWbTl1TUdBTXUzU0FrRXp3X1AtWWM3dG9YY3Q4Mjc3N1lqcktBd0dMaVBueF9GVWpieUIzdHFtbUxDcTBScHU1NGc1RHByRUNJY3BkRWpwbHpacFFzaEo1Zzc3c09pbkVPclUzeHBhSzVCT1kxTlh3?oc=5\" target=\"_blank\">Gazprombank: The Big Russian Lender That Dodged Western Sanctions</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">WSJ</font>",
+        "topology_signal": 0.945,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.0716229222453395,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.10037589141506632,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        }
+      },
+      {
+        "title": "Opening Gazprombank Accounts May Be Breach of Sanctions - EU - Albanian Daily News",
+        "masked_title": "Opening MASKED_COMPANY_001 Accounts May Be Breach of Sanctions - EU - Albanian Daily News",
+        "extracted_fact": "Opening accounts for MASKED_COMPANY_001 may constitute a breach of sanctions.",
+        "triaged_in": true,
+        "semantic_distance": 0.4706,
+        "combined_risk": 0.2432,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [],
+        "date": "2022-04-28T07:00:00+00:00",
+        "source": "Albanian Daily News",
+        "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNRHNfRTh6QVRPa2FiUUZYVVpsR1M4cUt4c1dCa2VsaE54bWl0ZUt6eVBlV2FIbUs2QWVEcVZnRVZVQi00RmdwQWZNTEphNnE0MU01eHhRTUM4MTJERlV2UnVYaTB0OHI0QmhDWnN2NE1VWDVOdGlkWDd5NHFHUVVXdWhoUE1NUUVmOVdFYVVsS0J2c0I4dXhldkstaw?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMimwFBVV95cUxNRHNfRTh6QVRPa2FiUUZYVVpsR1M4cUt4c1dCa2VsaE54bWl0ZUt6eVBlV2FIbUs2QWVEcVZnRVZVQi00RmdwQWZNTEphNnE0MU01eHhRTUM4MTJERlV2UnVYaTB0OHI0QmhDWnN2NE1VWDVOdGlkWDd5NHFHUVVXdWhoUE1NUUVmOVdFYVVsS0J2c0I4dXhldkstaw?oc=5\" target=\"_blank\">Opening Gazprombank Accounts May Be Breach of Sanctions - EU</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Albanian Daily News</font>",
+        "topology_signal": 0.945,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.17355740588585086,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.24323189813177917,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        }
+      },
+      {
+        "title": "Ukraine war: First ladies meet as US announces new sanctions - BBC",
+        "masked_title": "",
+        "extracted_fact": "",
+        "triaged_in": false,
+        "semantic_distance": 0.0,
+        "combined_risk": 0.0,
+        "alarms": {},
+        "new_graph_nodes": [],
+        "date": "2022-05-08T07:00:00+00:00",
+        "source": "BBC",
+        "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBlb2JKcnFMOXBJc24yMzZ3TGRjalFFcV82OV9zbks3d011WDBDZG1NWkxMcTlYMzZ6d0FHeFpiX3MzY0hFMWFzZENRVF9RWEtJWHpONDFFQTJkUQ?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMiWkFVX3lxTFBlb2JKcnFMOXBJc24yMzZ3TGRjalFFcV82OV9zbks3d011WDBDZG1NWkxMcTlYMzZ6d0FHeFpiX3MzY0hFMWFzZENRVF9RWEtJWHpONDFFQTJkUQ?oc=5\" target=\"_blank\">Ukraine war: First ladies meet as US announces new sanctions</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">BBC</font>",
+        "topology_signal": 0.945,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {},
+        "stream_ratios": {}
+      },
+      {
+        "title": "U.S. Sanctions Russian TV Stations, Prohibits Accounting Services After G7 Leaders Meet - Radio Free Europe/Radio Liberty",
+        "masked_title": "",
+        "extracted_fact": "",
+        "triaged_in": false,
+        "semantic_distance": 0.0,
+        "combined_risk": 0.0,
+        "alarms": {},
+        "new_graph_nodes": [],
+        "date": "2022-05-08T07:00:00+00:00",
+        "source": "Radio Free Europe/Radio Liberty",
+        "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxObVlfcHR2bE9kUW5SeG9QZEZzMHpqbmkwNGUteXJDVG1vcU5xdmd2RS13QXA0XzZZNktxYzZsSUZnQzFUOGxhdDg3QTJRM05oRTVKWS1JTEoxUkEyUjNDQmZGOHlkelpWYjc0Z2lDaWREdEgzMXd4elR2NnZjcFk0RDFNZm1Qak42QkRXRVp30gGQAUFVX3lxTFBKVkZyUFlMOFlweHFDYlhPd1dxQUVKVE9SR01MUm9RMGJ2eDZHZzZmY0M2ZVNELXlLTkQ3NWJmXzgxUGdsMmJhaTdydHA0RmVuNUUyVmxMMVFsSTlLTnlvNFpkbEtQR3Zhdm5xNkdhNnlKbVJUM3Z3YVo5YUxrUWFBNDVKNVlBdzVFUllabkNfZg?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMijgFBVV95cUxObVlfcHR2bE9kUW5SeG9QZEZzMHpqbmkwNGUteXJDVG1vcU5xdmd2RS13QXA0XzZZNktxYzZsSUZnQzFUOGxhdDg3QTJRM05oRTVKWS1JTEoxUkEyUjNDQmZGOHlkelpWYjc0Z2lDaWREdEgzMXd4elR2NnZjcFk0RDFNZm1Qak42QkRXRVp30gGQAUFVX3lxTFBKVkZyUFlMOFlweHFDYlhPd1dxQUVKVE9SR01MUm9RMGJ2eDZHZzZmY0M2ZVNELXlLTkQ3NWJmXzgxUGdsMmJhaTdydHA0RmVuNUUyVmxMMVFsSTlLTnlvNFpkbEtQR3Zhdm5xNkdhNnlKbVJUM3Z3YVo5YUxrUWFBNDVKNVlBdzVFUllabkNfZg?oc=5\" target=\"_blank\">U.S. Sanctions Russian TV Stations, Prohibits Accounting Services After G7 Leaders Meet</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Radio Free Europe/Radio Liberty</font>",
+        "topology_signal": 0.945,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {},
+        "stream_ratios": {}
+      },
+      {
+        "title": "Investigation: Free From Western Sanctions, A Russian Bank Helps Fund The Invasion Of Ukraine - Radio Free Europe/Radio Liberty",
+        "masked_title": "",
+        "extracted_fact": "",
+        "triaged_in": false,
+        "semantic_distance": 0.0,
+        "combined_risk": 0.0,
+        "alarms": {},
+        "new_graph_nodes": [],
+        "date": "2022-06-28T07:00:00+00:00",
+        "source": "Radio Free Europe/Radio Liberty",
+        "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOckpLMGRheXpZMjhTSFM1NGhUU1c3R1F3SnN6cUlnWTNKU0xqWXp5ZExLVmE3UUdnOXdxQnRlODBZN3JSOWZvMkFoZEpHcndBMldfMFR0QlZyTWI2czJzQjBGTXc4WXUxVUt1Rnd6anNrWVNJWXRzbjUtMWpPREVudEpFeFU4RU1hWFZTaU4wem15SWh6U1VDdnlUVTFlODFs?oc=5",
+        "evidence": "<a href=\"https://news.google.com/rss/articles/CBMioAFBVV95cUxOckpLMGRheXpZMjhTSFM1NGhUU1c3R1F3SnN6cUlnWTNKU0xqWXp5ZExLVmE3UUdnOXdxQnRlODBZN3JSOWZvMkFoZEpHcndBMldfMFR0QlZyTWI2czJzQjBGTXc4WXUxVUt1Rnd6anNrWVNJWXRzbjUtMWpPREVudEpFeFU4RU1hWFZTaU4wem15SWh6U1VDdnlUVTFlODFs?oc=5\" target=\"_blank\">Investigation: Free From Western Sanctions, A Russian Bank Helps Fund The Invasion Of Ukraine</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Radio Free Europe/Radio Liberty</font>",
+        "topology_signal": 0.945,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {},
+        "stream_ratios": {}
+      }
+    ],
+    "report_markdown": null,
+    "id": "6"
+  },
+  "7": {
+    "client": {
+      "legal_name": "Surgutneftegas",
+      "country": "RU",
+      "jurisdiction": "RU",
+      "baseline_risk_rating": "HIGH",
+      "expected_business_model": "Vertically integrated Russian oil and gas producer.",
+      "known_graph_nodes": 2
+    },
+    "security": {
+      "masked_entities": 4,
+      "company_token": "MASKED_COMPANY_001",
+      "note": "All Layer-1 text is processed locally on masked tokens."
+    },
+    "topology": {
+      "company_exposure": 0.375,
+      "circular_ownership_detected": false,
+      "top_contributors": [
+        {
+          "name": "Russian energy sector",
+          "type": "COMPANY",
+          "relation": "LEGAL_PROCEEDING",
+          "intrinsic_risk": 1.0,
+          "contributed": 0.375
+        },
+        {
+          "name": "Government of Russia",
+          "type": "COMPANY",
+          "relation": "ASSOCIATED_WITH",
+          "intrinsic_risk": 0.15,
+          "contributed": 0.007
+        },
+        {
+          "name": "Vladimir Bogdanov",
+          "type": "PERSON",
+          "relation": "DIRECTS",
+          "intrinsic_risk": 0.0,
+          "contributed": 0.0
+        }
+      ]
+    },
+    "streams": {
+      "bonferroni_scale": 2.0986,
+      "semantic": {
+        "last_statistic": 0.0,
+        "threshold": 0.9068
+      },
+      "topology": {
+        "last_statistic": 0.3183,
+        "threshold": 0.0563,
+        "observed_exposure": 0.375
+      },
+      "behavioral_tx": {
+        "last_statistic": 0.0,
+        "threshold": 6.0149
+      }
+    },
+    "decision": {
+      "alarm_fired": true,
+      "max_combined_risk": 0.8,
+      "threshold": 0.5,
+      "triggering_event": "EU refined oil products ban adds revenue pressure on Surgutneftegas and Russian energy sector"
+    },
+    "cost": {
+      "events_seen": 4,
+      "events_passed_triage": 4,
+      "events_embedded": 9,
+      "cloud_reports_generated": 1,
+      "local_tokens": {
+        "prompt": 1092,
+        "completion": 415,
+        "cost_usd": 0.0
+      },
+      "cloud_tokens": {
+        "prompt": 832,
+        "completion": 548,
+        "cost_usd": 0.000924
+      },
+      "projected_cloud_cost_per_1000_analyses_usd": 0.231,
+      "stage_calls": {
+        "embedding_profile": 1,
+        "sentinel_extract": 4,
+        "groq_report": 1
+      }
+    },
+    "governance": {
+      "alert_id": "ALT_007",
+      "target_entity_id": "COMPANY_7",
+      "target_display_name": "Surgutneftegas",
+      "risk_score": 0.8,
+      "trigger_streams": [
+        "topology"
+      ],
+      "status": "DETECTED",
+      "assigned_analyst": null,
+      "proposed_mitigation_action": null,
+      "compliance_approver": null,
+      "audit_trail": [
+        {
+          "timestamp": "2026-06-21T01:52:00+00:00",
+          "user": "system",
+          "action": "Alert detected by drift fusion gateway",
+          "resulting_status": "DETECTED"
+        }
+      ]
+    },
+    "warnings": [],
+    "events": [
+      {
+        "title": "US sectoral restrictions target Russian oil companies including Surgutneftegas",
+        "masked_title": "US sectoral restrictions target Russian oil companies including MASKED_COMPANY_001",
+        "extracted_fact": "US sectoral restrictions have been imposed on Russian oil companies including MASKED_COMPANY_001.",
+        "triaged_in": true,
+        "semantic_distance": 0.3381,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.0,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.0,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.0,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [],
+        "scenario_index": 1,
+        "date": "2014-09-12",
+        "source": "OpenSanctions / sanctions summaries",
+        "url": "https://www.opensanctions.org/entities/NK-gyXAZAjfijNDV3fHyi8HTR/adjacent/sanctions/",
+        "evidence": "OpenSanctions records US sanctions entries for Surgutneftegas starting 2014-09-12."
+      },
+      {
+        "title": "BIS Entity List restrictions apply to Surgutneftegas-linked Russian energy technology exposure",
+        "masked_title": "BIS Entity List restrictions apply to MASKED_COMPANY_001-linked Russian energy technology exposure",
+        "extracted_fact": "MASKED_COMPANY_001 is subject to BIS Entity List restrictions due to its association with Russian energy technology.",
+        "triaged_in": true,
+        "semantic_distance": 0.4047,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.017244469657491296,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.019017541852675766,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.019,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [],
+        "scenario_index": 2,
+        "date": "2014-09-17",
+        "source": "OpenSanctions",
+        "url": "https://www.opensanctions.org/entities/NK-gyXAZAjfijNDV3fHyi8HTR/adjacent/sanctions/",
+        "evidence": "BIS Entity List entry appears in sanctions adjacency data."
+      },
+      {
+        "title": "G7/EU oil price cap increases Surgutneftegas sanctions exposure for Russian oil exports",
+        "masked_title": "G7/EU oil price cap increases MASKED_COMPANY_001 sanctions exposure for Russian oil exports",
+        "extracted_fact": "MASKED_COMPANY_001's operations are exposed to sanctions due to its involvement in Russian oil exports under the G7/EU oil price cap.",
+        "triaged_in": true,
+        "semantic_distance": 0.318,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.0,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.0,
+          "topology": 0.0,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.0,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [],
+        "scenario_index": 3,
+        "date": "2022-12-05",
+        "source": "International sanctions summary",
+        "url": "https://en.wikipedia.org/wiki/International_sanctions_during_the_Russo-Ukrainian_war",
+        "evidence": "Oil price cap comes into effect to reduce Russia's ability to finance the war."
+      },
+      {
+        "title": "EU refined oil products ban adds revenue pressure on Surgutneftegas and Russian energy sector",
+        "masked_title": "EU refined oil products ban adds revenue pressure on MASKED_COMPANY_001 and Russian energy sector",
+        "extracted_fact": "The EU refined oil products ban has increased revenue pressure on MASKED_COMPANY_001 and the Russian energy sector.",
+        "triaged_in": true,
+        "semantic_distance": 0.2984,
+        "topology_signal": 0.375,
+        "behavioral_signal": 0.0,
+        "stream_statistics": {
+          "semantic": 0.0,
+          "topology": 0.3182502588016679,
+          "behavioral_tx": 0.0
+        },
+        "stream_ratios": {
+          "semantic": 0.0,
+          "topology": 0.8,
+          "behavioral_tx": 0.0
+        },
+        "combined_risk": 0.8,
+        "alarms": {
+          "semantic": false,
+          "topology": true,
+          "behavioral_tx": false
+        },
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_001",
+            "name": "Russian energy sector",
+            "type": "COMPANY",
+            "intrinsic_risk": 1.0,
+            "relation": "LEGAL_PROCEEDING",
+            "control_weight": 0.75,
+            "is_new": true
+          }
+        ],
+        "scenario_index": 4,
+        "date": "2023-02-05",
+        "source": "International sanctions summary",
+        "url": "https://en.wikipedia.org/wiki/International_sanctions_during_the_Russo-Ukrainian_war",
+        "evidence": "Refined oil product restrictions add sectoral pressure to Russian oil producers."
+      }
+    ],
+    "report_markdown": "# AML COMPLIANCE REPORT - ALERT RECORD ALT_007\n## 1. EXECUTIVE SUMMARY\nThe client profile of Surgutneftegas, a vertically integrated Russian oil and gas producer, has undergone a significant change due to the EU refined oil products ban. This ban has increased revenue pressure on the company and the Russian energy sector, potentially altering its expected business model and baseline risk rating.\n\n## 2. OPERATIONAL EXPLANATION FOR THE RISK COMMITTEE\n- What changed in the client profile: The EU refined oil products ban has added revenue pressure on Surgutneftegas, potentially impacting its financial stability and increasing its risk profile.\n- Why it matters for KYC/AML: The change in revenue pressure may lead to a shift in the company's business model, potentially increasing its exposure to high-risk activities and compromising its compliance with AML regulations.\n- Primary trigger: The topology alarm stream is true, indicating a significant change in the company's topological exposure, driven by the \"Russian energy sector\" node with a relation of \"LEGAL_PROCEEDING\" and an intrinsic risk of 1.0.\n\n## 3. MULTI-STREAM KYC DRIFT ANALYSIS\n- Semantic Drift and Statistical Test: The semantic cosine distance is 0.2984, indicating a moderate drift in the company's semantic profile. However, the semantic alarm stream is false, suggesting that this drift is not significant enough to trigger an alarm.\n- Control-Graph Topology Contagion: The topological exposure is 0.375, indicating a moderate level of exposure to high-risk entities. The topology alarm stream is true, suggesting that this exposure has increased significantly.\n- Transaction Anomaly (Z-Score): The behavioral transaction alarm stream is false, indicating that there are no significant anomalies in the company's transaction behavior.\n\n## 4. AUDITABLE METRIC TRACE\nThe following metrics support the recommended action:\n- Combined risk: 0.8\n- Semantic cosine distance: 0.2984\n- Topological exposure: 0.375\n- Dynamic graph nodes: 1 new node added, \"Russian energy sector\", with an intrinsic risk of 1.0 and a control weight of 0.75.\n\n## 5. RECOMMENDED GOVERNANCE ACTION\n- ENHANCED DUE DILIGENCE: The significant change in the company's topological exposure, driven by the \"Russian energy sector\" node, warrants enhanced due diligence to reassess the company's risk profile and ensure compliance with AML regulations. The proposed action is justified by the need to mitigate potential risks associated with the company's increased exposure to high-risk entities and activities.",
+    "scenario": {
+      "scenario_id": "surgutneftegas_sanctions_escalation",
+      "description": "Russian energy-sector escalation replay from sectoral controls to full US/UK oil-major designation.",
+      "reference_model": "Vertically integrated Russian oil and gas producer.",
+      "curated_event_count": 6,
+      "processed_event_count": 4
+    },
+    "id": "7"
+  }
+}

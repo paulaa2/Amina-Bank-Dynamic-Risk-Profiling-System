@@ -20,15 +20,12 @@ from typing import Any
 from scripts.collectors.base import adverse_media_score
 
 from .config import DATA_DIR, load_config
-from .ingestion import ClientProfileRepository, NewsEvent
-from .pipeline import EngineReport, PerpetualKYCPipeline
-from .run_demo import _report_to_dict
+from .ingestion import NewsEvent
+from .pipeline import PerpetualKYCPipeline
 
 _SEMANTIC = "semantic"
 _TOPOLOGY = "topology"
 _BEHAVIOURAL = "behavioral_tx"
-
-SCENARIOS_DIR = DATA_DIR / "scenarios"
 
 
 def _parse_event_date(value: str) -> dt.datetime | None:
@@ -81,36 +78,7 @@ def _order_scenario_events(events: list[dict[str, Any]], replay_order: str) -> l
     return _chronological_scenario_events(events)
 
 
-def find_scenario_path(scenario_id: str, scenario_dir: Path | None = None) -> Path:
-    """Resolve a scenario JSON path by ``scenario_id`` or filename stem."""
-    root = scenario_dir or SCENARIOS_DIR
-    for path in sorted(root.glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if data.get("scenario_id") == scenario_id or path.stem == scenario_id:
-            return path
-    raise LookupError(f"Unknown scenario '{scenario_id}' under {root}")
-
-
-def list_replay_scenarios(scenario_dir: Path | None = None) -> list[dict[str, Any]]:
-    """Return metadata for every curated replay scenario (for API / dashboard)."""
-    root = scenario_dir or SCENARIOS_DIR
-    scenarios: list[dict[str, Any]] = []
-    for path in sorted(root.glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        scenarios.append(
-            {
-                "scenario_id": str(data.get("scenario_id") or path.stem),
-                "client": str(data.get("client") or ""),
-                "description": str(data.get("description") or ""),
-                "reference_model": str(data.get("reference_model") or ""),
-                "event_count": len(data.get("events") or []),
-            }
-        )
-    return scenarios
-
-
-def run_scenario_engine(path: Path) -> tuple[dict[str, Any], EngineReport]:
-    """Execute one scenario through the pKYC pipeline and return raw scenario + report."""
+def replay_scenario(path: Path) -> dict[str, Any]:
     scenario = json.loads(path.read_text(encoding="utf-8"))
     replay_order = str(scenario.get("replay_order") or "chronological")
     news = _scenario_events_as_news(scenario)
@@ -124,61 +92,8 @@ def run_scenario_engine(path: Path) -> tuple[dict[str, Any], EngineReport]:
         events_override=stream,
         burn_in_events=burn_in or None,
     )
-    return scenario, report
 
-
-def replay_scenario_for_api(
-    scenario_id: str,
-    database_url: str | None = None,
-) -> dict[str, Any]:
-    """Run a curated scenario and return a dashboard-compatible LiveReport payload."""
-    path = find_scenario_path(scenario_id)
-    scenario, report = run_scenario_engine(path)
-    result = _report_to_dict(report)
-    replay_order = str(scenario.get("replay_order") or "chronological")
-    scenario_events = _order_scenario_events(
-        [event for event in scenario["events"] if not event.get("burn_in")],
-        replay_order,
-    )
-    for index, (source_event, output_event) in enumerate(
-        zip(scenario_events, result.get("events", [])),
-        start=1,
-    ):
-        output_event["scenario_index"] = index
-        output_event["date"] = source_event.get("date")
-        output_event["source"] = source_event.get("source")
-        output_event["url"] = source_event.get("url")
-        output_event["evidence"] = source_event.get("evidence")
-    result["scenario"] = {
-        "scenario_id": str(scenario.get("scenario_id") or path.stem),
-        "description": scenario.get("description"),
-        "reference_model": scenario.get("reference_model"),
-        "curated_event_count": len(scenario_events),
-        "processed_event_count": len(result.get("events", [])),
-    }
-
-    config = load_config()
-    db_url = database_url or config.database_url
-    repo = ClientProfileRepository(db_url)
-    client_name = str(scenario["client"])
-    matched_id = next(
-        (
-            row["id"]
-            for row in repo.list_companies()
-            if client_name.lower() in row["legal_name"].lower()
-            or row["legal_name"].lower() in client_name.lower()
-        ),
-        None,
-    )
-    if matched_id is not None:
-        result["id"] = str(matched_id)
-    return result
-
-
-def replay_scenario(path: Path) -> dict[str, Any]:
-    scenario, report = run_scenario_engine(path)
     threshold = float(report.decision["threshold"])
-    replay_order = str(scenario.get("replay_order") or "chronological")
     rows: list[dict[str, Any]] = []
     alarm_row: dict[str, Any] | None = None
     scenario_events = _order_scenario_events(
@@ -325,23 +240,6 @@ def _write_all_results(results: list[dict[str, Any]], output_dir: Path) -> tuple
     return summary_path, events_path
 
 
-def _graph_mutation_summary(result: dict[str, Any]) -> str:
-    """Compact graph-mutation line for CLI summaries."""
-    seen: set[str] = set()
-    labels: list[str] = []
-    for row in result.get("events", []):
-        for node in row.get("new_graph_nodes") or []:
-            name = str(node.get("name") or "")
-            if not name or name in seen:
-                continue
-            seen.add(name)
-            tag = "new" if node.get("is_new", True) else "link"
-            labels.append(f"{name} ({tag})")
-    if not labels:
-        return "graph: no new nodes"
-    return "graph: " + ", ".join(labels)
-
-
 def _print_human(result: dict[str, Any]) -> None:
     print(f"SCENARIO: {result['scenario_id']} — {result['client']}")
     print(result["description"])
@@ -398,19 +296,6 @@ def main() -> None:
         default=DATA_DIR.as_posix(),
         help="Directory for --all aggregate outputs.",
     )
-    parser.add_argument(
-        "--push-to-api",
-        action="store_true",
-        help=(
-            "After --all, POST each result to the running API so the dashboard "
-            "shows graph mutations automatically. Default API URL: http://localhost:8000"
-        ),
-    )
-    parser.add_argument(
-        "--api-url",
-        default="http://localhost:8000",
-        help="Base URL of the running API (used with --push-to-api).",
-    )
     args = parser.parse_args()
 
     if args.all:
@@ -424,43 +309,13 @@ def main() -> None:
         print(f"Wrote {summary_path} and {events_path}")
         print()
         for result in results:
-            if result["alarm_event_index"]:
-                alarm_risk = result["events"][result["alarm_event_index"] - 1]["combined_risk"]
-                print(
-                    f"- {result['client']}: alarm_event={result['alarm_event_index']} "
-                    f"date={result['alarm_date']} risk={alarm_risk:.4f} | "
-                    f"{_graph_mutation_summary(result)}"
-                )
-            else:
-                print(
-                    f"- {result['client']}: no alarm | {_graph_mutation_summary(result)}"
-                )
-        print()
-        print(f"Full graph details: {Path(args.output_dir) / 'scenario_replay_summary.json'}")
-
-        if args.push_to_api:
-            import urllib.request
-            import urllib.error
-            api = args.api_url.rstrip("/")
-            print()
-            pushed = 0
-            for result in results:
-                sid = result.get("scenario_id")
-                if not sid:
-                    continue
-                url = f"{api}/api/scenario-replay/{sid}?force_refresh=true"
-                req = urllib.request.Request(url, method="POST")
-                try:
-                    with urllib.request.urlopen(req, timeout=300) as resp:
-                        data = json.loads(resp.read())
-                        company = data.get("client", {}).get("legal_name", sid)
-                        nodes = sum(len(e.get("new_graph_nodes") or []) for e in data.get("events", []))
-                        print(f"  ✓ {company} → cached in API ({nodes} graph nodes)")
-                        pushed += 1
-                except urllib.error.URLError as exc:
-                    print(f"  ✗ {sid}: could not reach API ({exc}) — is `python -m src.api` running?")
-            if pushed:
-                print(f"\nDashboard ready: open http://localhost:3000 and click any client → 'Curated replay'")
+            print(
+                f"- {result['client']}: alarm_event={result['alarm_event_index']} "
+                f"date={result['alarm_date']} risk="
+                f"{result['events'][result['alarm_event_index'] - 1]['combined_risk']:.4f}"
+                if result["alarm_event_index"]
+                else f"- {result['client']}: no alarm"
+            )
         return
 
     result = replay_scenario(Path(args.scenario))

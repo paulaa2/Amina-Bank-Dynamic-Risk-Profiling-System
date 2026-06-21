@@ -235,20 +235,29 @@ html.light .app-shell {
   background: var(--surface-page);
 }
 
+.app-shell.bg-slate-950,
 .app-shell .bg-slate-950,
+.app-shell.bg-slate-950\/80,
 .app-shell .bg-slate-950\/80 {
   background-color: var(--surface-page) !important;
 }
 
+.app-shell.bg-slate-900,
 .app-shell .bg-slate-900,
+.app-shell.bg-slate-900\/80,
 .app-shell .bg-slate-900\/80 {
   background-color: var(--surface-panel) !important;
 }
 
+.app-shell.bg-slate-800,
 .app-shell .bg-slate-800,
+.app-shell.bg-slate-800\/20,
 .app-shell .bg-slate-800\/20,
+.app-shell.bg-slate-800\/40,
 .app-shell .bg-slate-800\/40,
+.app-shell.bg-slate-800\/50,
 .app-shell .bg-slate-800\/50,
+.app-shell.bg-slate-800\/60,
 .app-shell .bg-slate-800\/60 {
   background-color: var(--surface-muted) !important;
 }
@@ -280,8 +289,11 @@ html.light .evidence-modal-panel {
   border-color: var(--surface-border) !important;
 }
 
+.app-shell.text-slate-100,
 .app-shell .text-slate-100,
+.app-shell.text-slate-200,
 .app-shell .text-slate-200,
+.app-shell.text-slate-300,
 .app-shell .text-slate-300 {
   color: var(--text-strong) !important;
 }

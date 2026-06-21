@@ -8,15 +8,19 @@ import {
   ScrollText,
   ShieldCheck,
   Network,
+  BarChart3,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV_ITEMS = [
-  { label: "Control Room",    href: "/",        icon: LayoutDashboard },
-  { label: "Client Dossiers", href: "/client",  icon: FolderOpen      },
-  { label: "Demo Studio",     href: "/demos",   icon: Network         },
-  { label: "Audit History",   href: "/history", icon: ScrollText      },
+  { label: "Control Room",         href: "/",        icon: LayoutDashboard },
+  { label: "Client Dossiers",      href: "/client",  icon: FolderOpen      },
+  { label: "Demo Studio",          href: "/demos",   icon: Network         },
+  { label: "Comparative Metrics",  href: "/metrics", icon: BarChart3       },
+  { label: "Pipeline Efficiency",  href: "/efficiency", icon: Zap           },
+  { label: "Audit History",        href: "/history", icon: ScrollText      },
 ];
 
 export function Sidebar() {

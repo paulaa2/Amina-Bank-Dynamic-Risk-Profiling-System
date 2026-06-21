@@ -21,6 +21,7 @@ import { AlertBadge } from "@/components/alert-badge";
 import {
   listCompanies,
   getCachedReport,
+  getCachedAnalysis,
   checkHealth,
   type CompanyListItem,
   type LiveReport,
@@ -45,7 +46,6 @@ export default function ClientDossiers() {
     (async () => {
       const online = await checkHealth();
       setBackendOnline(online);
-      if (!online) { setLoading(false); return; }
 
       try {
         const list = await listCompanies();
@@ -61,6 +61,27 @@ export default function ClientDossiers() {
           if (r) cached[c.id] = r;
         }
         setCachedReports(cached);
+
+        // Automatically fetch already-calculated reports from backend or static cache in background
+        await Promise.all(
+          sorted.map(async (c) => {
+            if (!cached[c.id]) {
+              try {
+                const report = await getCachedAnalysis(c.id);
+                if (report) {
+                  setCachedReports((prev) => ({
+                    ...prev,
+                    [c.id]: report,
+                  }));
+                }
+              } catch (err) {
+                console.debug(`No cached analysis for client ${c.id}:`, err);
+              }
+            }
+          })
+        );
+      } catch (err) {
+        console.error("Failed to load dossiers:", err);
       } finally {
         setLoading(false);
       }

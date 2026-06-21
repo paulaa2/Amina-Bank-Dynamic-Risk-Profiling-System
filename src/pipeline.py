@@ -195,10 +195,6 @@ class PerpetualKYCPipeline:
                     k_std_delta=self.config.ph_semantic_delta_std,
                     k_std_threshold=self.config.ph_semantic_threshold_std,
                 )
-                # Re-apply the Bonferroni scale that DriftFusion applied at
-                # construction — the re-seed above resets threshold to the raw
-                # value, losing the family-wise error rate correction.
-                sem_det.threshold *= fusion.bonferroni_scale
         outcomes: list[EventOutcome] = []
         max_risk = 0.0
         peak_outcome: EventOutcome | None = None
@@ -356,7 +352,7 @@ class PerpetualKYCPipeline:
                         "intrinsic_risk": round(c["intrinsic_risk"], 3),
                         "contributed": round(c["contributed"], 3),
                     }
-                    for c in contributors
+                    for c in contributors[:5]
                 ],
             },
             streams=self._stream_summary(fusion, sem_det, topo_det, tx_det, company_exposure),
@@ -549,7 +545,7 @@ class PerpetualKYCPipeline:
     ) -> tuple[str, bool, list[dict]]:
         """Stage 2: atomic fact extraction on masked text (chat model)."""
         if not local_ok:
-            return masked_title, True, self._ner_fallback(masked_title)
+            return masked_title, True, []
         fact = self.sentinel.extract(masked_title)
         self.cost.add_local(
             self.ollama.last_usage.prompt_tokens,
@@ -557,54 +553,6 @@ class PerpetualKYCPipeline:
             "sentinel_extract",
         )
         return fact.text_for_embedding, fact.used_fallback, fact.entities_involved
-
-    @staticmethod
-    def _ner_fallback(text: str) -> list[dict]:
-        """Lightweight regex NER used when Ollama is unavailable.
-
-        Extracts capitalised noun phrases (2-3 consecutive Title-Case tokens)
-        that are likely company or person names.  MASKED_* tokens and
-        single-letter tokens are skipped.
-        """
-        import re
-        # Split into whitespace-separated tokens, strip punctuation.
-        tokens = re.split(r"\s+", text.strip())
-        clean = [re.sub(r"[^A-Za-z0-9']", "", t) for t in tokens]
-
-        skip = {
-            "The", "A", "An", "In", "On", "At", "For", "And", "Or", "But",
-            "With", "From", "To", "By", "Of", "Is", "Are", "Was", "Were",
-            "Has", "Have", "Had", "Its", "This", "That", "After", "Before",
-            "New", "Will", "Says", "Said", "Reports", "Files", "Faces",
-            "Halts", "Walks", "Away", "After", "Due",
-        }
-        entities: list[dict] = []
-        seen: set[str] = set()
-        i = 0
-        while i < len(clean):
-            tok = clean[i]
-            # Skip masked tokens, short tokens, or lowercase words
-            if not tok or tok.startswith("MASKED") or not tok[0].isupper() or tok in skip:
-                i += 1
-                continue
-            # Try to build a multi-word phrase (up to 3 tokens)
-            phrase_tokens = [tok]
-            j = i + 1
-            while j < min(i + 3, len(clean)):
-                nxt = clean[j]
-                if nxt and nxt[0].isupper() and nxt not in skip and not nxt.startswith("MASKED"):
-                    phrase_tokens.append(nxt)
-                    j += 1
-                else:
-                    break
-            phrase = " ".join(phrase_tokens)
-            if len(phrase) > 2 and phrase not in seen:
-                seen.add(phrase)
-                # Heuristic: single capitalised word → likely PERSON; multi-word → COMPANY
-                etype = "COMPANY" if len(phrase_tokens) > 1 else "PERSON"
-                entities.append({"name": phrase, "type": etype})
-            i = j if j > i + 1 else i + 1
-        return entities
 
     def _semantic_distance(
         self,
@@ -624,10 +572,6 @@ class PerpetualKYCPipeline:
                 pass
         return 0.10 + 0.6 * event.adverse_score
 
-    # Floor so dynamically discovered entities appear in contributors and the UI
-    # graph (ASSOCIATED_WITH edges use weight 0.1 — without this they stay at 0%).
-    _MIN_DYNAMIC_INTRINSIC_RISK = 0.35
-
     def _resolve_and_update_graph(
         self,
         entities: list[dict],
@@ -639,13 +583,8 @@ class PerpetualKYCPipeline:
         adverse_score: float,
         event_text: str,
     ) -> list[dict[str, object]]:
-        """Resolve extracted entities and mutate the live topology graph.
-
-        Returns every entity linked to the client this event — both brand-new
-        nodes and pre-existing KYC nodes that receive a new directed edge.
-        """
+        """Resolve extracted entities and mutate the live topology graph."""
         created: list[dict[str, object]] = []
-        seen: set[str] = set()
         relation, control_weight = self._infer_graph_relation(event_text)
         is_red_flag = self._is_red_flag_event(event_text)
         for entity in entities:
@@ -698,34 +637,22 @@ class PerpetualKYCPipeline:
                     f"Risk Injection: node {node_id} ({privacy_token}) marked with "
                     "intrinsic_risk=1.0"
                 )
-            elif was_new:
-                intrinsic_risk = min(
-                    max(
-                        float(adverse_score or 0.0),
-                        self._MIN_DYNAMIC_INTRINSIC_RISK,
-                    ),
-                    1.0,
-                )
-                graph.set_intrinsic_risk(node_id, intrinsic_risk)
             else:
-                intrinsic_risk = float(
-                    graph.graph.nodes[node_id].get("intrinsic_risk", 0.0)
-                )
+                intrinsic_risk = min(max(float(adverse_score or 0.0), 0.0), 1.0)
+                if was_new:
+                    graph.set_intrinsic_risk(node_id, intrinsic_risk)
 
-            if node_id in seen:
-                continue
-            seen.add(node_id)
-            created.append(
-                {
-                    "node_id": node_id,
-                    "name": real_name,
-                    "type": raw_type,
-                    "intrinsic_risk": round(intrinsic_risk, 4),
-                    "relation": relation,
-                    "control_weight": control_weight,
-                    "is_new": was_new,
-                }
-            )
+            if was_new:
+                created.append(
+                    {
+                        "node_id": node_id,
+                        "name": real_name,
+                        "type": raw_type,
+                        "intrinsic_risk": round(intrinsic_risk, 4),
+                        "relation": relation,
+                        "control_weight": control_weight,
+                    }
+                )
         return created
 
     @staticmethod
@@ -938,32 +865,32 @@ class PerpetualKYCPipeline:
         m = trace["metrics"]
         driver = trace.get("topology_driver")
         driver_line = (
-            f"- Control-Graph Topology Contagion: exposure {m['topological_exposure']} driven by "
-            f"{driver['name']} ({driver['relation']}, intrinsic risk {driver['intrinsic_risk']})."
+            f"- Contagio Topologico: exposicion {m['topological_exposure']} impulsada por "
+            f"{driver['name']} ({driver['relation']}, riesgo {driver['intrinsic_risk']})."
             if driver
-            else "- Control-Graph Topology Contagion: no dominant contributor."
+            else "- Contagio Topologico: sin contribuidor dominante."
         )
         return (
-            f"# AML COMPLIANCE REPORT - ALERT RECORD {trace['alert_id']}\n\n"
-            "## 1. EXECUTIVE SUMMARY\n"
-            f"A statistically significant KYC drift event has been detected for "
-            f"{trace['client_profile']['legal_name']} (combined risk "
-            f"{m['combined_risk']}). Triggering event: {trace['triggering_event']['headline']}.\n\n"
-            "## 2. OPERATIONAL EXPLANATION FOR THE RISK COMMITTEE\n"
-            f"- What changed in the client profile: the public event indicates "
+            f"# REPORTE DE CUMPLIMIENTO AML - REGISTRO DE ALERTA {trace['alert_id']}\n\n"
+            "## 1. RESUMEN EJECUTIVO\n"
+            f"Se ha detectado una desviacion de KYC estadisticamente significativa para "
+            f"{trace['client_profile']['legal_name']} (riesgo combinado "
+            f"{m['combined_risk']}). Evento disparador: {trace['triggering_event']['headline']}.\n\n"
+            "## 2. EXPLICACION OPERATIVA PARA COMITE DE RIESGO\n"
+            f"- Que cambio en el perfil del cliente: el evento publico indica "
             f"{trace['triggering_event']['extracted_fact']}.\n"
-            "- Why it matters for KYC/AML: the fact changes the expected profile "
-            "and creates an adverse signal requiring review before continued operation.\n"
-            f"- Primary trigger: active alarms {m['alarms']}.\n\n"
-            "## 3. MULTI-STREAM KYC DRIFT ANALYSIS\n"
-            f"- Semantic Drift: cosine distance {m['semantic_cosine_distance']} "
-            f"against the declared business model.\n"
+            "- Por que importa para KYC/AML: el hecho altera el perfil esperado y "
+            "genera una senal adversa que debe revisarse antes de seguir operando.\n"
+            f"- Cual fue el trigger principal: alarmas activas {m['alarms']}.\n\n"
+            "## 3. ANALISIS DE DERIVA DE KYC (KYC DRIFT) MULTICORRIENTE\n"
+            f"- Desviacion Semantica: distancia de coseno {m['semantic_cosine_distance']} "
+            f"respecto al modelo de negocio declarado.\n"
             f"{driver_line}\n"
-            f"- Transaction Anomaly: active alarms {m['alarms']}.\n\n"
-            "## 4. AUDITABLE METRIC TRACE\n"
+            f"- Anomalia Transaccional: alarmas activas {m['alarms']}.\n\n"
+            "## 4. TRAZA DE METRICAS AUDITABLES\n"
             f"```json\n{trace['metrics']}\n```\n\n"
-            "## 5. RECOMMENDED GOVERNANCE ACTION\n"
-            f"- {trace['proposed_action']}: justified by the detected multi-stream drift.\n"
+            "## 5. ACCION DE GOBERNANZA RECOMENDADA\n"
+            f"- {trace['proposed_action']}: justificada por la deriva multicorriente detectada.\n"
         )
 
     def _run_governance(self, profile, peak_outcome, max_risk) -> ComplianceAlert:

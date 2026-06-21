@@ -416,46 +416,124 @@ export async function analyzeCompanyStream(
   if (simulateTx) params.set("simulate_tx_anomaly", "true");
   const qs = params.toString();
   const url  = `${API_BASE}/api/analyze/${id}/stream${qs ? `?${qs}` : ""}`;
-  const res  = await fetch(url, { signal });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
-  }
-
-  const reader = res.body?.getReader();
-  if (!reader) throw new Error("Response body is not readable");
-
-  const decoder = new TextDecoder();
-  let buffer = "";
 
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    const res  = await fetch(url, { signal });
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
+    }
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith("data:")) continue;
-        const jsonStr = trimmed.slice(5).trim();
-        if (!jsonStr) continue;
-        try {
-          const parsed = JSON.parse(jsonStr) as StreamEvent;
-          if (parsed.event === "complete") {
-            putReport(id, simulateTx, parsed.data);
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error("Response body is not readable");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        if (signal?.aborted) break;
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const jsonStr = trimmed.slice(5).trim();
+          if (!jsonStr) continue;
+          try {
+            const parsed = JSON.parse(jsonStr) as StreamEvent;
+            if (parsed.event === "complete") {
+              putReport(id, simulateTx, parsed.data);
+            }
+            onEvent(parsed);
+          } catch {
+            /* skip malformed SSE chunks */
           }
-          onEvent(parsed);
-        } catch {
-          /* skip malformed SSE chunks */
         }
       }
+    } finally {
+      reader.releaseLock();
     }
-  } finally {
-    reader.releaseLock();
+  } catch (err) {
+    console.warn(`SSE stream for client ${id} failed, attempting simulated streaming from static cache:`, err);
+    if (signal?.aborted) return;
+
+    try {
+      const basePath = typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
+        ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
+        : "";
+      const staticRes = await fetch(`${basePath}/api_cache/analysis.json`);
+      if (!staticRes.ok) throw new Error("Static analysis cache not found");
+      const data = await staticRes.json();
+      const report = data[String(id)] as LiveReport | undefined;
+      if (!report) {
+        throw new Error(`Company ID ${id} not found in static analysis cache`);
+      }
+
+      // Simulate baseline event
+      onEvent({
+        event: "baseline",
+        data: {
+          id: report.id,
+          client: report.client,
+          security: report.security,
+          topology: report.topology,
+          stream_thresholds: report.streams ? {
+            bonferroni_scale: report.streams.bonferroni_scale,
+            semantic: report.streams.semantic.threshold,
+            topology: report.streams.topology.threshold,
+            behavioral_tx: report.streams.behavioral_tx.threshold,
+          } : undefined,
+        }
+      });
+      await new Promise(resolve => setTimeout(resolve, 800));
+      if (signal?.aborted) return;
+
+      // Yield events one by one to simulate live analysis
+      for (const ev of report.events) {
+        if (signal?.aborted) return;
+
+        onEvent({
+          event: "extraction",
+          data: {
+            event_title: ev.title,
+            source: ev.source || "Static Cache",
+            adverse_score: ev.semantic_distance,
+            new_nodes: ev.new_graph_nodes || [],
+          }
+        });
+        await new Promise(resolve => setTimeout(resolve, 600));
+        if (signal?.aborted) return;
+
+        onEvent({
+          event: "risk_calculated",
+          data: {
+            event_title: ev.title,
+            semantic: ev.semantic_distance,
+            topology: ev.topology_signal ?? report.topology.company_exposure,
+            behavioral_tx: ev.behavioral_signal ?? 0,
+            r_combined: ev.combined_risk,
+            alarms: ev.alarms,
+            contributors: report.topology.top_contributors,
+          }
+        });
+        await new Promise(resolve => setTimeout(resolve, 600));
+        if (signal?.aborted) return;
+      }
+
+      // Yield complete event
+      putReport(id, simulateTx, report);
+      onEvent({ event: "complete", data: report });
+    } catch (staticErr) {
+      console.error("Static simulated streaming failed:", staticErr);
+      throw err;
+    }
   }
 }
 
@@ -495,9 +573,22 @@ export async function checkHealth(): Promise<boolean> {
 
 /** Fast: reads directly from SQLite, no Ollama involved. */
 export async function listCompanies(): Promise<CompanyListItem[]> {
-  const res = await fetch(`${API_BASE}/api/companies`);
-  if (!res.ok) throw new Error(`listCompanies: ${res.status} ${res.statusText}`);
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/companies`);
+    if (!res.ok) throw new Error(`listCompanies: ${res.status} ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.warn("API listCompanies failed, falling back to static default companies list:", err);
+    return [
+      { id: 1, legal_name: "Wirecard AG", country: "DE", baseline_risk_rating: "MEDIUM" },
+      { id: 2, legal_name: "FTX Trading Ltd", country: "BS", baseline_risk_rating: "HIGH" },
+      { id: 3, legal_name: "MicroStrategy Incorporated", country: "US", baseline_risk_rating: "LOW" },
+      { id: 4, legal_name: "OpenAI", country: "US", baseline_risk_rating: "LOW" },
+      { id: 5, legal_name: "VTB Bank", country: "RU", baseline_risk_rating: "HIGH" },
+      { id: 6, legal_name: "Gazprombank", country: "RU", baseline_risk_rating: "HIGH" },
+      { id: 7, legal_name: "Surgutneftegas", country: "RU", baseline_risk_rating: "HIGH" },
+    ];
+  }
 }
 
 export interface AnalyzeOptions {
@@ -520,22 +611,43 @@ export async function analyzeCompany(
     return cached;
   }
 
-  const res = await fetch(`${API_BASE}/api/analyze/${id}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      max_events: opts.max_events ?? 5,
-      simulate_tx_anomaly: simulateTx,
-      force_refresh: opts.force_refresh ?? false,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(body.detail ?? "Analysis failed");
+  try {
+    const res = await fetch(`${API_BASE}/api/analyze/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        max_events: opts.max_events ?? 5,
+        simulate_tx_anomaly: simulateTx,
+        force_refresh: opts.force_refresh ?? false,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(body.detail ?? "Analysis failed");
+    }
+    const report: LiveReport = await res.json();
+    putReport(id, simulateTx, report);
+    return report;
+  } catch (err) {
+    console.warn(`API analyzeCompany ${id} failed, attempting static file fallback:`, err);
+    try {
+      const basePath = typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
+        ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
+        : "";
+      const staticRes = await fetch(`${basePath}/api_cache/analysis.json`);
+      if (!staticRes.ok) throw new Error("Static analysis cache not found");
+      const data = await staticRes.json();
+      const report = data[String(id)];
+      if (!report) {
+        throw new Error(`Company ID ${id} not found in static analysis cache`);
+      }
+      putReport(id, simulateTx, report);
+      return report;
+    } catch (staticErr) {
+      console.error("Static file fallback failed:", staticErr);
+      throw err;
+    }
   }
-  const report: LiveReport = await res.json();
-  putReport(id, simulateTx, report);
-  return report;
 }
 
 /**
@@ -558,22 +670,102 @@ export async function getCachedAnalysis(id: number): Promise<LiveReport | null> 
   const cached = getStoredReport(id, false);
   if (cached) return cached;
 
-  const res = await fetch(`${API_BASE}/api/analyze/${id}`);
-  if (res.status === 404) return null;
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(body.detail ?? `getCachedAnalysis: ${res.status}`);
+  try {
+    const res = await fetch(`${API_BASE}/api/analyze/${id}`);
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(body.detail ?? `getCachedAnalysis: ${res.status}`);
+    }
+    const report: LiveReport = await res.json();
+    putReport(id, false, report);
+    return report;
+  } catch (err) {
+    console.warn(`API getCachedAnalysis for client ${id} failed, attempting static file fallback:`, err);
+    try {
+      const basePath = typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
+        ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
+        : "";
+      const staticRes = await fetch(`${basePath}/api_cache/analysis.json`);
+      if (!staticRes.ok) throw new Error("Static analysis cache not found");
+      const data = await staticRes.json();
+      const report = data[String(id)] as LiveReport | undefined;
+      if (!report) return null;
+      putReport(id, false, report);
+      return report;
+    } catch {
+      return null;
+    }
   }
-  const report: LiveReport = await res.json();
-  putReport(id, false, report);
-  return report;
 }
 
 /** List curated historical scenarios (same as ``run_scenario_demo``). */
 export async function listReplayScenarios(): Promise<ReplayScenarioItem[]> {
-  const res = await fetch(`${API_BASE}/api/scenarios/replay`);
-  if (!res.ok) throw new Error(`listReplayScenarios: ${res.status} ${res.statusText}`);
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/scenarios/replay`);
+    if (!res.ok) throw new Error(`listReplayScenarios: ${res.status} ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.warn("API listReplayScenarios failed, falling back to static defaults:", err);
+    return [
+      {
+        scenario_id: "microstrategy_drift",
+        client: "MicroStrategy",
+        description: "Semantic drift: Enterprise BI software pivoting to a Bitcoin treasury reserve asset.",
+        reference_model: "Enterprise Business Intelligence software",
+        event_count: 6,
+        company_id: 3,
+      },
+      {
+        scenario_id: "wirecard_drift",
+        client: "Wirecard",
+        description: "Structural accounting fraud and sudden corporate collapse.",
+        reference_model: "Licensed payment processing and merchant acquiring.",
+        event_count: 6,
+        company_id: 1,
+      },
+      {
+        scenario_id: "ftx_rapid_deterioration",
+        client: "FTX",
+        description: "Evidence-backed rapid deterioration replay: liquidity and governance collapse before bankruptcy.",
+        reference_model: "Centralised crypto-asset exchange and custody.",
+        event_count: 6,
+        company_id: 2,
+      },
+      {
+        scenario_id: "openai_regulatory_drift",
+        client: "OpenAI",
+        description: "Drift regulatorio y de gobernanza con alto crecimiento y escrutinio.",
+        reference_model: "AI research lab monetising via API and subscriptions.",
+        event_count: 9,
+        company_id: 4,
+      },
+      {
+        scenario_id: "vtb_sanctions_escalation",
+        client: "VTB",
+        description: "Sanctions escalation and directed network contagion.",
+        reference_model: "State-owned commercial and investment bank.",
+        event_count: 5,
+        company_id: 5,
+      },
+      {
+        scenario_id: "gazprombank_sanctions_escalation",
+        client: "Gazprombank",
+        description: "Sovereign risk linkage and European energy payments exposure.",
+        reference_model: "Large private/state-linked commercial bank.",
+        event_count: 5,
+        company_id: 6,
+      },
+      {
+        scenario_id: "surgutneftegas_sanctions_escalation",
+        client: "Surgutneftegas",
+        description: "Russian energy-sector escalation replay from sectoral controls to full designation.",
+        reference_model: "Vertically integrated Russian oil and gas producer.",
+        event_count: 4,
+        company_id: 7,
+      },
+    ];
+  }
 }
 
 /**
@@ -591,26 +783,80 @@ export async function replayScenario(
   }
 
   const qs = opts.force_refresh ? "?force_refresh=true" : "";
-  const res = await fetch(`${API_BASE}/api/scenario-replay/${scenarioId}${qs}`, {
-    method: "POST",
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(body.detail ?? "Scenario replay failed");
+  try {
+    const res = await fetch(`${API_BASE}/api/scenario-replay/${scenarioId}${qs}`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(body.detail ?? "Scenario replay failed");
+    }
+    const report: LiveReport = await res.json();
+    putScenarioReport(scenarioId, report);
+    if (report.id) {
+      putReport(Number(report.id), false, report);
+    }
+    return report;
+  } catch (err) {
+    console.warn(`API replayScenario for ${scenarioId} failed, attempting static file fallback:`, err);
+    try {
+      const basePath = typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
+        ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
+        : "";
+      const staticRes = await fetch(`${basePath}/api_cache/scenario.json`);
+      if (!staticRes.ok) throw new Error("Static scenario cache not found");
+      const data = await staticRes.json();
+      const report = data[scenarioId] as LiveReport | undefined;
+      if (!report) {
+        throw new Error(`Scenario ID ${scenarioId} not found in static scenario cache`);
+      }
+      putScenarioReport(scenarioId, report);
+      if (report.id) {
+        putReport(Number(report.id), false, report);
+      }
+      return report;
+    } catch (staticErr) {
+      console.error("Static scenario replay fallback failed:", staticErr);
+      throw err;
+    }
   }
-  const report: LiveReport = await res.json();
-  putScenarioReport(scenarioId, report);
-  if (report.id) {
-    putReport(Number(report.id), false, report);
-  }
-  return report;
 }
 
 /** List cross-client contagion demos (same as ``run_global_demo`` presets). */
 export async function listGlobalScenarios(): Promise<GlobalScenarioItem[]> {
-  const res = await fetch(`${API_BASE}/api/scenarios`);
-  if (!res.ok) throw new Error(`listGlobalScenarios: ${res.status} ${res.statusText}`);
-  return res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/scenarios`);
+    if (!res.ok) throw new Error(`listGlobalScenarios: ${res.status} ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.warn("API listGlobalScenarios failed, falling back to static defaults:", err);
+    return [
+      {
+        id: "russian_sovereign",
+        name: "Russian Sovereign Cluster",
+        description: "VTB sanctions trigger cross-client contagion: Gazprombank inherits 'Government of Russia' risk (0.15 → 0.90) before processing its own news events.",
+        companies: ["VTB", "Gazprombank"],
+        expected_contagion: "Government of Russia → Gazprombank",
+        max_events: 5,
+      },
+      {
+        id: "vc_contagion",
+        name: "VC Investor Contagion",
+        description: "FTX collapse publishes Sequoia Capital (risk 0.53). OpenAI, which shares the same institutional investor, inherits elevated Sequoia risk and enters alarm.",
+        companies: ["FTX", "OpenAI"],
+        expected_contagion: "Sequoia Capital → OpenAI",
+        max_events: 5,
+      },
+      {
+        id: "russian_triple",
+        name: "Full Russian Triple Cluster",
+        description: "VTB and Gazprombank both alarm; Surgutneftegas inherits 'Government of Russia' from the shared threat memory but its own news events fail triage — demonstrating partial propagation.",
+        companies: ["VTB", "Gazprombank", "Surgutneftegas"],
+        expected_contagion: "Government of Russia → Gazprombank, Surgutneftegas",
+        max_events: 5,
+      },
+    ];
+  }
 }
 
 /** Run a cross-client contagion demo and return the structured orchestrator trace. */
@@ -623,25 +869,52 @@ export async function runGlobalScenario(
     return cached;
   }
 
-  const res = await fetch(`${API_BASE}/api/global-demo/scenario/${scenarioId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      force_refresh: opts.force_refresh ?? false,
-      max_events: opts.max_events,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(body.detail ?? "Global demo failed");
+  try {
+    const res = await fetch(`${API_BASE}/api/global-demo/scenario/${scenarioId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        force_refresh: opts.force_refresh ?? false,
+        max_events: opts.max_events,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(body.detail ?? "Global demo failed");
+    }
+    const result: GlobalDemoResult = await res.json();
+    if (opts.max_events === undefined) {
+      putGlobalScenario(scenarioId, result);
+    }
+    for (const [name, report] of Object.entries(result.clients)) {
+      const id = result.company_ids[name] ?? Number(report.id);
+      if (id) putReport(id, false, report);
+    }
+    return result;
+  } catch (err) {
+    console.warn(`API runGlobalScenario for ${scenarioId} failed, attempting static file fallback:`, err);
+    try {
+      const basePath = typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
+        ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
+        : "";
+      const staticRes = await fetch(`${basePath}/api_cache/global.json`);
+      if (!staticRes.ok) throw new Error("Static global scenario cache not found");
+      const data = await staticRes.json();
+      const result = data[scenarioId] as GlobalDemoResult | undefined;
+      if (!result) {
+        throw new Error(`Global scenario ID ${scenarioId} not found in static global cache`);
+      }
+      if (opts.max_events === undefined) {
+        putGlobalScenario(scenarioId, result);
+      }
+      for (const [name, report] of Object.entries(result.clients)) {
+        const id = result.company_ids[name] ?? Number(report.id);
+        if (id) putReport(id, false, report);
+      }
+      return result;
+    } catch (staticErr) {
+      console.error("Static global scenario fallback failed:", staticErr);
+      throw err;
+    }
   }
-  const result: GlobalDemoResult = await res.json();
-  if (opts.max_events === undefined) {
-    putGlobalScenario(scenarioId, result);
-  }
-  for (const [name, report] of Object.entries(result.clients)) {
-    const id = result.company_ids[name] ?? Number(report.id);
-    if (id) putReport(id, false, report);
-  }
-  return result;
 }

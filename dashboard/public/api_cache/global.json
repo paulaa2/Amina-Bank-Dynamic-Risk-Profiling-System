@@ -1,0 +1,586 @@
+{
+  "russian_sovereign": {
+    "scenario_id": "russian_sovereign",
+    "scenario_name": "Russian Sovereign Cluster",
+    "scenario_description": "VTB sanctions trigger cross-client contagion: Gazprombank inherits 'Government of Russia' risk (0.15 → 0.90) before processing its own news events.",
+    "expected_contagion": "Government of Russia → Gazprombank",
+    "companies": [
+      "VTB",
+      "Gazprombank"
+    ],
+    "company_ids": {
+      "VTB": 5,
+      "Gazprombank": 6
+    },
+    "shared_threat_memory": {
+      "Andrei Kostin": 1.0,
+      "Dmitry Pyanov": 0.6,
+      "Government of Russia": 0.9,
+      "Andrey Akimov": 0.8,
+      "Gazprom": 1.0,
+      "Head of VTB Bank": 1.0
+    },
+    "contagion_events": [
+      {
+        "type": "published",
+        "source": "VTB",
+        "entity": "Andrei Kostin",
+        "risk": 1.0
+      },
+      {
+        "type": "published",
+        "source": "VTB",
+        "entity": "Dmitry Pyanov",
+        "risk": 0.6
+      },
+      {
+        "type": "published",
+        "source": "VTB",
+        "entity": "Government of Russia",
+        "risk": 0.9
+      },
+      {
+        "type": "event",
+        "target": "VTB",
+        "risk": 0.0904,
+        "trigger": false,
+        "title": "VTB Bank Georgia Hit with Int’l Sanctions - Civil Georgia"
+      },
+      {
+        "type": "inherited",
+        "target": "Gazprombank",
+        "entity": "Government of Russia",
+        "risk": 0.9
+      },
+      {
+        "type": "published",
+        "source": "Gazprombank",
+        "entity": "Andrey Akimov",
+        "risk": 0.8
+      },
+      {
+        "type": "published",
+        "source": "Gazprombank",
+        "entity": "Gazprom",
+        "risk": 1.0
+      },
+      {
+        "type": "event",
+        "target": "Gazprombank",
+        "risk": 0.1004,
+        "trigger": false,
+        "title": "Gazprombank: The Big Russian Lender That Dodged Western Sanctions - WSJ"
+      },
+      {
+        "type": "inherited",
+        "target": "VTB",
+        "entity": "Gazprom",
+        "risk": 1.0
+      },
+      {
+        "type": "event",
+        "target": "Gazprombank",
+        "risk": 0.2432,
+        "trigger": false,
+        "title": "Opening Gazprombank Accounts May Be Breach of Sanctions - EU - Albanian Daily News"
+      },
+      {
+        "type": "event",
+        "target": "VTB",
+        "risk": 0.1042,
+        "trigger": false,
+        "title": "Sanctioned VTB Bank and Putin Ally Andrei Kostin Behind Luxury Austrian Hotel - Organized Crime and Corruption Reporting"
+      },
+      {
+        "type": "published",
+        "source": "VTB",
+        "entity": "Head of VTB Bank",
+        "risk": 1.0
+      },
+      {
+        "type": "event",
+        "target": "VTB",
+        "risk": 0.1981,
+        "trigger": false,
+        "title": "US charges head of Russia's VTB Bank for sanctions violations - Reuters"
+      },
+      {
+        "type": "event",
+        "target": "VTB",
+        "risk": 0.2609,
+        "trigger": false,
+        "title": "Russia’s VTB Bank chief charged with US sanctions violations - Banking Dive"
+      }
+    ],
+    "clients": {
+      "VTB": {
+        "client": {
+          "legal_name": "VTB Bank",
+          "country": "RU",
+          "jurisdiction": "RU",
+          "baseline_risk_rating": "HIGH",
+          "expected_business_model": "State-owned commercial and investment bank.",
+          "known_graph_nodes": 4
+        },
+        "security": {
+          "masked_entities": 6,
+          "company_token": "MASKED_COMPANY_001",
+          "note": "Global demo keeps each client ego graph isolated."
+        },
+        "topology": {
+          "company_exposure": 0.9,
+          "circular_ownership_detected": false,
+          "top_contributors": [
+            {
+              "name": "Government of Russia",
+              "type": "COMPANY",
+              "relation": "OWNS_MAJORITY",
+              "intrinsic_risk": 0.9,
+              "contributed": 0.45
+            },
+            {
+              "name": "Dmitry Pyanov",
+              "type": "PERSON",
+              "relation": "DIRECTS",
+              "intrinsic_risk": 0.6,
+              "contributed": 0.3
+            },
+            {
+              "name": "Andrei Kostin",
+              "type": "PERSON",
+              "relation": "ASSOCIATED_WITH",
+              "intrinsic_risk": 1.0,
+              "contributed": 0.05
+            },
+            {
+              "name": "Gazprom",
+              "type": "COMPANY",
+              "relation": "ASSOCIATED_WITH",
+              "intrinsic_risk": 1.0,
+              "contributed": 0.05
+            },
+            {
+              "name": "Head of VTB Bank",
+              "type": "PERSON",
+              "relation": "ASSOCIATED_WITH",
+              "intrinsic_risk": 1.0,
+              "contributed": 0.05
+            }
+          ]
+        },
+        "streams": {
+          "bonferroni_scale": 2.0986,
+          "semantic": {
+            "last_statistic": 0.203,
+            "threshold": 0.778
+          },
+          "topology": {
+            "last_statistic": 0.0,
+            "threshold": 0.5475,
+            "observed_exposure": 0.9
+          },
+          "behavioral_tx": {
+            "last_statistic": 0.0,
+            "threshold": 28.9749
+          }
+        },
+        "decision": {
+          "alarm_fired": false,
+          "max_combined_risk": 0.2609,
+          "threshold": 0.5,
+          "triggering_event": "Russia’s VTB Bank chief charged with US sanctions violations - Banking Dive"
+        },
+        "cost": {
+          "events_seen": 5,
+          "events_passed_triage": 4,
+          "events_embedded": 9,
+          "cloud_reports_generated": 0,
+          "local_tokens": {
+            "prompt": 1105,
+            "completion": 377,
+            "cost_usd": 0.0
+          },
+          "cloud_tokens": {
+            "prompt": 0,
+            "completion": 0,
+            "cost_usd": 0.0
+          },
+          "projected_cloud_cost_per_1000_analyses_usd": 0.0,
+          "stage_calls": {
+            "embedding_profile": 1,
+            "sentinel_extract": 4
+          }
+        },
+        "governance": null,
+        "warnings": [],
+        "events": [
+          {
+            "title": "VTB Bank Georgia Hit with Int’l Sanctions - Civil Georgia",
+            "masked_title": "MASKED_COMPANY_001 Georgia Hit with Int’l Sanctions - Civil Georgia",
+            "extracted_fact": "MASKED_COMPANY_001 is subject to international sanctions due to its involvement in activities linked to Georgia.",
+            "triaged_in": true,
+            "semantic_distance": 0.4283,
+            "combined_risk": 0.0904,
+            "alarms": {
+              "semantic": false,
+              "topology": false,
+              "behavioral_tx": false
+            },
+            "new_graph_nodes": [],
+            "date": "2022-02-25T08:00:00+00:00",
+            "source": "Civil Georgia",
+            "url": "https://news.google.com/rss/articles/CBMiR0FVX3lxTE9JMzRZZ1NycWlLSUpmWHBISVFwTk5oZHFwQmVjdS15UXNvTkJLekduRlVPLWtIMnZ4LUZTRkY5OG9TYkdzTUU00gFMQVVfeXFMTVpNdlhBWjBmaWswb3k2bDIxUm0yOU9XM1ZxQ3dRaXFxNnhXMlNmdWI1Z2lCcmo2Q2wyU19mWGRva2NLeUUxTFRycndNdg?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMiR0FVX3lxTE9JMzRZZ1NycWlLSUpmWHBISVFwTk5oZHFwQmVjdS15UXNvTkJLekduRlVPLWtIMnZ4LUZTRkY5OG9TYkdzTUU00gFMQVVfeXFMTVpNdlhBWjBmaWswb3k2bDIxUm0yOU9XM1ZxQ3dRaXFxNnhXMlNmdWI1Z2lCcmo2Q2wyU19mWGRva2NLeUUxTFRycndNdg?oc=5\" target=\"_blank\">VTB Bank Georgia Hit with Int’l Sanctions</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Civil Georgia</font>",
+            "topology_signal": 1.0,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {
+              "semantic": 0.07030294963549652,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            },
+            "stream_ratios": {
+              "semantic": 0.09036567865233786,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            }
+          },
+          {
+            "title": "Russian bankers shuffled personal wealth offshore long before latest sanctions, Pandora Papers show - International Consortium of Investigative Journalists - ICIJ",
+            "masked_title": "",
+            "extracted_fact": "",
+            "triaged_in": false,
+            "semantic_distance": 0.0,
+            "combined_risk": 0.0,
+            "alarms": {},
+            "new_graph_nodes": [],
+            "date": "2022-04-11T07:00:00+00:00",
+            "source": "International Consortium of Investigative Journalists - ICIJ",
+            "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPelRZZHF2QmRqNmFMN0ZxMUJKazU1U2dsT3JjX05FOGlmdE1mNnVpajJNbEFWbVJDTDJXdFM4SHVSSHFBNWZWc2U3SEhzWEQyNWt5clM4dkRnSy1yMFRody1ONjR4blN4QmVJVzRhOUR5RUFNMktBWmppbl9uQ1NyME5pUFoxQVFUajBKSU5iQzVwLTlIYTlhRA?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMimAFBVV95cUxPelRZZHF2QmRqNmFMN0ZxMUJKazU1U2dsT3JjX05FOGlmdE1mNnVpajJNbEFWbVJDTDJXdFM4SHVSSHFBNWZWc2U3SEhzWEQyNWt5clM4dkRnSy1yMFRody1ONjR4blN4QmVJVzRhOUR5RUFNMktBWmppbl9uQ1NyME5pUFoxQVFUajBKSU5iQzVwLTlIYTlhRA?oc=5\" target=\"_blank\">Russian bankers shuffled personal wealth offshore long before latest sanctions, Pandora Papers show</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">International Consortium of Investigative Journalists - ICIJ</font>",
+            "topology_signal": 1.0,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {},
+            "stream_ratios": {}
+          },
+          {
+            "title": "Sanctioned VTB Bank and Putin Ally Andrei Kostin Behind Luxury Austrian Hotel - Organized Crime and Corruption Reporting Project | OCCRP",
+            "masked_title": "Sanctioned MASKED_COMPANY_001 and Putin Ally MASKED_PERSON_002 Behind Luxury Austrian Hotel - Organized Crime and Corruption Reporting Project | OCCRP",
+            "extracted_fact": "The Luxury Austrian Hotel is linked to sanctioned entity MASKED_COMPANY_001 and Putin ally MASKED_PERSON_002 through organized crime and corruption activities.",
+            "triaged_in": true,
+            "semantic_distance": 0.3953,
+            "combined_risk": 0.1042,
+            "alarms": {
+              "semantic": false,
+              "topology": false,
+              "behavioral_tx": false
+            },
+            "new_graph_nodes": [
+              {
+                "node_id": "91eb3a2184372d63",
+                "name": "Andrei Kostin",
+                "type": "PERSON",
+                "intrinsic_risk": 1.0,
+                "relation": "ASSOCIATED_WITH",
+                "control_weight": 0.1,
+                "is_new": false
+              }
+            ],
+            "date": "2022-07-28T07:00:00+00:00",
+            "source": "Organized Crime and Corruption Reporting Project | OCCRP",
+            "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOdU0yNWhwWkR6UnFKWkl5T3ZITGhWOGtYZmdNZWZFdFRoUF9CRDk3b2VaZVNCell6cnhKS1NCaURiUEVMcjZfbXhjb3VXRlliNFhkUGtoN1NienliQUpZUUl6eDUzcXdGRkM1T3YzNTA5aTlrTXlLWXdIa05EaXdVejF0aDlhNjhwZDMtd3FJUTVaTHpieGR1c0xLTVY1N0RHbkppaGk0Wmx1TnBxSk1OeHR5WDVLNFRmNUpJaFRwQ3dHZXM4dWFsdFBYa3Q?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMizAFBVV95cUxOdU0yNWhwWkR6UnFKWkl5T3ZITGhWOGtYZmdNZWZFdFRoUF9CRDk3b2VaZVNCell6cnhKS1NCaURiUEVMcjZfbXhjb3VXRlliNFhkUGtoN1NienliQUpZUUl6eDUzcXdGRkM1T3YzNTA5aTlrTXlLWXdIa05EaXdVejF0aDlhNjhwZDMtd3FJUTVaTHpieGR1c0xLTVY1N0RHbkppaGk0Wmx1TnBxSk1OeHR5WDVLNFRmNUpJaFRwQ3dHZXM4dWFsdFBYa3Q?oc=5\" target=\"_blank\">Sanctioned VTB Bank and Putin Ally Andrei Kostin Behind Luxury Austrian Hotel</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Organized Crime and Corruption Reporting Project | OCCRP</font>",
+            "topology_signal": 0.85,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {
+              "semantic": 0.08106762982687554,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            },
+            "stream_ratios": {
+              "semantic": 0.10420233324525113,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            }
+          },
+          {
+            "title": "US charges head of Russia's VTB Bank for sanctions violations - Reuters",
+            "masked_title": "US charges head of Russia's MASKED_COMPANY_001 for sanctions violations - Reuters",
+            "extracted_fact": "The head of Russia's MASKED_COMPANY_001 has been charged by the US for violating sanctions.",
+            "triaged_in": true,
+            "semantic_distance": 0.4892,
+            "combined_risk": 0.1981,
+            "alarms": {
+              "semantic": false,
+              "topology": false,
+              "behavioral_tx": false
+            },
+            "new_graph_nodes": [
+              {
+                "node_id": "DYN_PERSON_001",
+                "name": "Head of VTB Bank",
+                "type": "PERSON",
+                "intrinsic_risk": 1.0,
+                "relation": "ASSOCIATED_WITH",
+                "control_weight": 0.1,
+                "is_new": true
+              }
+            ],
+            "date": "2024-02-22T08:00:00+00:00",
+            "source": "Reuters",
+            "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxPZjE0N3REZ25WVHhQaGI0aHNiV3Fhb0UwUDhvZWdGWEs4dmlvaWtVdmN4YzgtdUkxWVF3MVc1YVBSUTBnX0YyV01PSWN1dzJXRUdNdENFYUtLU0NOYkJlX0h5cEx0THF1WDJ2MUFoNXczdGt2U0FOYUUtOUptUlZEOXpwczY4eGozNmU5VV82ZFdWODNDeWN6UlpEMDhnLUpUbGQzTDZkbVkzUQ?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMiqgFBVV95cUxPZjE0N3REZ25WVHhQaGI0aHNiV3Fhb0UwUDhvZWdGWEs4dmlvaWtVdmN4YzgtdUkxWVF3MVc1YVBSUTBnX0YyV01PSWN1dzJXRUdNdENFYUtLU0NOYkJlX0h5cEx0THF1WDJ2MUFoNXczdGt2U0FOYUUtOUptUlZEOXpwczY4eGozNmU5VV82ZFdWODNDeWN6UlpEMDhnLUpUbGQzTDZkbVkzUQ?oc=5\" target=\"_blank\">US charges head of Russia's VTB Bank for sanctions violations</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Reuters</font>",
+            "topology_signal": 0.9,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {
+              "semantic": 0.15413008543240103,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            },
+            "stream_ratios": {
+              "semantic": 0.19811501285586655,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            }
+          },
+          {
+            "title": "Russia’s VTB Bank chief charged with US sanctions violations - Banking Dive",
+            "masked_title": "Russia’s MASKED_COMPANY_001 chief charged with US sanctions violations - Banking Dive",
+            "extracted_fact": "The chief executive of MASKED_COMPANY_001 has been charged with violating US sanctions.",
+            "triaged_in": true,
+            "semantic_distance": 0.4896,
+            "combined_risk": 0.2609,
+            "alarms": {
+              "semantic": false,
+              "topology": false,
+              "behavioral_tx": false
+            },
+            "new_graph_nodes": [],
+            "date": "2024-02-23T08:00:00+00:00",
+            "source": "Banking Dive",
+            "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxNeWxjSm5sR3ZqNC02YVB1cUs2WHhYS0MxT0dHeVBqMk9HX1FmeEVWRUF0eHEybnF3d0lMRjhMalJrSXFsRFRTU0RGeDRpNmpNODQ4aTI4bXFnYUhpNVFablVjWWtMZ01MRG51RnRpUVhaVGs0N1ZYN3NrTGgybW9UUGdBcHlTdXZnU1VqX3NiUnlneTdNWGhwR1JRbWUyY3FmNHljWHNSNlNieGlRMnBhUzBYOUNXX3NvSHdTb3VIN2dXb2VrT3BsekpkMVdXUFY0WUFJUDZrYw?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMi1wFBVV95cUxNeWxjSm5sR3ZqNC02YVB1cUs2WHhYS0MxT0dHeVBqMk9HX1FmeEVWRUF0eHEybnF3d0lMRjhMalJrSXFsRFRTU0RGeDRpNmpNODQ4aTI4bXFnYUhpNVFablVjWWtMZ01MRG51RnRpUVhaVGs0N1ZYN3NrTGgybW9UUGdBcHlTdXZnU1VqX3NiUnlneTdNWGhwR1JRbWUyY3FmNHljWHNSNlNieGlRMnBhUzBYOUNXX3NvSHdTb3VIN2dXb2VrT3BsekpkMVdXUFY0WUFJUDZrYw?oc=5\" target=\"_blank\">Russia’s VTB Bank chief charged with US sanctions violations</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Banking Dive</font>",
+            "topology_signal": 0.9,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {
+              "semantic": 0.2029571975348784,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            },
+            "stream_ratios": {
+              "semantic": 0.2608761792742147,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            }
+          }
+        ],
+        "report_markdown": null,
+        "id": "5"
+      },
+      "Gazprombank": {
+        "client": {
+          "legal_name": "Gazprombank",
+          "country": "RU",
+          "jurisdiction": "RU",
+          "baseline_risk_rating": "HIGH",
+          "expected_business_model": "Large private/state-linked commercial bank.",
+          "known_graph_nodes": 3
+        },
+        "security": {
+          "masked_entities": 4,
+          "company_token": "MASKED_COMPANY_001",
+          "note": "Global demo keeps each client ego graph isolated."
+        },
+        "topology": {
+          "company_exposure": 0.945,
+          "circular_ownership_detected": false,
+          "top_contributors": [
+            {
+              "name": "Gazprom",
+              "type": "COMPANY",
+              "relation": "OWNS_MAJORITY",
+              "intrinsic_risk": 1.0,
+              "contributed": 0.5
+            },
+            {
+              "name": "Andrey Akimov",
+              "type": "PERSON",
+              "relation": "DIRECTS",
+              "intrinsic_risk": 0.8,
+              "contributed": 0.4
+            },
+            {
+              "name": "Government of Russia",
+              "type": "COMPANY",
+              "relation": "ASSOCIATED_WITH",
+              "intrinsic_risk": 0.9,
+              "contributed": 0.045
+            }
+          ]
+        },
+        "streams": {
+          "bonferroni_scale": 2.0986,
+          "semantic": {
+            "last_statistic": 0.1736,
+            "threshold": 0.7135
+          },
+          "topology": {
+            "last_statistic": 0.0,
+            "threshold": 0.4977,
+            "observed_exposure": 0.945
+          },
+          "behavioral_tx": {
+            "last_statistic": 0.0,
+            "threshold": 4.4724
+          }
+        },
+        "decision": {
+          "alarm_fired": false,
+          "max_combined_risk": 0.2432,
+          "threshold": 0.5,
+          "triggering_event": "Opening Gazprombank Accounts May Be Breach of Sanctions - EU - Albanian Daily News"
+        },
+        "cost": {
+          "events_seen": 5,
+          "events_passed_triage": 2,
+          "events_embedded": 7,
+          "cloud_reports_generated": 0,
+          "local_tokens": {
+            "prompt": 553,
+            "completion": 163,
+            "cost_usd": 0.0
+          },
+          "cloud_tokens": {
+            "prompt": 0,
+            "completion": 0,
+            "cost_usd": 0.0
+          },
+          "projected_cloud_cost_per_1000_analyses_usd": 0.0,
+          "stage_calls": {
+            "embedding_profile": 1,
+            "sentinel_extract": 2
+          }
+        },
+        "governance": null,
+        "warnings": [],
+        "events": [
+          {
+            "title": "Gazprombank: The Big Russian Lender That Dodged Western Sanctions - WSJ",
+            "masked_title": "MASKED_COMPANY_001: The Big Russian Lender That Dodged Western Sanctions - WSJ",
+            "extracted_fact": "MASKED_COMPANY_001 continued its operations despite being linked to Russian entities and facing potential Western sanctions exposure.",
+            "triaged_in": true,
+            "semantic_distance": 0.4006,
+            "combined_risk": 0.1004,
+            "alarms": {
+              "semantic": false,
+              "topology": false,
+              "behavioral_tx": false
+            },
+            "new_graph_nodes": [],
+            "date": "2022-03-12T08:00:00+00:00",
+            "source": "WSJ",
+            "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOZkFTUHF0T3hWeTlXRmV0eTYzcDVsV001OFNvUlhiY0ZFMnZNR2hsOVBDZmQ1b00xaUc2M09lMXNaXzJWbTl1TUdBTXUzU0FrRXp3X1AtWWM3dG9YY3Q4Mjc3N1lqcktBd0dMaVBueF9GVWpieUIzdHFtbUxDcTBScHU1NGc1RHByRUNJY3BkRWpwbHpacFFzaEo1Zzc3c09pbkVPclUzeHBhSzVCT1kxTlh3?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMisgFBVV95cUxOZkFTUHF0T3hWeTlXRmV0eTYzcDVsV001OFNvUlhiY0ZFMnZNR2hsOVBDZmQ1b00xaUc2M09lMXNaXzJWbTl1TUdBTXUzU0FrRXp3X1AtWWM3dG9YY3Q4Mjc3N1lqcktBd0dMaVBueF9GVWpieUIzdHFtbUxDcTBScHU1NGc1RHByRUNJY3BkRWpwbHpacFFzaEo1Zzc3c09pbkVPclUzeHBhSzVCT1kxTlh3?oc=5\" target=\"_blank\">Gazprombank: The Big Russian Lender That Dodged Western Sanctions</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">WSJ</font>",
+            "topology_signal": 0.945,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {
+              "semantic": 0.0716229222453395,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            },
+            "stream_ratios": {
+              "semantic": 0.10037589141506632,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            }
+          },
+          {
+            "title": "Opening Gazprombank Accounts May Be Breach of Sanctions - EU - Albanian Daily News",
+            "masked_title": "Opening MASKED_COMPANY_001 Accounts May Be Breach of Sanctions - EU - Albanian Daily News",
+            "extracted_fact": "Opening accounts for MASKED_COMPANY_001 may constitute a breach of sanctions.",
+            "triaged_in": true,
+            "semantic_distance": 0.4706,
+            "combined_risk": 0.2432,
+            "alarms": {
+              "semantic": false,
+              "topology": false,
+              "behavioral_tx": false
+            },
+            "new_graph_nodes": [],
+            "date": "2022-04-28T07:00:00+00:00",
+            "source": "Albanian Daily News",
+            "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNRHNfRTh6QVRPa2FiUUZYVVpsR1M4cUt4c1dCa2VsaE54bWl0ZUt6eVBlV2FIbUs2QWVEcVZnRVZVQi00RmdwQWZNTEphNnE0MU01eHhRTUM4MTJERlV2UnVYaTB0OHI0QmhDWnN2NE1VWDVOdGlkWDd5NHFHUVVXdWhoUE1NUUVmOVdFYVVsS0J2c0I4dXhldkstaw?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMimwFBVV95cUxNRHNfRTh6QVRPa2FiUUZYVVpsR1M4cUt4c1dCa2VsaE54bWl0ZUt6eVBlV2FIbUs2QWVEcVZnRVZVQi00RmdwQWZNTEphNnE0MU01eHhRTUM4MTJERlV2UnVYaTB0OHI0QmhDWnN2NE1VWDVOdGlkWDd5NHFHUVVXdWhoUE1NUUVmOVdFYVVsS0J2c0I4dXhldkstaw?oc=5\" target=\"_blank\">Opening Gazprombank Accounts May Be Breach of Sanctions - EU</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Albanian Daily News</font>",
+            "topology_signal": 0.945,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {
+              "semantic": 0.17355740588585086,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            },
+            "stream_ratios": {
+              "semantic": 0.24323189813177917,
+              "topology": 0.0,
+              "behavioral_tx": 0.0
+            }
+          },
+          {
+            "title": "Ukraine war: First ladies meet as US announces new sanctions - BBC",
+            "masked_title": "",
+            "extracted_fact": "",
+            "triaged_in": false,
+            "semantic_distance": 0.0,
+            "combined_risk": 0.0,
+            "alarms": {},
+            "new_graph_nodes": [],
+            "date": "2022-05-08T07:00:00+00:00",
+            "source": "BBC",
+            "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBlb2JKcnFMOXBJc24yMzZ3TGRjalFFcV82OV9zbks3d011WDBDZG1NWkxMcTlYMzZ6d0FHeFpiX3MzY0hFMWFzZENRVF9RWEtJWHpONDFFQTJkUQ?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMiWkFVX3lxTFBlb2JKcnFMOXBJc24yMzZ3TGRjalFFcV82OV9zbks3d011WDBDZG1NWkxMcTlYMzZ6d0FHeFpiX3MzY0hFMWFzZENRVF9RWEtJWHpONDFFQTJkUQ?oc=5\" target=\"_blank\">Ukraine war: First ladies meet as US announces new sanctions</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">BBC</font>",
+            "topology_signal": 0.945,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {},
+            "stream_ratios": {}
+          },
+          {
+            "title": "U.S. Sanctions Russian TV Stations, Prohibits Accounting Services After G7 Leaders Meet - Radio Free Europe/Radio Liberty",
+            "masked_title": "",
+            "extracted_fact": "",
+            "triaged_in": false,
+            "semantic_distance": 0.0,
+            "combined_risk": 0.0,
+            "alarms": {},
+            "new_graph_nodes": [],
+            "date": "2022-05-08T07:00:00+00:00",
+            "source": "Radio Free Europe/Radio Liberty",
+            "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxObVlfcHR2bE9kUW5SeG9QZEZzMHpqbmkwNGUteXJDVG1vcU5xdmd2RS13QXA0XzZZNktxYzZsSUZnQzFUOGxhdDg3QTJRM05oRTVKWS1JTEoxUkEyUjNDQmZGOHlkelpWYjc0Z2lDaWREdEgzMXd4elR2NnZjcFk0RDFNZm1Qak42QkRXRVp30gGQAUFVX3lxTFBKVkZyUFlMOFlweHFDYlhPd1dxQUVKVE9SR01MUm9RMGJ2eDZHZzZmY0M2ZVNELXlLTkQ3NWJmXzgxUGdsMmJhaTdydHA0RmVuNUUyVmxMMVFsSTlLTnlvNFpkbEtQR3Zhdm5xNkdhNnlKbVJUM3Z3YVo5YUxrUWFBNDVKNVlBdzVFUllabkNfZg?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMijgFBVV95cUxObVlfcHR2bE9kUW5SeG9QZEZzMHpqbmkwNGUteXJDVG1vcU5xdmd2RS13QXA0XzZZNktxYzZsSUZnQzFUOGxhdDg3QTJRM05oRTVKWS1JTEoxUkEyUjNDQmZGOHlkelpWYjc0Z2lDaWREdEgzMXd4elR2NnZjcFk0RDFNZm1Qak42QkRXRVp30gGQAUFVX3lxTFBKVkZyUFlMOFlweHFDYlhPd1dxQUVKVE9SR01MUm9RMGJ2eDZHZzZmY0M2ZVNELXlLTkQ3NWJmXzgxUGdsMmJhaTdydHA0RmVuNUUyVmxMMVFsSTlLTnlvNFpkbEtQR3Zhdm5xNkdhNnlKbVJUM3Z3YVo5YUxrUWFBNDVKNVlBdzVFUllabkNfZg?oc=5\" target=\"_blank\">U.S. Sanctions Russian TV Stations, Prohibits Accounting Services After G7 Leaders Meet</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Radio Free Europe/Radio Liberty</font>",
+            "topology_signal": 0.945,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {},
+            "stream_ratios": {}
+          },
+          {
+            "title": "Investigation: Free From Western Sanctions, A Russian Bank Helps Fund The Invasion Of Ukraine - Radio Free Europe/Radio Liberty",
+            "masked_title": "",
+            "extracted_fact": "",
+            "triaged_in": false,
+            "semantic_distance": 0.0,
+            "combined_risk": 0.0,
+            "alarms": {},
+            "new_graph_nodes": [],
+            "date": "2022-06-28T07:00:00+00:00",
+            "source": "Radio Free Europe/Radio Liberty",
+            "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOckpLMGRheXpZMjhTSFM1NGhUU1c3R1F3SnN6cUlnWTNKU0xqWXp5ZExLVmE3UUdnOXdxQnRlODBZN3JSOWZvMkFoZEpHcndBMldfMFR0QlZyTWI2czJzQjBGTXc4WXUxVUt1Rnd6anNrWVNJWXRzbjUtMWpPREVudEpFeFU4RU1hWFZTaU4wem15SWh6U1VDdnlUVTFlODFs?oc=5",
+            "evidence": "<a href=\"https://news.google.com/rss/articles/CBMioAFBVV95cUxOckpLMGRheXpZMjhTSFM1NGhUU1c3R1F3SnN6cUlnWTNKU0xqWXp5ZExLVmE3UUdnOXdxQnRlODBZN3JSOWZvMkFoZEpHcndBMldfMFR0QlZyTWI2czJzQjBGTXc4WXUxVUt1Rnd6anNrWVNJWXRzbjUtMWpPREVudEpFeFU4RU1hWFZTaU4wem15SWh6U1VDdnlUVTFlODFs?oc=5\" target=\"_blank\">Investigation: Free From Western Sanctions, A Russian Bank Helps Fund The Invasion Of Ukraine</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">Radio Free Europe/Radio Liberty</font>",
+            "topology_signal": 0.945,
+            "behavioral_signal": 0.0,
+            "stream_statistics": {},
+            "stream_ratios": {}
+          }
+        ],
+        "report_markdown": null,
+        "id": "6"
+      }
+    }
+  }
+}

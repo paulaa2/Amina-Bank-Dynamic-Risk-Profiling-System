@@ -1,33 +1,9 @@
 {
   "scenario_id": "openai_regulatory_drift",
   "client": "OpenAI",
-  "description": "Chronological watchlist example: heavy commercial burn-in absorbs early regulatory hits so risk rises gradually without crossing the alarm threshold in this curated window. For Sequoia/FTX investor contagion use run_global_demo --companies FTX OpenAI.",
+  "description": "Chronological watchlist example (6 stream events): one commercial burn-in, then Sequoia/FTX cap-table stress, EU privacy action, US scrutiny and governance/litigation — combined risk climbs gradually without crossing 0.5. Cross-client Sequoia contagion at scale: run_global_demo --companies FTX OpenAI.",
   "reference_model": "AI research lab monetising via API and subscriptions.",
   "events": [
-    {
-      "date": "2022-11-30",
-      "title": "OpenAI launches ChatGPT to the public as a research preview",
-      "source": "OpenAI",
-      "url": "https://openai.com/blog/chatgpt/",
-      "evidence": "OpenAI releases ChatGPT for broad public use, beginning rapid consumer adoption.",
-      "burn_in": true
-    },
-    {
-      "date": "2023-01-23",
-      "title": "Microsoft announces multiyear multibillion dollar investment in OpenAI",
-      "source": "Microsoft",
-      "url": "https://blogs.microsoft.com/blog/2023/01/23/microsoftandopenaiextendpartnership/",
-      "evidence": "Microsoft extends its OpenAI partnership and commercial integration across Azure and product lines.",
-      "burn_in": true
-    },
-    {
-      "date": "2023-02-01",
-      "title": "OpenAI launches ChatGPT Plus subscription at $20 per month",
-      "source": "OpenAI",
-      "url": "https://openai.com/blog/chatgpt-plus/",
-      "evidence": "OpenAI introduces a paid subscription tier for ChatGPT.",
-      "burn_in": true
-    },
     {
       "date": "2023-03-01",
       "title": "OpenAI launches ChatGPT API for enterprise developers",
@@ -37,18 +13,18 @@
       "burn_in": true
     },
     {
+      "date": "2022-11-10",
+      "title": "OpenAI investor Sequoia Capital writes down entire FTX stake to zero",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/technology/what-are-ftxs-investors-saying-2022-11-11/",
+      "evidence": "Sequoia, also an early backer of OpenAI, marks $213M FTX exposure to zero after the exchange collapse."
+    },
+    {
       "date": "2023-03-31",
       "title": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection",
       "source": "Reuters",
       "url": "https://www.reuters.com/technology/italy-data-protection-agency-opens-chatgpt-probe-privacy-concerns-2023-03-31/",
-      "evidence": "Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection."
-    },
-    {
-      "date": "2023-04-28",
-      "title": "ChatGPT returns to Italy after OpenAI implements privacy safeguards requested by regulator",
-      "source": "The Verge",
-      "url": "https://www.theverge.com/2023/4/28/23702883/chatgpt-italy-ban-lifted-gpdp-data-protection-age-verification",
-      "evidence": "OpenAI restores ChatGPT access in Italy after meeting regulator demands on transparency and age controls."
+      "evidence": "Italy's Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection."
     },
     {
       "date": "2023-07-13",
@@ -77,27 +53,6 @@
       "source": "Reuters",
       "url": "https://www.reuters.com/legal/transactional/ny-times-sues-openai-microsoft-infringing-copyrighted-work-2023-12-27/",
       "evidence": "Major copyright litigation seeks billions of dollars and destruction of infringing models/data."
-    },
-    {
-      "date": "2024-05-26",
-      "title": "Former OpenAI board members accuse Altman of lying and call the governance experiment failed",
-      "source": "TIME timeline",
-      "url": "https://time.com/6986711/openai-sam-altman-accusations-controversies-timeline/",
-      "evidence": "Former board members publicly question governance and safety oversight."
-    },
-    {
-      "date": "2024-06-06",
-      "title": "US regulators clear antitrust probes into Microsoft OpenAI and Nvidia",
-      "source": "Reuters",
-      "url": "https://www.reuters.com/technology/us-regulators-open-antitrust-inquiries-microsoft-openai-nvidia-nyt-reports-2024-06-06/",
-      "evidence": "DOJ and FTC divide antitrust work; FTC leads the Microsoft-OpenAI conduct review."
-    },
-    {
-      "date": "2024-12-20",
-      "title": "Italian privacy regulator fines OpenAI €15M over EU data privacy breaches",
-      "source": "Reuters",
-      "url": "https://www.reuters.com/technology/italy-fines-openai-15-million-euros-over-data-privacy-2024-12-20/",
-      "evidence": "Garante Privacy confirms material privacy enforcement with a €15M fine."
     }
   ]
 }

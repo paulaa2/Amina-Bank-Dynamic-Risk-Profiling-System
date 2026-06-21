@@ -646,6 +646,18 @@ export default function DemoStudioPage() {
     }
   }
 
+  useEffect(() => {
+    if (selectedReplayId) {
+      loadReplay(false);
+    }
+  }, [selectedReplayId]);
+
+  useEffect(() => {
+    if (selectedGlobalId) {
+      loadGlobal(false);
+    }
+  }, [selectedGlobalId]);
+
   return (
     <div className="risk-workspace min-h-screen space-y-5 px-7 py-6">
       <header className="flex flex-col gap-4 border-b border-slate-800 pb-5 lg:flex-row lg:items-end lg:justify-between">

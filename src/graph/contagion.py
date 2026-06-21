@@ -102,6 +102,8 @@ class ComplianceDirectedGraph:
         contributors: list[dict] = []
         for u in self.graph.predecessors(target):
             u_risk = self.graph.nodes[u].get("intrinsic_risk", 0.0)
+            if u_risk <= 0.0:
+                continue
             edge = self.graph.get_edge_data(u, target) or {}
             rel_type = edge.get("type", "UNKNOWN")
             edge_weight = self._edge_weight(edge, rel_type)

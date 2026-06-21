@@ -74,22 +74,36 @@ export default function AuditHistory() {
     setBackendOnline(online);
 
     let reports = getAllCachedReports();
-    if (online) {
-      try {
+    try {
+      let cachedIds: string[] = [];
+      if (online) {
         const cache = await getBackendCacheStatus();
-        const backendReports = (
+        cachedIds = cache.cached_ids;
+      } else {
+        const basePath = typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
+          ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
+          : "";
+        const staticRes = await fetch(`${basePath}/api_cache/analysis.json`);
+        if (staticRes.ok) {
+          const data = await staticRes.json();
+          cachedIds = Object.keys(data);
+        }
+      }
+
+      if (cachedIds.length > 0) {
+        const fetchedReports = (
           await Promise.all(
-            cache.cached_ids.map((id) =>
+            cachedIds.map((id) =>
               getCachedAnalysis(Number(id)).catch(() => null)
             )
           )
         ).filter((report): report is LiveReport => report !== null);
-        if (backendReports.length > 0) {
-          reports = backendReports;
+        if (fetchedReports.length > 0) {
+          reports = fetchedReports;
         }
-      } catch {
-        // Keep the session cache fallback if the backend cache endpoint is unavailable.
       }
+    } catch (err) {
+      console.warn("Failed to load cached analysis history:", err);
     }
 
     setRows(buildRows(reports));

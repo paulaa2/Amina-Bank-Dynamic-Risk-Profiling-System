@@ -78,10 +78,16 @@ export function ScenarioRiskPath({ report, selectedIndex }: ScenarioRiskPathProp
         />
         <Tooltip content={<CustomTooltip />} />
         <ReferenceLine
-          y={threshold}
-          stroke="#f59e0b"
-          strokeDasharray="4 3"
+          y={0.5}
+          stroke="#f43f5e"
+          strokeDasharray="4 4"
           strokeWidth={1.5}
+          label={{
+            value: "Freeze Threshold (0.50)",
+            fill: "#f43f5e",
+            fontSize: 10,
+            position: "top",
+          }}
         />
         <ReferenceLine
           x={data[Math.max(0, selectedStep)]?.label}

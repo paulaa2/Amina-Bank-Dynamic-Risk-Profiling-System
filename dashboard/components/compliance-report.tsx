@@ -5,6 +5,9 @@ import { FileText } from "lucide-react";
 
 interface ComplianceReportProps {
   markdown: string | null;
+  complianceView?: boolean;
+  legalName?: string;
+  companyToken?: string;
 }
 
 interface ReportSection {
@@ -95,8 +98,17 @@ function parseBold(text: string): React.ReactNode {
   );
 }
 
-export function ComplianceReport({ markdown }: ComplianceReportProps) {
-  const sections = markdown ? splitReportSections(markdown) : [];
+export function ComplianceReport({
+  markdown,
+  complianceView = false,
+  legalName,
+  companyToken,
+}: ComplianceReportProps) {
+  let displayMarkdown = markdown;
+  if (complianceView && markdown && legalName) {
+    displayMarkdown = markdown.split(legalName).join(companyToken || "MASKED_COMPANY_001");
+  }
+  const sections = displayMarkdown ? splitReportSections(displayMarkdown) : [];
   const intro = sections[0]?.title ? null : sections[0] ?? null;
   const bodySections = intro ? sections.slice(1) : sections;
 
