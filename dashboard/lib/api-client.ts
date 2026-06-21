@@ -184,6 +184,7 @@ const CURATED_STATIC_VERSION = "golden-pinned-20250621";
 const _cache = new Map<string, LiveReport>();
 const _globalScenarioCache = new Map<string, GlobalDemoResult>();
 let _staticScenarioCache: Record<string, LiveReport> | null = null;
+let _staticGlobalCache: Record<string, GlobalDemoResult> | null = null;
 
 function staticBasePath(): string {
   if (typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")) {
@@ -224,6 +225,26 @@ async function getCuratedStaticReport(scenarioId: string): Promise<LiveReport | 
   const staticCache = await loadStaticScenarioCache();
   const report = staticCache[scenarioId];
   return isValidCuratedReport(report, scenarioId) ? report : null;
+}
+
+async function loadStaticGlobalCache(): Promise<Record<string, GlobalDemoResult>> {
+  if (_staticGlobalCache) return _staticGlobalCache;
+  try {
+    const res = await fetch(
+      `${staticBasePath()}/api_cache/global.json?v=${CURATED_STATIC_VERSION}`,
+    );
+    if (!res.ok) throw new Error("Static global cache not found");
+    _staticGlobalCache = (await res.json()) as Record<string, GlobalDemoResult>;
+    return _staticGlobalCache;
+  } catch {
+    _staticGlobalCache = {};
+    return _staticGlobalCache;
+  }
+}
+
+async function getStaticGlobalScenario(scenarioId: string): Promise<GlobalDemoResult | null> {
+  const staticCache = await loadStaticGlobalCache();
+  return staticCache[scenarioId] ?? null;
 }
 
 function storageAvailable(): boolean {
@@ -855,13 +876,13 @@ export async function replayScenario(
   scenarioId: string,
   opts: { force_refresh?: boolean } = {},
 ): Promise<LiveReport> {
-  if (!opts.force_refresh) {
-    const staticReport = await getCuratedStaticReport(scenarioId);
-    if (staticReport) {
-      storeCuratedReport(staticReport);
-      return staticReport;
-    }
+  const staticReport = await getCuratedStaticReport(scenarioId);
+  if (staticReport) {
+    storeCuratedReport(staticReport);
+    return staticReport;
+  }
 
+  if (!opts.force_refresh) {
     const cachedScenario = getStoredScenarioReport(scenarioId);
     if (isValidCuratedReport(cachedScenario, scenarioId)) {
       storeCuratedReport(cachedScenario);
@@ -934,6 +955,18 @@ export async function runGlobalScenario(
   scenarioId: string,
   opts: { force_refresh?: boolean; max_events?: number } = {},
 ): Promise<GlobalDemoResult> {
+  if (opts.max_events === undefined) {
+    const staticResult = await getStaticGlobalScenario(scenarioId);
+    if (staticResult) {
+      putGlobalScenario(scenarioId, staticResult);
+      for (const [name, report] of Object.entries(staticResult.clients)) {
+        const id = staticResult.company_ids[name] ?? Number(report.id);
+        if (id) putReport(id, false, report);
+      }
+      return staticResult;
+    }
+  }
+
   const cached = getStoredGlobalScenario(scenarioId);
   if (cached && !opts.force_refresh && opts.max_events === undefined) {
     return cached;

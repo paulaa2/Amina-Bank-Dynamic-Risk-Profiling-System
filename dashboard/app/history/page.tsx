@@ -17,6 +17,7 @@ import {
   checkHealth,
   getBackendCacheStatus,
   getCachedAnalysis,
+  type GlobalDemoResult,
   type LiveReport,
 } from "@/lib/api-client";
 
@@ -65,53 +66,92 @@ function buildRows(reports: LiveReport[]) {
   return entries;
 }
 
+function staticBasePath(): string {
+  return typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
+    ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
+    : "";
+}
+
+function reportKey(report: LiveReport): string {
+  const scenarioId = report.scenario?.scenario_id;
+  return scenarioId ? `scenario:${scenarioId}` : `company:${report.id}`;
+}
+
+async function fetchJson<T>(path: string): Promise<T | null> {
+  try {
+    const res = await fetch(path);
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function loadStaticReports(): Promise<LiveReport[]> {
+  const basePath = staticBasePath();
+  const reports: LiveReport[] = [];
+
+  const [analysis, scenarios, globals] = await Promise.all([
+    fetchJson<Record<string, LiveReport>>(`${basePath}/api_cache/analysis.json`),
+    fetchJson<Record<string, LiveReport>>(`${basePath}/api_cache/scenario.json`),
+    fetchJson<Record<string, GlobalDemoResult>>(`${basePath}/api_cache/global.json`),
+  ]);
+
+  if (analysis) reports.push(...Object.values(analysis));
+  if (scenarios) reports.push(...Object.values(scenarios));
+  if (globals) {
+    for (const globalDemo of Object.values(globals)) {
+      reports.push(...Object.values(globalDemo.clients));
+    }
+  }
+
+  return reports;
+}
+
 export default function AuditHistory() {
   const [rows, setRows] = useState<HistoryRow[]>([]);
+  const [reportCount, setReportCount] = useState(0);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
 
   const loadData = useCallback(async () => {
     const online = await checkHealth();
     setBackendOnline(online);
 
-    let reports = getAllCachedReports();
+    const reportsByKey = new Map<string, LiveReport>();
+    const mergeReports = (reports: LiveReport[]) => {
+      for (const report of reports) {
+        reportsByKey.set(reportKey(report), report);
+      }
+    };
+
     try {
-      let cachedIds: string[] = [];
       if (online) {
         const cache = await getBackendCacheStatus();
-        cachedIds = cache.cached_ids;
-      } else {
-        const basePath = typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
-          ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
-          : "";
-        const staticRes = await fetch(`${basePath}/api_cache/analysis.json`);
-        if (staticRes.ok) {
-          const data = await staticRes.json();
-          cachedIds = Object.keys(data);
-        }
-      }
-
-      if (cachedIds.length > 0) {
-        const fetchedReports = (
-          await Promise.all(
-            cachedIds.map((id) =>
-              getCachedAnalysis(Number(id)).catch(() => null)
+        if (cache.cached_ids.length > 0) {
+          const fetchedReports = (
+            await Promise.all(
+              cache.cached_ids.map((id) =>
+                getCachedAnalysis(Number(id)).catch(() => null)
+              )
             )
-          )
-        ).filter((report): report is LiveReport => report !== null);
-        if (fetchedReports.length > 0) {
-          reports = fetchedReports;
+          ).filter((report): report is LiveReport => report !== null);
+          mergeReports(fetchedReports);
         }
       }
     } catch (err) {
-      console.warn("Failed to load cached analysis history:", err);
+      console.warn("Failed to load backend analysis history:", err);
     }
 
+    mergeReports(await loadStaticReports());
+    mergeReports(getAllCachedReports());
+
+    const reports = Array.from(reportsByKey.values());
+    setReportCount(reports.length);
     setRows(buildRows(reports));
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadData();
+    void Promise.resolve().then(loadData);
   }, [loadData]);
 
   return (
@@ -162,7 +202,7 @@ export default function AuditHistory() {
               <Clock className="h-4 w-4 text-slate-500" />
               <span className="text-sm font-semibold text-slate-200">Compliance Audit Trail</span>
             </div>
-            <span className="font-mono text-xs text-slate-500">{rows.length} entries from {getAllCachedReports().length} analyses</span>
+            <span className="font-mono text-xs text-slate-500">{rows.length} entries from {reportCount} cached reports</span>
           </div>
 
           <Table>
