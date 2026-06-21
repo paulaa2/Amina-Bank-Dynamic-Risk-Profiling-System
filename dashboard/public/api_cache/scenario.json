@@ -69,13 +69,31 @@
         "sentinel_extract": 6
       }
     },
-    "governance": null,
+    "governance": {
+      "alert_id": "ALT_002",
+      "target_entity_id": "COMPANY_2",
+      "target_display_name": "FTX Trading Ltd",
+      "risk_score": 0.5263,
+      "trigger_streams": [],
+      "status": "DETECTED",
+      "assigned_analyst": null,
+      "proposed_mitigation_action": null,
+      "compliance_approver": null,
+      "audit_trail": [
+        {
+          "timestamp": "2022-11-09T09:00:00+00:00",
+          "user": "system",
+          "action": "Alert detected by curated replay drift fusion gateway",
+          "resulting_status": "DETECTED"
+        }
+      ]
+    },
     "warnings": [],
     "events": [
       {
         "title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
         "masked_title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
-        "extracted_fact": "Alameda Research depende significativamente de los activos relacionados con el token FTT de FTX en su balance sheet",
+        "extracted_fact": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns.",
         "triaged_in": true,
         "semantic_distance": 0.4822,
         "topology_signal": 0.0,
@@ -115,7 +133,7 @@
       {
         "title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
         "masked_title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
-        "extracted_fact": "Binance planea liquidar sus activos restantes de FTT relacionados con FTX tras revelaciones de CoinDesk",
+        "extracted_fact": "Public counterparty action accelerates market pressure and begins a bank-run dynamic.",
         "triaged_in": true,
         "semantic_distance": 0.5148,
         "topology_signal": 0.0,
@@ -155,7 +173,7 @@
       {
         "title": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal",
         "masked_title": "FTX faces withdrawal pressure and announces non-binding MASKED_COMPANY_007 rescue deal",
-        "extracted_fact": "FTX anuncia un acuerdo de rescate no vinculante para enfrentar la presión de retiros",
+        "extracted_fact": "FTX withdrawal stress and bailout discussions show acute liquidity deterioration.",
         "triaged_in": true,
         "semantic_distance": 0.5833,
         "topology_signal": 0.0,
@@ -186,7 +204,7 @@
       {
         "title": "Binance walks away from FTX rescue after due diligence",
         "masked_title": "MASKED_COMPANY_007 walks away from FTX rescue after due diligence",
-        "extracted_fact": "MASKED_COMPANY_007 rechaza participar en la rescatada de FTX tras realizar debido diligence",
+        "extracted_fact": "Failed acquisition removes last-resort support and exposes severe financial issues.",
         "triaged_in": true,
         "semantic_distance": 0.5024,
         "topology_signal": 0.0,
@@ -215,13 +233,16 @@
         "evidence": "Failed acquisition removes last-resort support and exposes severe financial issues."
       }
     ],
-    "report_markdown": null,
+    "report_markdown": "# AML COMPLIANCE REPORT - ALERT RECORD ALT_002\n\n## 1. EXECUTIVE SUMMARY\nFTX Trading Ltd breached the configured KYC drift threshold during the curated historical replay. The maximum combined risk reached 0.53 against a threshold of 0.50.\n\n## 2. TRIGGERING EVIDENCE\n- Triggering event: Binance walks away from FTX rescue after due diligence\n- Extracted fact: Failed acquisition removes last-resort support and exposes severe financial issues.\n- Source: Reuters / CoinDesk\n- URL: https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/\n\n## 3. MULTI-STREAM KYC DRIFT ANALYSIS\n- Semantic signal: 0.5024\n- Topology exposure: 0.0\n- Behavioural transaction signal: 0.0\n- Alarm stream status: semantic=inactive, topology=inactive, behavioral tx=inactive\n\n## 4. AUDITABLE METRIC TRACE\n- Combined risk: 0.5263\n- Threshold: 0.5000\n- Processed replay events: 4\n\n## 5. RECOMMENDED GOVERNANCE ACTION\nOpen an enhanced due-diligence review, preserve source evidence, and require four-eyes approval before any mitigation action is executed.",
     "scenario": {
       "scenario_id": "ftx_rapid_deterioration",
       "description": "Evidence-backed rapid deterioration replay: not slow KYC drift, but a multi-day liquidity and governance collapse before bankruptcy.",
       "reference_model": "Centralised crypto-asset exchange and custody.",
       "curated_event_count": 4,
-      "processed_event_count": 4
+      "processed_event_count": 4,
+      "alarm_event_index": 4,
+      "alarm_date": "2022-11-09",
+      "alarm_title": "Binance walks away from FTX rescue after due diligence"
     },
     "id": "2"
   },
@@ -302,13 +323,31 @@
         "sentinel_extract": 6
       }
     },
-    "governance": null,
+    "governance": {
+      "alert_id": "ALT_006",
+      "target_entity_id": "COMPANY_6",
+      "target_display_name": "Gazprombank",
+      "risk_score": 0.5981,
+      "trigger_streams": [],
+      "status": "DETECTED",
+      "assigned_analyst": null,
+      "proposed_mitigation_action": null,
+      "compliance_approver": null,
+      "audit_trail": [
+        {
+          "timestamp": "2022-03-31T09:00:00+00:00",
+          "user": "system",
+          "action": "Alert detected by curated replay drift fusion gateway",
+          "resulting_status": "DETECTED"
+        }
+      ]
+    },
     "warnings": [],
     "events": [
       {
         "title": "Gazprombank is subject to Ukraine/Russia-related sectoral sanctions directives",
         "masked_title": "MASKED_COMPANY_001 is subject to Ukraine/Russia-related sectoral sanctions directives",
-        "extracted_fact": "La empresa fue sometida a directivas de sanciones sectoriales relacionadas con Ucrania/Rusia",
+        "extracted_fact": "Gazprombank appears under Ukraine/Russia-related sanctions directives as a Russian financial institution.",
         "triaged_in": true,
         "semantic_distance": 0.429,
         "topology_signal": 0.0,
@@ -339,7 +378,7 @@
       {
         "title": "Gazprombank becomes subject to EO 14024 Directive 3 restrictions on new debt and equity",
         "masked_title": "MASKED_COMPANY_001 becomes subject to EO 14024 Directive 3 restrictions on new debt and equity",
-        "extracted_fact": "La empresa se somete a restricciones de la Directiva 3 de la EO 14024 sobre nuevos préstamos y acciones",
+        "extracted_fact": "Directive 3 restrictions apply to new debt/equity after effective date.",
         "triaged_in": true,
         "semantic_distance": 0.5131,
         "topology_signal": 0.0,
@@ -370,7 +409,7 @@
       {
         "title": "EU removes several Russian banks from SWIFT but spares Gazprombank for energy payments",
         "masked_title": "EU removes several Russian banks from SWIFT but spares MASKED_COMPANY_001 for energy payments",
-        "extracted_fact": "La empresa fue exenta de ser removida de SWIFT por parte de la UE para seguir realizando pagos energéticos",
+        "extracted_fact": "Gazprombank is spared because it processes Russian oil and gas payments, creating continuing sanctions exposure.",
         "triaged_in": true,
         "semantic_distance": 0.4949,
         "topology_signal": 0.0,
@@ -401,7 +440,7 @@
       {
         "title": "Russia requires foreign gas payments through Gazprombank rouble-conversion mechanism",
         "masked_title": "Russia requires foreign gas payments through MASKED_COMPANY_001 rouble-conversion mechanism",
-        "extracted_fact": "Russia requiere que los pagos por gas extranjeros se realicen mediante el mecanismo de conversión de rublos de la empresa",
+        "extracted_fact": "Putin decree makes Gazprombank central to foreign gas settlement and sanctions compliance risk.",
         "triaged_in": true,
         "semantic_distance": 0.5539,
         "topology_signal": 0.0,
@@ -430,13 +469,16 @@
         "evidence": "Putin decree makes Gazprombank central to foreign gas settlement and sanctions compliance risk."
       }
     ],
-    "report_markdown": null,
+    "report_markdown": "# AML COMPLIANCE REPORT - ALERT RECORD ALT_006\n\n## 1. EXECUTIVE SUMMARY\nGazprombank breached the configured KYC drift threshold during the curated historical replay. The maximum combined risk reached 0.60 against a threshold of 0.50.\n\n## 2. TRIGGERING EVIDENCE\n- Triggering event: Russia requires foreign gas payments through Gazprombank rouble-conversion mechanism\n- Extracted fact: Putin decree makes Gazprombank central to foreign gas settlement and sanctions compliance risk.\n- Source: Reuters UK Gazprombank payments coverage\n- URL: https://www.reuters.com/world/uk/britain-permits-gas-payments-gazprombank-until-may-31-2022-04-22/\n\n## 3. MULTI-STREAM KYC DRIFT ANALYSIS\n- Semantic signal: 0.5539\n- Topology exposure: 0.0\n- Behavioural transaction signal: 0.0\n- Alarm stream status: semantic=inactive, topology=inactive, behavioral tx=inactive\n\n## 4. AUDITABLE METRIC TRACE\n- Combined risk: 0.5981\n- Threshold: 0.5000\n- Processed replay events: 4\n\n## 5. RECOMMENDED GOVERNANCE ACTION\nOpen an enhanced due-diligence review, preserve source evidence, and require four-eyes approval before any mitigation action is executed.",
     "scenario": {
       "scenario_id": "gazprombank_sanctions_escalation",
       "description": "Energy-payment exposure replay showing Gazprombank's sanctions risk rising despite initial exemptions.",
       "reference_model": "Large private/state-linked commercial bank.",
       "curated_event_count": 4,
-      "processed_event_count": 4
+      "processed_event_count": 4,
+      "alarm_event_index": 4,
+      "alarm_date": "2022-03-31",
+      "alarm_title": "Russia requires foreign gas payments through Gazprombank rouble-conversion mechanism"
     },
     "id": "6"
   },
@@ -510,13 +552,31 @@
         "sentinel_extract": 6
       }
     },
-    "governance": null,
+    "governance": {
+      "alert_id": "ALT_003",
+      "target_entity_id": "COMPANY_3",
+      "target_display_name": "MicroStrategy Incorporated",
+      "risk_score": 0.5132,
+      "trigger_streams": [],
+      "status": "DETECTED",
+      "assigned_analyst": null,
+      "proposed_mitigation_action": null,
+      "compliance_approver": null,
+      "audit_trail": [
+        {
+          "timestamp": "2020-12-11T09:00:00+00:00",
+          "user": "system",
+          "action": "Alert detected by curated replay drift fusion gateway",
+          "resulting_status": "DETECTED"
+        }
+      ]
+    },
     "warnings": [],
     "events": [
       {
         "title": "MicroStrategy announces capital allocation strategy: buyback plus alternative assets including digital assets such as bitcoin",
         "masked_title": "MicroStrategy announces capital allocation strategy: buyback plus alternative assets including digital assets such as bitcoin",
-        "extracted_fact": "MicroStrategy anunció una estrategia de asignación de capital que incluye compras de acciones y activos alternativos, entre ellos activos digitales como el bitcoin",
+        "extracted_fact": "Company says it may invest up to $250M in alternative assets including digital assets such as bitcoin.",
         "triaged_in": true,
         "semantic_distance": 0.4386,
         "topology_signal": 0.0,
@@ -547,7 +607,7 @@
       {
         "title": "MicroStrategy adopts Bitcoin as primary treasury reserve asset with a $250M purchase",
         "masked_title": "MicroStrategy adopts Bitcoin as primary treasury reserve asset with a $250M purchase",
-        "extracted_fact": "MicroStrategy adquiere Bitcoin como activo principal de reserva de tesorería con un monto de $250M",
+        "extracted_fact": "Company purchases 21,454 bitcoins and states Bitcoin is now the principal holding in treasury reserve strategy.",
         "triaged_in": true,
         "semantic_distance": 0.5627,
         "topology_signal": 0.0,
@@ -578,7 +638,7 @@
       {
         "title": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin",
         "masked_title": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin",
-        "extracted_fact": "MicroStrategy emitió un bono convertible por $650 millones con intención de invertir los fondos en Bitcoin",
+        "extracted_fact": "Net proceeds from convertible senior notes are intended for Bitcoin purchases under the Treasury Reserve Policy.",
         "triaged_in": true,
         "semantic_distance": 0.5289,
         "topology_signal": 0.0,
@@ -607,13 +667,16 @@
         "evidence": "Net proceeds from convertible senior notes are intended for Bitcoin purchases under the Treasury Reserve Policy."
       }
     ],
-    "report_markdown": null,
+    "report_markdown": "# AML COMPLIANCE REPORT - ALERT RECORD ALT_003\n\n## 1. EXECUTIVE SUMMARY\nMicroStrategy Incorporated breached the configured KYC drift threshold during the curated historical replay. The maximum combined risk reached 0.51 against a threshold of 0.50.\n\n## 2. TRIGGERING EVIDENCE\n- Triggering event: MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin\n- Extracted fact: Net proceeds from convertible senior notes are intended for Bitcoin purchases under the Treasury Reserve Policy.\n- Source: Strategy press release / SEC 8-K\n- URL: https://www.strategy.com/press/microstrategy-completes-650m-offering-of-convertible-senior-notes-due-2025\n\n## 3. MULTI-STREAM KYC DRIFT ANALYSIS\n- Semantic signal: 0.5289\n- Topology exposure: 0.0\n- Behavioural transaction signal: 0.0\n- Alarm stream status: semantic=inactive, topology=inactive, behavioral tx=inactive\n\n## 4. AUDITABLE METRIC TRACE\n- Combined risk: 0.5132\n- Threshold: 0.5000\n- Processed replay events: 3\n\n## 5. RECOMMENDED GOVERNANCE ACTION\nOpen an enhanced due-diligence review, preserve source evidence, and require four-eyes approval before any mitigation action is executed.",
     "scenario": {
       "scenario_id": "microstrategy_drift",
       "description": "Evidence-backed as-of replay showing gradual KYC drift from enterprise BI software toward a leveraged Bitcoin treasury strategy.",
       "reference_model": "Enterprise Business Intelligence software and cloud analytics.",
       "curated_event_count": 3,
-      "processed_event_count": 3
+      "processed_event_count": 3,
+      "alarm_event_index": 3,
+      "alarm_date": "2020-12-11",
+      "alarm_title": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin"
     },
     "id": "3"
   },
@@ -700,7 +763,7 @@
       {
         "title": "OpenAI investor Sequoia Capital writes down entire FTX stake to zero",
         "masked_title": "MASKED_COMPANY_001 investor MASKED_COMPANY_005 writes down entire FTX stake to zero",
-        "extracted_fact": "MASKED_COMPANY_001 vendió toda su participación en FTX a cero",
+        "extracted_fact": "Sequoia, also an early backer of OpenAI, marks $213M FTX exposure to zero after the exchange collapse.",
         "triaged_in": true,
         "semantic_distance": 0.5213,
         "topology_signal": 0.0,
@@ -740,7 +803,7 @@
       {
         "title": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection",
         "masked_title": "Italian privacy regulator orders temporary ban on MASKED_COMPANY_001 ChatGPT over unlawful data collection",
-        "extracted_fact": "La autoridad de privacidad italiana ordena una prohibición temporal de ChatGPT por recopilación ilegal de datos",
+        "extracted_fact": "Italy's Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection.",
         "triaged_in": true,
         "semantic_distance": 0.547,
         "topology_signal": 0.0,
@@ -771,7 +834,7 @@
       {
         "title": "US FTC opens investigation into OpenAI over consumer harm, reputational risk and data practices",
         "masked_title": "US FTC opens investigation into MASKED_COMPANY_001 over consumer harm, reputational risk and data practices",
-        "extracted_fact": "La FTC de EE.UU. inicia una investigación sobre prácticas de datos, riesgo reputacional y daño al consumidor",
+        "extracted_fact": "FTC sends a civil investigative demand on data security and risks of false or harmful statements about individuals.",
         "triaged_in": true,
         "semantic_distance": 0.4816,
         "topology_signal": 0.0,
@@ -802,7 +865,7 @@
       {
         "title": "OpenAI board fires CEO Sam Altman; governance crisis begins",
         "masked_title": "MASKED_COMPANY_001 board fires CEO MASKED_PERSON_002; governance crisis begins",
-        "extracted_fact": "El consejo de administración de la empresa destituyó al CEO.",
+        "extracted_fact": "Board removes Altman; communication breakdown and board-control questions create governance risk.",
         "triaged_in": true,
         "semantic_distance": 0.4456,
         "topology_signal": 0.0,
@@ -833,7 +896,7 @@
       {
         "title": "Nearly all OpenAI staff threaten to quit and join Microsoft unless board resigns",
         "masked_title": "Nearly all MASKED_COMPANY_001 staff threaten to quit and join MASKED_COMPANY_004 unless board resigns",
-        "extracted_fact": "El personal de la empresa amenaza con dejarla y unirse a otra empresa si el consejo de administración renuncia",
+        "extracted_fact": "Staff revolt and Microsoft intervention reveal extreme governance fragility.",
         "triaged_in": true,
         "semantic_distance": 0.4952,
         "topology_signal": 0.0,
@@ -864,7 +927,7 @@
       {
         "title": "New York Times sues OpenAI and Microsoft over copyrighted works used to train AI systems",
         "masked_title": "New York Times sues MASKED_COMPANY_001 and MASKED_COMPANY_004 over copyrighted works used to train AI systems",
-        "extracted_fact": "La empresa fue demandada por el New York Times por uso no autorizado de obras protegidas para entrenamiento de sistemas de inteligencia artificial",
+        "extracted_fact": "Major copyright litigation seeks billions of dollars and destruction of infringing models/data.",
         "triaged_in": true,
         "semantic_distance": 0.4762,
         "topology_signal": 0.0,
@@ -899,7 +962,10 @@
       "description": "Chronological watchlist example (6 stream events): one commercial burn-in, then Sequoia/FTX cap-table stress, EU privacy action, US scrutiny and governance/litigation — combined risk climbs gradually without crossing 0.5. Cross-client Sequoia contagion at scale: run_global_demo --companies FTX OpenAI.",
       "reference_model": "AI research lab monetising via API and subscriptions.",
       "curated_event_count": 6,
-      "processed_event_count": 6
+      "processed_event_count": 6,
+      "alarm_event_index": null,
+      "alarm_date": null,
+      "alarm_title": null
     },
     "id": "4"
   },
@@ -985,38 +1051,18 @@
       "alert_id": "ALT_007",
       "target_entity_id": "COMPANY_7",
       "target_display_name": "Surgutneftegas",
-      "risk_score": 0.8,
-      "trigger_streams": [
-        "topology"
-      ],
-      "status": "RESOLVED_MITIGATED",
-      "assigned_analyst": "analyst_clara",
-      "proposed_mitigation_action": "FREEZE_ASSETS",
-      "compliance_approver": "officer_marcus",
+      "risk_score": 0.5201,
+      "trigger_streams": [],
+      "status": "DETECTED",
+      "assigned_analyst": null,
+      "proposed_mitigation_action": null,
+      "compliance_approver": null,
       "audit_trail": [
         {
-          "timestamp": "2026-06-21T03:10:37+00:00",
+          "timestamp": "2025-01-10T09:00:00+00:00",
           "user": "system",
-          "action": "Alert detected by drift fusion gateway",
+          "action": "Alert detected by curated replay drift fusion gateway",
           "resulting_status": "DETECTED"
-        },
-        {
-          "timestamp": "2026-06-21T03:10:37+00:00",
-          "user": "analyst_clara",
-          "action": "Assigned to level-1 analyst for trace investigation",
-          "resulting_status": "UNDER_REVIEW"
-        },
-        {
-          "timestamp": "2026-06-21T03:10:37+00:00",
-          "user": "analyst_clara",
-          "action": "Proposed mitigation 'FREEZE_ASSETS'; submitted for compliance approval",
-          "resulting_status": "FOUR_EYES_PENDING"
-        },
-        {
-          "timestamp": "2026-06-21T03:10:37+00:00",
-          "user": "officer_marcus",
-          "action": "Approved and executed mitigation",
-          "resulting_status": "RESOLVED_MITIGATED"
         }
       ]
     },
@@ -1025,7 +1071,7 @@
       {
         "title": "US sectoral restrictions target Russian oil companies including Surgutneftegas",
         "masked_title": "US sectoral restrictions target Russian oil companies including MASKED_COMPANY_001",
-        "extracted_fact": "Se aplican restricciones sectoriales en el sector energético de EE.UU. a empresas rusas",
+        "extracted_fact": "OpenSanctions records US sanctions entries for Surgutneftegas starting 2014-09-12.",
         "triaged_in": true,
         "semantic_distance": 0.4645,
         "topology_signal": 0.0,
@@ -1056,7 +1102,7 @@
       {
         "title": "BIS Entity List restrictions apply to Surgutneftegas-linked Russian energy technology exposure",
         "masked_title": "BIS Entity List restrictions apply to MASKED_COMPANY_001-linked Russian energy technology exposure",
-        "extracted_fact": "La empresa está sujeta a restricciones de la BIS Entity List debido a su exposición a tecnología energética rusa.",
+        "extracted_fact": "BIS Entity List entry appears in sanctions adjacency data.",
         "triaged_in": true,
         "semantic_distance": 0.504,
         "topology_signal": 0.0,
@@ -1087,7 +1133,7 @@
       {
         "title": "G7/EU oil price cap increases Surgutneftegas sanctions exposure for Russian oil exports",
         "masked_title": "G7/EU oil price cap increases MASKED_COMPANY_001 sanctions exposure for Russian oil exports",
-        "extracted_fact": "La empresa enfrenta sanciones por exportar petróleo ruso bajo el precio máximo establecido por el G7/EU.",
+        "extracted_fact": "Oil price cap comes into effect to reduce Russia's ability to finance the war.",
         "triaged_in": true,
         "semantic_distance": 0.4618,
         "topology_signal": 0.0,
@@ -1118,7 +1164,7 @@
       {
         "title": "EU refined oil products ban adds revenue pressure on Surgutneftegas and Russian energy sector",
         "masked_title": "EU refined oil products ban adds revenue pressure on MASKED_COMPANY_001 and Russian energy sector",
-        "extracted_fact": "La prohibicion de productos de aceite refinado en la UE genera presion sobre los ingresos de la empresa",
+        "extracted_fact": "Refined oil product restrictions add sectoral pressure to Russian oil producers.",
         "triaged_in": true,
         "semantic_distance": 0.4274,
         "topology_signal": 0.0,
@@ -1157,7 +1203,7 @@
         "behavioral_signal": 0.0,
         "combined_risk": 0.5201,
         "triaged_in": true,
-        "extracted_fact": "Gazprom Neft fue designada como objetivo principal de sanciones por parte de EE.UU. y Reino Unido debido a su actividad en el sector del petróleo ruso.",
+        "extracted_fact": "UK and US directly sanction two major Russian oil companies, including PJSC Surgutneftegas.",
         "scenario_index": 5,
         "new_graph_nodes": [
           {
@@ -1193,7 +1239,10 @@
       "description": "Russian energy-sector escalation replay from sectoral controls to full US/UK oil-major designation.",
       "reference_model": "Vertically integrated Russian oil and gas producer.",
       "curated_event_count": 5,
-      "processed_event_count": 5
+      "processed_event_count": 5,
+      "alarm_event_index": 5,
+      "alarm_date": "2025-01-10",
+      "alarm_title": "US and UK designate Surgutneftegas and Gazprom Neft as major Russian oil sanctions targets"
     },
     "id": "7"
   },
@@ -1274,13 +1323,31 @@
         "sentinel_extract": 4
       }
     },
-    "governance": null,
+    "governance": {
+      "alert_id": "ALT_005",
+      "target_entity_id": "COMPANY_5",
+      "target_display_name": "VTB Bank",
+      "risk_score": 0.5504,
+      "trigger_streams": [],
+      "status": "DETECTED",
+      "assigned_analyst": null,
+      "proposed_mitigation_action": null,
+      "compliance_approver": null,
+      "audit_trail": [
+        {
+          "timestamp": "2022-03-02T09:00:00+00:00",
+          "user": "system",
+          "action": "Alert detected by curated replay drift fusion gateway",
+          "resulting_status": "DETECTED"
+        }
+      ]
+    },
     "warnings": [],
     "events": [
       {
         "title": "EU introduces targeted restrictive measures on Russian capital markets and sensitive sectors",
         "masked_title": "",
-        "extracted_fact": "",
+        "extracted_fact": "Council Decision 2014/512 introduced sectoral restrictions after Russia's destabilisation of Ukraine.",
         "triaged_in": false,
         "semantic_distance": 0.0,
         "topology_signal": 0.0,
@@ -1311,7 +1378,7 @@
       {
         "title": "VTB appears under EU sectoral restrictive measures linked to Russia's actions in Ukraine",
         "masked_title": "VTB appears under EU sectoral restrictive measures linked to Russia's actions in Ukraine",
-        "extracted_fact": "VTB fue incluido en medidas restrictivas sectoriales de la UE relacionadas con las acciones de Rusia en Ucrania",
+        "extracted_fact": "VTB listing date under EU Russia sectoral restrictive measures.",
         "triaged_in": true,
         "semantic_distance": 0.5255,
         "topology_signal": 0.0,
@@ -1342,7 +1409,7 @@
       {
         "title": "US issues new Russia-related blocking measures as Ukraine crisis escalates",
         "masked_title": "",
-        "extracted_fact": "",
+        "extracted_fact": "New executive actions follow Russia's continued efforts to undermine Ukraine sovereignty.",
         "triaged_in": false,
         "semantic_distance": 0.0,
         "topology_signal": 0.0,
@@ -1373,7 +1440,7 @@
       {
         "title": "US announces full blocking sanctions on VTB, Russia's second largest financial institution",
         "masked_title": "US announces full blocking sanctions on VTB, Russia's second largest financial institution",
-        "extracted_fact": "Estados Unidos impone sanciones completas contra VTB",
+        "extracted_fact": "Full blocking sanctions freeze VTB assets touching the US financial system.",
         "triaged_in": true,
         "semantic_distance": 0.5788,
         "topology_signal": 0.0,
@@ -1404,7 +1471,7 @@
       {
         "title": "EU orders VTB and six other Russian banks disconnected from SWIFT",
         "masked_title": "EU orders VTB and six other Russian banks disconnected from SWIFT",
-        "extracted_fact": "VTB fue ordenada por la UE a desconectarse del sistema SWIFT",
+        "extracted_fact": "SWIFT disconnection further limits access to global financial infrastructure.",
         "triaged_in": true,
         "semantic_distance": 0.5861,
         "topology_signal": 0.0,
@@ -1433,13 +1500,16 @@
         "evidence": "SWIFT disconnection further limits access to global financial infrastructure."
       }
     ],
-    "report_markdown": null,
+    "report_markdown": "# AML COMPLIANCE REPORT - ALERT RECORD ALT_005\n\n## 1. EXECUTIVE SUMMARY\nVTB Bank breached the configured KYC drift threshold during the curated historical replay. The maximum combined risk reached 0.55 against a threshold of 0.50.\n\n## 2. TRIGGERING EVIDENCE\n- Triggering event: EU orders VTB and six other Russian banks disconnected from SWIFT\n- Extracted fact: SWIFT disconnection further limits access to global financial infrastructure.\n- Source: Davis Polk sanctions update\n- URL: https://www.davispolk.com/insights/client-update/russia-sanctions-update-march-4-2022\n\n## 3. MULTI-STREAM KYC DRIFT ANALYSIS\n- Semantic signal: 0.5861\n- Topology exposure: 0.0\n- Behavioural transaction signal: 0.0\n- Alarm stream status: semantic=inactive, topology=inactive, behavioral tx=inactive\n\n## 4. AUDITABLE METRIC TRACE\n- Combined risk: 0.5504\n- Threshold: 0.5000\n- Processed replay events: 5\n\n## 5. RECOMMENDED GOVERNANCE ACTION\nOpen an enhanced due-diligence review, preserve source evidence, and require four-eyes approval before any mitigation action is executed.",
     "scenario": {
       "scenario_id": "vtb_sanctions_escalation",
       "description": "Sanctions escalation replay from 2014 sectoral restrictions to 2022 full blocking sanctions.",
       "reference_model": "State-owned commercial and investment bank.",
       "curated_event_count": 5,
-      "processed_event_count": 5
+      "processed_event_count": 5,
+      "alarm_event_index": 5,
+      "alarm_date": "2022-03-02",
+      "alarm_title": "EU orders VTB and six other Russian banks disconnected from SWIFT"
     },
     "id": "5"
   },
@@ -1527,13 +1597,31 @@
         "sentinel_extract": 6
       }
     },
-    "governance": null,
+    "governance": {
+      "alert_id": "ALT_001",
+      "target_entity_id": "COMPANY_1",
+      "target_display_name": "Wirecard AG",
+      "risk_score": 0.5896,
+      "trigger_streams": [],
+      "status": "DETECTED",
+      "assigned_analyst": null,
+      "proposed_mitigation_action": null,
+      "compliance_approver": null,
+      "audit_trail": [
+        {
+          "timestamp": "2020-06-25T09:00:00+00:00",
+          "user": "system",
+          "action": "Alert detected by curated replay drift fusion gateway",
+          "resulting_status": "DETECTED"
+        }
+      ]
+    },
     "warnings": [],
     "events": [
       {
         "title": "Financial Times begins questioning inconsistencies in Wirecard's accounts",
         "masked_title": "Financial Times begins questioning inconsistencies in Wirecard's accounts",
-        "extracted_fact": "Financial Times inicia la cuestion de inconsistencias en los estados financieros de Wirecard",
+        "extracted_fact": "FT timeline records early investigative reporting questioning Wirecard's accounting years before insolvency.",
         "triaged_in": true,
         "semantic_distance": 0.5459,
         "topology_signal": 0.0,
@@ -1564,7 +1652,7 @@
       {
         "title": "FT reports suspicious transactions and alleged forged/backdated contracts in Wirecard's Singapore operations",
         "masked_title": "FT reports suspicious transactions and alleged forged/backdated contracts in Wirecard's Singapore operations",
-        "extracted_fact": "FT reporta transacciones sospechosas y contratos falsos/fechados en retroceso en las operaciones de Wirecard en Singapur",
+        "extracted_fact": "Reuters timeline notes a January 2019 FT report on suspicious transactions and accounting-practice integrity.",
         "triaged_in": true,
         "semantic_distance": 0.5286,
         "topology_signal": 0.0,
@@ -1595,7 +1683,7 @@
       {
         "title": "Wirecard hires KPMG to conduct an independent special audit under investor pressure",
         "masked_title": "Wirecard hires KPMG to conduct an independent special audit under investor pressure",
-        "extracted_fact": "Wirecard contrata a KPMG para realizar una auditoría especial independiente bajo presión de los inversores",
+        "extracted_fact": "Independent audit commissioned to address allegations that finance team inflated reported sales and profits.",
         "triaged_in": true,
         "semantic_distance": 0.5127,
         "topology_signal": 0.0,
@@ -1635,7 +1723,7 @@
       {
         "title": "KPMG special audit cannot verify key Wirecard profit arrangements and cash balances",
         "masked_title": "MASKED_COMPANY_007 special audit cannot verify key Wirecard profit arrangements and cash balances",
-        "extracted_fact": "Una auditoría especial no puede verificar los acuerdos de beneficio clave y los saldos en efectivo de la empresa",
+        "extracted_fact": "KPMG was unable to verify cash balances and could not trace transactions underpinning major reported profits.",
         "triaged_in": true,
         "semantic_distance": 0.4795,
         "topology_signal": 0.0,
@@ -1666,7 +1754,7 @@
       {
         "title": "Wirecard announces €1.9B cash is missing after auditor EY refuses to sign accounts",
         "masked_title": "Wirecard announces €1.9B cash is missing after auditor EY refuses to sign accounts",
-        "extracted_fact": "Wirecard revela que falta €1.900 millones en efectivo",
+        "extracted_fact": "Wirecard says cash balances may be intended to deceive the auditor; this is the material pre-insolvency break.",
         "triaged_in": true,
         "semantic_distance": 0.502,
         "topology_signal": 0.0,
@@ -1706,7 +1794,7 @@
       {
         "title": "Wirecard files for insolvency after the missing-cash fraud becomes undeniable",
         "masked_title": "Wirecard files for insolvency after the missing-cash fraud becomes undeniable",
-        "extracted_fact": "Wirecard presenta su quiebra tras confirmarse la fraude de falta de efectivo",
+        "extracted_fact": "Wirecard collapses owing creditors almost $4B after auditor points to sophisticated global fraud.",
         "triaged_in": true,
         "semantic_distance": 0.5887,
         "topology_signal": 0.0,
@@ -1735,13 +1823,16 @@
         "evidence": "Wirecard collapses owing creditors almost $4B after auditor points to sophisticated global fraud."
       }
     ],
-    "report_markdown": null,
+    "report_markdown": "# AML COMPLIANCE REPORT - ALERT RECORD ALT_001\n\n## 1. EXECUTIVE SUMMARY\nWirecard AG breached the configured KYC drift threshold during the curated historical replay. The maximum combined risk reached 0.59 against a threshold of 0.50.\n\n## 2. TRIGGERING EVIDENCE\n- Triggering event: Wirecard files for insolvency after the missing-cash fraud becomes undeniable\n- Extracted fact: Wirecard collapses owing creditors almost $4B after auditor points to sophisticated global fraud.\n- Source: Reuters\n- URL: https://www.reuters.com/article/technology/the-moneys-gone-wirecard-collapses-owing-4-billion-idUSKBN23W176/\n\n## 3. MULTI-STREAM KYC DRIFT ANALYSIS\n- Semantic signal: 0.5887\n- Topology exposure: 0.0\n- Behavioural transaction signal: 1.7726\n- Alarm stream status: semantic=inactive, topology=inactive, behavioral tx=inactive\n\n## 4. AUDITABLE METRIC TRACE\n- Combined risk: 0.5896\n- Threshold: 0.5000\n- Processed replay events: 6\n\n## 5. RECOMMENDED GOVERNANCE ACTION\nOpen an enhanced due-diligence review, preserve source evidence, and require four-eyes approval before any mitigation action is executed.",
     "scenario": {
       "scenario_id": "wirecard_drift",
       "description": "Evidence-backed replay showing accounting-risk drift before Wirecard's insolvency shock.",
       "reference_model": "Licensed payment processing and merchant acquiring.",
       "curated_event_count": 6,
-      "processed_event_count": 6
+      "processed_event_count": 6,
+      "alarm_event_index": 6,
+      "alarm_date": "2020-06-25",
+      "alarm_title": "Wirecard files for insolvency after the missing-cash fraud becomes undeniable"
     },
     "id": "1"
   }

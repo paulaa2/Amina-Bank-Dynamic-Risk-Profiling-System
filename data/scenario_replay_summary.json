@@ -34,7 +34,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Alameda Research depende significativamente de los activos relacionados con el token FTT de FTX en su balance sheet",
+        "extracted_fact": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns.",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_001",
@@ -70,7 +70,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Binance planea liquidar sus activos restantes de FTT relacionados con FTX tras revelaciones de CoinDesk",
+        "extracted_fact": "Public counterparty action accelerates market pressure and begins a bank-run dynamic.",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_002",
@@ -106,7 +106,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "FTX anuncia un acuerdo de rescate no vinculante para enfrentar la presión de retiros",
+        "extracted_fact": "FTX withdrawal stress and bailout discussions show acute liquidity deterioration.",
         "new_graph_nodes": []
       },
       {
@@ -133,7 +133,7 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "MASKED_COMPANY_007 rechaza participar en la rescatada de FTX tras realizar debido diligence",
+        "extracted_fact": "Failed acquisition removes last-resort support and exposes severe financial issues.",
         "new_graph_nodes": []
       }
     ],
@@ -182,7 +182,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa fue sometida a directivas de sanciones sectoriales relacionadas con Ucrania/Rusia",
+        "extracted_fact": "Gazprombank appears under Ukraine/Russia-related sanctions directives as a Russian financial institution.",
         "new_graph_nodes": []
       },
       {
@@ -209,7 +209,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa se somete a restricciones de la Directiva 3 de la EO 14024 sobre nuevos préstamos y acciones",
+        "extracted_fact": "Directive 3 restrictions apply to new debt/equity after effective date.",
         "new_graph_nodes": []
       },
       {
@@ -236,7 +236,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa fue exenta de ser removida de SWIFT por parte de la UE para seguir realizando pagos energéticos",
+        "extracted_fact": "Gazprombank is spared because it processes Russian oil and gas payments, creating continuing sanctions exposure.",
         "new_graph_nodes": []
       },
       {
@@ -263,7 +263,7 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "Russia requiere que los pagos por gas extranjeros se realicen mediante el mecanismo de conversión de rublos de la empresa",
+        "extracted_fact": "Putin decree makes Gazprombank central to foreign gas settlement and sanctions compliance risk.",
         "new_graph_nodes": []
       }
     ],
@@ -312,7 +312,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "MicroStrategy anunció una estrategia de asignación de capital que incluye compras de acciones y activos alternativos, entre ellos activos digitales como el bitcoin",
+        "extracted_fact": "Company says it may invest up to $250M in alternative assets including digital assets such as bitcoin.",
         "new_graph_nodes": []
       },
       {
@@ -339,7 +339,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "MicroStrategy adquiere Bitcoin como activo principal de reserva de tesorería con un monto de $250M",
+        "extracted_fact": "Company purchases 21,454 bitcoins and states Bitcoin is now the principal holding in treasury reserve strategy.",
         "new_graph_nodes": []
       },
       {
@@ -366,7 +366,7 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "MicroStrategy emitió un bono convertible por $650 millones con intención de invertir los fondos en Bitcoin",
+        "extracted_fact": "Net proceeds from convertible senior notes are intended for Bitcoin purchases under the Treasury Reserve Policy.",
         "new_graph_nodes": []
       }
     ],
@@ -415,7 +415,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "MASKED_COMPANY_001 vendió toda su participación en FTX a cero",
+        "extracted_fact": "Sequoia, also an early backer of OpenAI, marks $213M FTX exposure to zero after the exchange collapse.",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_001",
@@ -451,7 +451,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La autoridad de privacidad italiana ordena una prohibición temporal de ChatGPT por recopilación ilegal de datos",
+        "extracted_fact": "Italy's Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection.",
         "new_graph_nodes": []
       },
       {
@@ -478,7 +478,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La FTC de EE.UU. inicia una investigación sobre prácticas de datos, riesgo reputacional y daño al consumidor",
+        "extracted_fact": "FTC sends a civil investigative demand on data security and risks of false or harmful statements about individuals.",
         "new_graph_nodes": []
       },
       {
@@ -505,7 +505,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "El consejo de administración de la empresa destituyó al CEO.",
+        "extracted_fact": "Board removes Altman; communication breakdown and board-control questions create governance risk.",
         "new_graph_nodes": []
       },
       {
@@ -532,7 +532,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "El personal de la empresa amenaza con dejarla y unirse a otra empresa si el consejo de administración renuncia",
+        "extracted_fact": "Staff revolt and Microsoft intervention reveal extreme governance fragility.",
         "new_graph_nodes": []
       },
       {
@@ -559,7 +559,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa fue demandada por el New York Times por uso no autorizado de obras protegidas para entrenamiento de sistemas de inteligencia artificial",
+        "extracted_fact": "Major copyright litigation seeks billions of dollars and destruction of infringing models/data.",
         "new_graph_nodes": []
       }
     ],
@@ -606,7 +606,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Se aplican restricciones sectoriales en el sector energético de EE.UU. a empresas rusas",
+        "extracted_fact": "OpenSanctions records US sanctions entries for Surgutneftegas starting 2014-09-12.",
         "new_graph_nodes": []
       },
       {
@@ -633,7 +633,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa está sujeta a restricciones de la BIS Entity List debido a su exposición a tecnología energética rusa.",
+        "extracted_fact": "BIS Entity List entry appears in sanctions adjacency data.",
         "new_graph_nodes": []
       },
       {
@@ -660,7 +660,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa enfrenta sanciones por exportar petróleo ruso bajo el precio máximo establecido por el G7/EU.",
+        "extracted_fact": "Oil price cap comes into effect to reduce Russia's ability to finance the war.",
         "new_graph_nodes": []
       },
       {
@@ -687,7 +687,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La prohibicion de productos de aceite refinado en la UE genera presion sobre los ingresos de la empresa",
+        "extracted_fact": "Refined oil product restrictions add sectoral pressure to Russian oil producers.",
         "new_graph_nodes": []
       },
       {
@@ -714,7 +714,7 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "Gazprom Neft fue designada como objetivo principal de sanciones por parte de EE.UU. y Reino Unido debido a su actividad en el sector del petróleo ruso.",
+        "extracted_fact": "UK and US directly sanction two major Russian oil companies, including PJSC Surgutneftegas.",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_001",
@@ -768,7 +768,7 @@
         "alarms": {},
         "trigger": false,
         "triaged_in": false,
-        "extracted_fact": "",
+        "extracted_fact": "Council Decision 2014/512 introduced sectoral restrictions after Russia's destabilisation of Ukraine.",
         "new_graph_nodes": []
       },
       {
@@ -795,7 +795,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "VTB fue incluido en medidas restrictivas sectoriales de la UE relacionadas con las acciones de Rusia en Ucrania",
+        "extracted_fact": "VTB listing date under EU Russia sectoral restrictive measures.",
         "new_graph_nodes": []
       },
       {
@@ -818,7 +818,7 @@
         "alarms": {},
         "trigger": false,
         "triaged_in": false,
-        "extracted_fact": "",
+        "extracted_fact": "New executive actions follow Russia's continued efforts to undermine Ukraine sovereignty.",
         "new_graph_nodes": []
       },
       {
@@ -845,7 +845,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Estados Unidos impone sanciones completas contra VTB",
+        "extracted_fact": "Full blocking sanctions freeze VTB assets touching the US financial system.",
         "new_graph_nodes": []
       },
       {
@@ -872,7 +872,7 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "VTB fue ordenada por la UE a desconectarse del sistema SWIFT",
+        "extracted_fact": "SWIFT disconnection further limits access to global financial infrastructure.",
         "new_graph_nodes": []
       }
     ],
@@ -919,7 +919,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Financial Times inicia la cuestion de inconsistencias en los estados financieros de Wirecard",
+        "extracted_fact": "FT timeline records early investigative reporting questioning Wirecard's accounting years before insolvency.",
         "new_graph_nodes": []
       },
       {
@@ -946,7 +946,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "FT reporta transacciones sospechosas y contratos falsos/fechados en retroceso en las operaciones de Wirecard en Singapur",
+        "extracted_fact": "Reuters timeline notes a January 2019 FT report on suspicious transactions and accounting-practice integrity.",
         "new_graph_nodes": []
       },
       {
@@ -973,7 +973,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Wirecard contrata a KPMG para realizar una auditoría especial independiente bajo presión de los inversores",
+        "extracted_fact": "Independent audit commissioned to address allegations that finance team inflated reported sales and profits.",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_001",
@@ -1009,7 +1009,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Una auditoría especial no puede verificar los acuerdos de beneficio clave y los saldos en efectivo de la empresa",
+        "extracted_fact": "KPMG was unable to verify cash balances and could not trace transactions underpinning major reported profits.",
         "new_graph_nodes": []
       },
       {
@@ -1036,7 +1036,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Wirecard revela que falta €1.900 millones en efectivo",
+        "extracted_fact": "Wirecard says cash balances may be intended to deceive the auditor; this is the material pre-insolvency break.",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_002",
@@ -1072,7 +1072,7 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "Wirecard presenta su quiebra tras confirmarse la fraude de falta de efectivo",
+        "extracted_fact": "Wirecard collapses owing creditors almost $4B after auditor points to sophisticated global fraud.",
         "new_graph_nodes": []
       }
     ],
