@@ -33,7 +33,7 @@ function CustomTooltip({ active, payload }: TooltipPayload) {
   if (!active || !payload?.length) return null;
   const point = payload[0].payload;
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs shadow-xl">
+    <div className="border border-slate-700 bg-slate-950 px-3 py-2 text-xs">
       <p className="font-semibold text-slate-200">{point.label}</p>
       <p className="mt-1 text-slate-400">
         Combined risk:{" "}

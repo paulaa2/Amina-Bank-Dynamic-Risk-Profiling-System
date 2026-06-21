@@ -135,10 +135,26 @@ def replay_scenario_for_api(
     path = find_scenario_path(scenario_id)
     scenario, report = run_scenario_engine(path)
     result = _report_to_dict(report)
+    replay_order = str(scenario.get("replay_order") or "chronological")
+    scenario_events = _order_scenario_events(
+        [event for event in scenario["events"] if not event.get("burn_in")],
+        replay_order,
+    )
+    for index, (source_event, output_event) in enumerate(
+        zip(scenario_events, result.get("events", [])),
+        start=1,
+    ):
+        output_event["scenario_index"] = index
+        output_event["date"] = source_event.get("date")
+        output_event["source"] = source_event.get("source")
+        output_event["url"] = source_event.get("url")
+        output_event["evidence"] = source_event.get("evidence")
     result["scenario"] = {
         "scenario_id": str(scenario.get("scenario_id") or path.stem),
         "description": scenario.get("description"),
         "reference_model": scenario.get("reference_model"),
+        "curated_event_count": len(scenario_events),
+        "processed_event_count": len(result.get("events", [])),
     }
 
     config = load_config()

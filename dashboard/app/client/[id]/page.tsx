@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
+  X,
   Clock,
   User,
   Loader2,
@@ -25,6 +26,8 @@ import {
   TriangleAlert,
   BadgeCheck,
   Building2 as BuildingIcon,
+  ExternalLink,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -111,7 +114,7 @@ function nowTs(): string {
 }
 
 const FINDING_STYLES: Record<FindingCategory, { icon: React.ElementType; iconClass: string; titleClass: string }> = {
-  entity: { icon: BuildingIcon,  iconClass: "text-violet-400", titleClass: "text-violet-300" },
+  entity: { icon: BuildingIcon,  iconClass: "text-slate-400",  titleClass: "text-slate-200"  },
   risk:   { icon: TriangleAlert, iconClass: "text-rose-400",   titleClass: "text-rose-300"   },
   score:  { icon: TrendingUp,    iconClass: "text-amber-400",  titleClass: "text-amber-300"  },
 };
@@ -129,6 +132,12 @@ function eventStatistic(event: LiveEvent | undefined, key: string, fallback = 0)
   return event?.stream_statistics?.[key] ?? fallback;
 }
 
+function namesMatch(a: string, b: string): boolean {
+  const la = a.toLowerCase();
+  const lb = b.toLowerCase();
+  return la === lb || la.includes(lb) || lb.includes(la);
+}
+
 function buildScenarioSnapshot(report: LiveReport, stepIndex: number): LiveReport {
   const safeIndex = Math.max(-1, Math.min(stepIndex, report.events.length - 1));
   const visibleEvents = safeIndex >= 0 ? report.events.slice(0, safeIndex + 1) : [];
@@ -136,9 +145,22 @@ function buildScenarioSnapshot(report: LiveReport, stepIndex: number): LiveRepor
   const threshold = report.decision.threshold;
   const triggeringEvent =
     visibleEvents.find((event) => event.combined_risk > threshold)?.title ?? null;
+  const allMutationNodes = report.events.flatMap((event) => event.new_graph_nodes ?? []);
+  const visibleMutationNodes = visibleEvents.flatMap((event) => event.new_graph_nodes ?? []);
+  const visibleContributors = report.topology.top_contributors.filter((contributor) => {
+    const introducedByReplay = allMutationNodes.some((node) =>
+      namesMatch(contributor.name, node.name)
+    );
+    if (!introducedByReplay) return true;
+    return visibleMutationNodes.some((node) => namesMatch(contributor.name, node.name));
+  });
 
   return {
     ...report,
+    topology: {
+      ...report.topology,
+      top_contributors: visibleContributors,
+    },
     events: visibleEvents,
     streams: {
       ...report.streams,
@@ -165,12 +187,6 @@ function buildScenarioSnapshot(report: LiveReport, stepIndex: number): LiveRepor
   };
 }
 
-function scenarioStepLabel(event: LiveEvent): string {
-  if (!event.triaged_in) return "Triage skipped";
-  if (Object.values(event.alarms).some(Boolean)) return "Stream alarm";
-  return `${Math.round(event.combined_risk * 100)}% risk`;
-}
-
 function formatTs(iso: string) {
   return new Date(iso).toLocaleString("en-GB", {
     day: "2-digit", month: "short", year: "numeric",
@@ -189,7 +205,7 @@ function StreamGauge({
   const thresholdPct = Math.round(threshold * 100);
   return (
     <div className={cn(
-      "flex flex-col gap-3 rounded-xl border p-5",
+      "flex flex-col gap-3 border p-5",
       triggered ? "border-rose-500/20 bg-rose-500/5" : "border-slate-800 bg-slate-800/40"
     )}>
       <div className="flex items-start justify-between gap-2">
@@ -219,10 +235,266 @@ function StreamGauge({
   );
 }
 
+function SignalRow({
+  label,
+  value,
+  threshold,
+}: {
+  label: string;
+  value: number;
+  threshold: number;
+}) {
+  const pct = Math.max(0, Math.min(100, Math.round(value * 100)));
+  const triggered = value >= threshold;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs font-medium text-slate-400">{label}</span>
+        <span className={cn(
+          "font-mono text-xs font-semibold",
+          triggered ? "text-rose-300" : pct >= 30 ? "text-amber-300" : "text-slate-500",
+        )}>
+          {pct}%
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all duration-300",
+            triggered ? "bg-rose-400" : pct >= 30 ? "bg-amber-400" : "bg-slate-500",
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function EventReviewPanel({
+  event,
+  report,
+  stepIndex,
+}: {
+  event: LiveEvent | null;
+  report: LiveReport;
+  stepIndex: number;
+}) {
+  const thresholdPct = Math.round(report.decision.threshold * 100);
+  const riskPct = Math.round((event?.combined_risk ?? 0) * 100);
+  const graphNodes = event?.new_graph_nodes ?? [];
+  const isAlarm = Boolean(event && event.combined_risk > report.decision.threshold);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const eventDate = event?.date
+    ? new Date(event.date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
+  return (
+    <div className="col-span-1 flex flex-col rounded-lg border border-slate-800 bg-slate-900 overflow-hidden">
+      <div className="border-b border-slate-800 px-5 py-4">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+          Event Review
+        </p>
+        <h2 className="mt-1 text-sm font-semibold text-slate-200">
+          {event ? `Event ${stepIndex + 1}` : "Baseline"}
+        </h2>
+      </div>
+
+      <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+        <section>
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            Source item
+          </p>
+          {event && (eventDate || event.source) && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-500">
+              {eventDate && <span>{eventDate}</span>}
+              {eventDate && event.source && <span className="text-slate-700">/</span>}
+              {event.source && <span>{event.source}</span>}
+            </div>
+          )}
+          <p className="mt-2 text-sm font-semibold leading-snug text-slate-100">
+            {event?.title ?? "Original onboarding graph before scenario replay."}
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+            {event
+              ? event.triaged_in
+                ? "Processed by the scoring pipeline for this scenario step."
+                : "Shown for chronology, but skipped by triage before downstream scoring."
+              : "No curated event has been applied yet."}
+          </p>
+          {event?.evidence && (
+            <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950 p-3">
+              <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-300">
+                <FileText className="h-3.5 w-3.5 text-slate-500" strokeWidth={1.75} />
+                Full evidence used in this step
+              </div>
+              <p className="line-clamp-6 text-xs leading-relaxed text-slate-400">
+                {event.evidence}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEvidenceOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-slate-100"
+                >
+                  Read full evidence
+                  <ExternalLink className="h-3 w-3" strokeWidth={1.75} />
+                </button>
+                {event.url && (
+                <a
+                  href={event.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-100"
+                >
+                  Open source
+                  <ExternalLink className="h-3 w-3" strokeWidth={1.75} />
+                </a>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+
+        <Separator className="bg-slate-800" />
+
+        <section className="space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                Effect on client risk
+              </p>
+              <p className={cn(
+                "mt-1 font-mono text-3xl font-bold tabular-nums",
+                isAlarm ? "text-rose-300" : riskPct >= 40 ? "text-amber-300" : "text-emerald-300",
+              )}>
+                {riskPct}%
+              </p>
+            </div>
+            <Badge variant="outline" className={cn(
+              "mb-1 text-xs",
+              isAlarm
+                ? "border-rose-500/20 bg-rose-500/10 text-rose-300"
+                : "border-slate-700 bg-slate-800 text-slate-400",
+            )}>
+              Threshold {thresholdPct}%
+            </Badge>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all duration-300",
+                isAlarm ? "bg-rose-400" : riskPct >= 40 ? "bg-amber-400" : "bg-emerald-400",
+              )}
+              style={{ width: `${Math.min(100, riskPct)}%` }}
+            />
+          </div>
+        </section>
+
+        <Separator className="bg-slate-800" />
+
+        <section className="space-y-3">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            Graph change
+          </p>
+          {graphNodes.length > 0 ? (
+            <div className="space-y-2">
+              {graphNodes.map((node) => (
+                <div key={`${node.node_id}-${node.name}`} className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="truncate text-sm font-semibold text-amber-100">{node.name}</p>
+                    <span className="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">
+                      {node.is_new ? "New node" : "New link"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-amber-200/70">
+                    {node.relation.replace(/_/g, " ")} · risk {Math.round(node.intrinsic_risk * 100)}%
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs leading-relaxed text-slate-500">
+              No entity or relationship is added at this step.
+            </p>
+          )}
+        </section>
+
+        <Separator className="bg-slate-800" />
+
+        <section className="space-y-3">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            Why the score moved
+          </p>
+          <SignalRow
+            label="Narrative drift"
+            value={event ? eventStatistic(event, "semantic", event.semantic_distance) : 0}
+            threshold={report.streams.semantic.threshold}
+          />
+          <SignalRow
+            label="Network exposure"
+            value={event?.topology_signal ?? 0}
+            threshold={report.streams.topology.threshold}
+          />
+          <SignalRow
+            label="Transaction pattern"
+            value={event?.behavioral_signal ?? 0}
+            threshold={report.streams.behavioral_tx.threshold}
+          />
+        </section>
+      </div>
+      {event && evidenceOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-6 backdrop-blur-[2px]">
+          <div className="max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-lg border border-slate-700/80 bg-slate-950/90 shadow-2xl backdrop-blur-xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-6 py-5">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  {eventDate && <span>{eventDate}</span>}
+                  {event.source && <span>{event.source}</span>}
+                  <span>{riskPct}% combined risk</span>
+                </div>
+                <h2 className="mt-2 text-lg font-semibold leading-snug text-slate-100">
+                  {event.title}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEvidenceOpen(false)}
+                className="rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-100"
+                aria-label="Close full evidence"
+              >
+                <X className="h-4 w-4" strokeWidth={1.75} />
+              </button>
+            </div>
+            <div className="max-h-[62vh] overflow-y-auto px-6 py-5">
+              <p className="whitespace-pre-wrap text-sm leading-7 text-slate-300">
+                {event.evidence}
+              </p>
+              {event.extracted_fact && (
+                <div className="mt-5 rounded-lg border border-slate-800 bg-slate-900 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Extracted fact
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                    {event.extracted_fact}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AuditTrailCollapsible({ governance }: { governance: NonNullable<LiveReport["governance"]> }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 shadow-none overflow-hidden">
+    <div className="border border-slate-800 bg-slate-900 overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-slate-800/50 transition-colors"
@@ -760,7 +1032,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
           </Link>
         </div>
         <div className="flex-1 flex items-center justify-center px-8 py-16">
-          <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-8 max-w-md text-center">
+          <div className="border border-rose-500/20 bg-rose-500/10 p-8 max-w-md text-center">
             <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto mb-4 opacity-70" />
             <p className="text-base font-semibold text-rose-300 mb-2">Analysis Failed</p>
             <p className="text-sm text-rose-400/80 mb-6">{error}</p>
@@ -843,7 +1115,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="risk-workspace flex flex-col min-h-screen">
 
       {/* ── Sticky header ─────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
@@ -864,7 +1136,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
               </span>
             )}
             {isComplete && analysisMode === "scenario" && (
-              <Badge variant="outline" className="border-violet-500/20 bg-violet-500/10 text-violet-300 text-xs">
+              <Badge variant="outline" className="border-slate-700 bg-slate-900 text-slate-300 text-xs">
                 Curated replay
               </Badge>
             )}
@@ -882,7 +1154,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1.5 border-violet-500/30 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20"
+                className="gap-1.5 border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800"
                 onClick={() => startScenarioReplay(isComplete && analysisMode === "scenario")}
                 disabled={phase === "streaming"}
               >
@@ -906,7 +1178,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             {isComplete && analysisMode === "live" && curatedScenario && (
               <button
                 onClick={() => startScenarioReplay(true)}
-                className="flex items-center gap-1.5 text-xs text-violet-400/80 hover:text-violet-300 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
               >
                 <History className="h-3.5 w-3.5" /> Switch to scenario
               </button>
@@ -916,16 +1188,16 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* ── Body ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1 px-8 py-7 space-y-6">
+      <div className="flex-1 px-7 py-5 space-y-4">
 
         {/* ── Graph + Live Terminal ──────────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-5 items-stretch">
+        <div className="grid grid-cols-4 gap-4 items-stretch">
 
           {/* Corporate graph */}
           <Card className="col-span-3 border-slate-800 bg-slate-900 shadow-none">
             <CardHeader className="border-b border-slate-800 px-6 py-4 space-y-3">
               <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-slate-200">
-                <Network className="h-4 w-4 text-violet-300" strokeWidth={1.75} />
+                <Network className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
                 Relationship graph
                 {isStreaming && graph.nodes.length > 0 && (
                   <span className="text-xs font-normal text-amber-400 ml-1 animate-pulse">
@@ -956,7 +1228,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                 ))}
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500">
-                <span><span className="text-violet-300">Center node</span> = selected client risk</span>
+                <span><span className="text-slate-300">Center node</span> = selected client risk</span>
                 <span><span className="text-amber-300">Yellow/dashed</span> = added by selected replay step</span>
                 <span>Other node percentages = intrinsic risk of that entity</span>
               </div>
@@ -975,8 +1247,14 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             </CardContent>
           </Card>
 
-          {/* Activity feed */}
-          <div className="col-span-1 flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
+          {isComplete && analysisMode === "scenario" && report && scenarioStep !== null ? (
+            <EventReviewPanel
+              event={selectedScenarioEvent}
+              report={report}
+              stepIndex={scenarioStep}
+            />
+          ) : (
+          <div className="col-span-1 flex flex-col rounded-lg border border-slate-800 bg-slate-900 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 shrink-0">
               <div className="flex items-center gap-2">
@@ -1036,9 +1314,9 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                   <div key={data.id} className="border-t border-slate-800/60 px-5 pt-3.5 pb-2">
                     {/* Article header */}
                     <div className="flex items-start gap-3">
-                      <Newspaper className="h-4 w-4 mt-0.5 text-sky-400 shrink-0" strokeWidth={1.75} />
+                      <Newspaper className="h-4 w-4 mt-0.5 text-slate-500 shrink-0" strokeWidth={1.75} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-sky-300 leading-snug">{data.articleTitle}</p>
+                        <p className="text-sm font-medium text-slate-200 leading-snug">{data.articleTitle}</p>
                         <p className="mt-0.5 text-xs text-slate-500">
                           {data.source}
                           {" · "}
@@ -1098,21 +1376,17 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
               )}
             </div>
           </div>
+          )}
         </div>
 
         {isComplete && analysisMode === "scenario" && report && scenarioStep !== null && (
-          <Card className="border-violet-500/20 bg-slate-900 shadow-none">
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-start justify-between gap-4">
+          <Card className="border-slate-800 bg-slate-900 shadow-none">
+            <CardContent className="p-4">
+              <div className="mb-4 flex items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-violet-300">
-                    Scenario timeline
-                  </p>
-                  <h2 className="mt-1 text-base font-semibold text-slate-200 leading-snug">
-                    {scenarioStep < 0 ? "Baseline" : `Event ${scenarioStep + 1} of ${report.events.length}`}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-400 leading-relaxed line-clamp-2">
-                    {selectedScenarioEvent?.title ?? "Original KYC graph before the curated scenario starts."}
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">Replay control</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-200">
+                    {scenarioStep < 0 ? "Baseline selected" : `Event ${scenarioStep + 1} selected`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -1139,43 +1413,19 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { label: "Step risk", value: `${Math.round((selectedScenarioEvent?.combined_risk ?? 0) * 100)}%` },
-                  { label: "Semantic", value: selectedScenarioEvent ? `${Math.round(selectedScenarioEvent.semantic_distance * 100)}%` : "0%" },
-                  { label: "New graph nodes", value: String(selectedScenarioEvent?.new_graph_nodes?.length ?? 0) },
-                  { label: "Triage", value: selectedScenarioEvent ? (selectedScenarioEvent.triaged_in ? "Processed" : "Skipped") : "Not started" },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{item.label}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-200">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-start gap-2 overflow-x-auto pb-1">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
                 <button
                   type="button"
                   onClick={() => applyScenarioStep(-1)}
                   className={cn(
-                    "min-w-[180px] rounded-lg border px-3 py-2 text-left transition-colors",
+                    "flex min-w-[120px] flex-col items-start gap-1 rounded-md border px-3 py-2 text-left transition-colors",
                     scenarioStep < 0
-                      ? "border-violet-400 bg-violet-500/10"
+                      ? "border-slate-400 bg-slate-800"
                       : "border-slate-800 bg-slate-950 hover:border-slate-700",
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={cn("text-xs font-semibold", scenarioStep < 0 ? "text-violet-200" : "text-slate-400")}>
-                      Start
-                    </span>
-                    <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
-                      Baseline
-                    </span>
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-xs leading-snug text-slate-300">
-                    Original onboarding graph
-                  </p>
-                  <p className="mt-1 text-[11px] text-slate-500">No replay mutations yet</p>
+                  <span className={cn("text-xs font-semibold", scenarioStep < 0 ? "text-slate-100" : "text-slate-400")}>Baseline</span>
+                  <span className="text-[11px] text-slate-500">Initial graph</span>
                 </button>
                 {report.events.map((event, index) => {
                   const isActive = index === scenarioStep;
@@ -1187,36 +1437,24 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                       type="button"
                       onClick={() => applyScenarioStep(index)}
                       className={cn(
-                        "min-w-[180px] rounded-lg border px-3 py-2 text-left transition-colors",
+                        "flex min-w-[128px] flex-col items-start gap-1 rounded-md border px-3 py-2 text-left transition-colors",
                         isActive
-                          ? "border-violet-400 bg-violet-500/10"
+                          ? "border-slate-400 bg-slate-800"
                           : "border-slate-800 bg-slate-950 hover:border-slate-700",
                       )}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={cn(
-                          "text-xs font-semibold",
-                          isActive ? "text-violet-200" : "text-slate-400",
-                        )}>
-                          #{index + 1}
-                        </span>
-                        <span className={cn(
-                          "rounded px-1.5 py-0.5 text-[10px] font-semibold",
-                          hasAlarm
-                            ? "bg-rose-500/10 text-rose-300"
-                            : event.triaged_in
-                              ? "bg-amber-500/10 text-amber-300"
-                              : "bg-slate-800 text-slate-500",
-                        )}>
-                          {scenarioStepLabel(event)}
-                        </span>
-                      </div>
-                      <p className="mt-2 line-clamp-2 text-xs leading-snug text-slate-300">
-                        {event.title}
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-500">
-                        {newNodes > 0 ? `${newNodes} graph mutation${newNodes === 1 ? "" : "s"}` : "No graph mutation"}
-                      </p>
+                      <span className={cn("text-xs font-semibold", isActive ? "text-slate-100" : "text-slate-400")}>
+                        Event {index + 1}
+                      </span>
+                      <span className={cn(
+                        "text-[11px] font-medium",
+                        hasAlarm ? "text-rose-300" : event.triaged_in ? "text-amber-300" : "text-slate-500",
+                      )}>
+                        {Math.round(event.combined_risk * 100)}% risk
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        {newNodes > 0 ? `+${newNodes} graph` : event.triaged_in ? "scored" : "skipped"}
+                      </span>
                     </button>
                   );
                 })}
@@ -1237,7 +1475,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        {/* ── ROW 1: Triggering Event card + Gauge ──────────────────────── */}
+        {analysisMode !== "scenario" && (
         <div className="grid grid-cols-3 gap-5">
 
           {/* Triggering Event / Analysis Status */}
@@ -1351,6 +1589,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* ── ROW 2: Entity Profile ──────────────────────────────────────── */}
         {clientInfo && securityInfo && (
@@ -1396,15 +1635,15 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
           </Card>
         )}
 
-        {/* ── Current event signals ──────────────────────────────────────── */}
+        {analysisMode !== "scenario" && (
         <Card className="border-slate-800 bg-slate-900 shadow-none">
           <CardHeader className="border-b border-slate-800 px-6 py-4">
             <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-slate-200">
               <ShieldAlert className="h-4 w-4 text-slate-500" strokeWidth={1.75} />
-              Current Event Signals
+              Live Signal Breakdown
               <span className="ml-1 text-sm font-normal text-slate-500">
                 {isComplete
-                  ? "Signals used for the selected step"
+                  ? "Latest scoring inputs"
                   : "Live — updating…"}
               </span>
               {isStreaming && (
@@ -1439,6 +1678,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
             />
           </CardContent>
         </Card>
+        )}
 
         {/* ── Drift chart + Top contributors ──────────────────────────────── */}
         <div className="grid grid-cols-5 gap-5">
@@ -1477,7 +1717,11 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
                 contributors.map((c, i) => (
                   <div key={i} className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-base">{c.type.toLowerCase() === "person" ? "👤" : "🏢"}</span>
+                      {c.type.toLowerCase() === "person" ? (
+                        <User className="h-4 w-4 shrink-0 text-slate-500" />
+                      ) : (
+                        <BuildingIcon className="h-4 w-4 shrink-0 text-slate-500" />
+                      )}
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-slate-200 truncate">{c.name}</p>
                         <p className="text-xs text-slate-500">{c.relation.replace(/_/g, " ")}</p>
@@ -1532,7 +1776,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
         {isComplete && governance ? (
           <AuditTrailCollapsible governance={governance} />
         ) : (
-          <div className="rounded-xl border border-slate-800 bg-slate-900 px-6 py-5 flex items-center gap-3">
+          <div className="border border-slate-800 bg-slate-900 px-6 py-5 flex items-center gap-3">
             <CheckCircle2 className="h-5 w-5 opacity-40 text-slate-500" />
             <div>
               <p className="text-sm font-medium text-slate-400">

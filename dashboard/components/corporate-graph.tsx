@@ -44,8 +44,6 @@ function RiskNode({ data }: NodeProps) {
           "graph-node-enter",
           "rounded-lg border-2 px-3 py-2 text-center min-w-[110px] max-w-[140px]",
           "bg-slate-900",
-          isHighRisk && "shadow-[0_0_15px_rgba(251,113,133,0.35)]",
-          isDiscovered && !isHighRisk && "shadow-[0_0_12px_rgba(251,191,36,0.25)]"
         )}
         style={{
           borderColor: isDiscovered && !isHighRisk ? "#fbbf24" : borderColor,
@@ -55,7 +53,7 @@ function RiskNode({ data }: NodeProps) {
       >
         <p className={cn(
           "mb-0.5 text-[9px] font-semibold uppercase tracking-wide",
-          isClient ? "text-violet-300" : isDiscovered ? "text-amber-400" : "text-slate-500",
+          isClient ? "text-slate-300" : isDiscovered ? "text-amber-400" : "text-slate-500",
         )}>
           {isClient ? "Client risk" : isDiscovered ? (isNewDiscovery ? "New entity" : "New link") : "Entity risk"}
         </p>

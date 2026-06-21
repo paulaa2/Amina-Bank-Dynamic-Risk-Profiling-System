@@ -14,8 +14,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="bg-slate-950 text-slate-200 antialiased">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(() => {
+              try {
+                const mode = localStorage.getItem("amina-theme") === "light" ? "light" : "dark";
+                document.documentElement.classList.toggle("light", mode === "light");
+                document.documentElement.classList.toggle("dark", mode === "dark");
+                document.documentElement.dataset.theme = mode;
+              } catch {}
+            })();`,
+          }}
+        />
+      </head>
+      <body className="app-shell bg-slate-950 text-slate-200 antialiased">
         <Sidebar />
         <main className="ml-60 min-h-screen">{children}</main>
       </body>

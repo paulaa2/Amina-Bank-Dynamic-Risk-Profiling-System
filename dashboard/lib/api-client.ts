@@ -44,6 +44,11 @@ export interface LiveEvent {
   masked_title: string;
   extracted_fact: string;
   triaged_in: boolean;
+  scenario_index?: number;
+  date?: string;
+  source?: string;
+  url?: string;
+  evidence?: string;
   semantic_distance: number;
   topology_signal?: number;
   behavioral_signal?: number;
@@ -123,6 +128,8 @@ export interface LiveReport {
     scenario_id: string;
     description?: string;
     reference_model?: string;
+    curated_event_count?: number;
+    processed_event_count?: number;
   };
 }
 
@@ -133,6 +140,37 @@ export interface ReplayScenarioItem {
   reference_model: string;
   event_count: number;
   company_id: number | null;
+}
+
+export interface GlobalScenarioItem {
+  id: string;
+  name: string;
+  description: string;
+  companies: string[];
+  expected_contagion: string;
+  max_events: number;
+}
+
+export interface GlobalContagionEvent {
+  type: "inherited" | "published" | "frozen" | "event" | string;
+  target?: string;
+  source?: string;
+  entity?: string;
+  risk?: number;
+  trigger?: boolean;
+  title?: string;
+}
+
+export interface GlobalDemoResult {
+  scenario_id: string;
+  scenario_name: string;
+  scenario_description: string;
+  expected_contagion: string;
+  companies: string[];
+  company_ids: Record<string, number>;
+  shared_threat_memory: Record<string, number>;
+  contagion_events: GlobalContagionEvent[];
+  clients: Record<string, LiveReport>;
 }
 
 // ── Session cache ─────────────────────────────────────────────────────────────
@@ -437,4 +475,31 @@ export async function replayScenario(
     _cache.set(cacheKey(Number(report.id), false), report);
   }
   return report;
+}
+
+/** List cross-client contagion demos (same as ``run_global_demo`` presets). */
+export async function listGlobalScenarios(): Promise<GlobalScenarioItem[]> {
+  const res = await fetch(`${API_BASE}/api/scenarios`);
+  if (!res.ok) throw new Error(`listGlobalScenarios: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+/** Run a cross-client contagion demo and return the structured orchestrator trace. */
+export async function runGlobalScenario(
+  scenarioId: string,
+  opts: { force_refresh?: boolean; max_events?: number } = {},
+): Promise<GlobalDemoResult> {
+  const res = await fetch(`${API_BASE}/api/global-demo/scenario/${scenarioId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      force_refresh: opts.force_refresh ?? false,
+      max_events: opts.max_events,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(body.detail ?? "Global demo failed");
+  }
+  return res.json();
 }

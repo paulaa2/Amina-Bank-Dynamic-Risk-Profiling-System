@@ -259,7 +259,23 @@ def _process_event(
 
     verdict = runtime.triage.is_relevant(f"{event.title} {event.summary}")
     if not verdict.is_relevant:
-        runtime.outcomes.append(EventOutcome(event.title, "", "", 0.0, 0.0, {}, False, False))
+        outcome = EventOutcome(
+            event.title,
+            "",
+            "",
+            0.0,
+            0.0,
+            {},
+            False,
+            False,
+            topology_signal=round(runtime.company_exposure, 4),
+            behavioral_signal=0.0,
+        )
+        outcome.date = _utc_timestamp(event).isoformat()
+        outcome.source = event.source
+        outcome.url = event.url
+        outcome.evidence = event.summary
+        runtime.outcomes.append(outcome)
         print(
             f"[GLOBAL EVENT {global_index}/{total_events}] target={runtime.name} "
             f"timestamp={_utc_timestamp(event).isoformat()} skipped_by_triage title={event.title[:120]}",
@@ -286,7 +302,7 @@ def _process_event(
     sem_distance = runtime.pipeline._semantic_distance(
         profile_text=runtime.profile_text,
         m0=runtime.m0,
-        fact_text=fact_text,
+        embed_text=fact_text,
         event=event,
         local_ok=runtime.local_ok,
     )
@@ -311,8 +327,16 @@ def _process_event(
         alarms=result.alarms,
         triaged_in=True,
         used_fallback=used_fallback,
+        topology_signal=round(runtime.company_exposure, 4),
+        behavioral_signal=round(tx_z, 4),
+        stream_statistics=result.statistics,
+        stream_ratios=result.ratios,
         new_graph_nodes=new_nodes,
     )
+    outcome.date = _utc_timestamp(event).isoformat()
+    outcome.source = event.source
+    outcome.url = event.url
+    outcome.evidence = event.summary
     runtime.outcomes.append(outcome)
     if result.combined_risk > runtime.max_risk:
         runtime.max_risk = result.combined_risk
@@ -418,6 +442,14 @@ def _report_to_dict(report: EngineReport) -> dict[str, Any]:
                 "combined_risk": e.combined_risk,
                 "alarms": e.alarms,
                 "new_graph_nodes": e.new_graph_nodes,
+                "date": getattr(e, "date", None),
+                "source": getattr(e, "source", None),
+                "url": getattr(e, "url", None),
+                "evidence": getattr(e, "evidence", None),
+                "topology_signal": e.topology_signal,
+                "behavioral_signal": e.behavioral_signal,
+                "stream_statistics": e.stream_statistics,
+                "stream_ratios": e.stream_ratios,
             }
             for e in report.events
         ],

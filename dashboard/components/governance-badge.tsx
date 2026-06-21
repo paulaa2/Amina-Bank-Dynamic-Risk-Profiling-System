@@ -13,7 +13,7 @@ const STATUS_CONFIG: Record<GovernanceStatus, { label: string; className: string
   },
   FOUR_EYES_PENDING: {
     label: "Four-Eyes Pending",
-    className: "border-violet-500/20 bg-violet-500/10 text-violet-400",
+    className: "border-slate-700 bg-slate-800 text-slate-300",
   },
   RESOLVED_MITIGATED: {
     label: "Resolved — Mitigated",

@@ -101,8 +101,8 @@ export default function AuditHistory() {
   }, [loadData]);
 
   return (
-    <div className="px-8 py-8">
-      <div className="mb-8 flex items-start justify-between">
+    <div className="px-7 py-5">
+      <div className="mb-5 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-200">Audit History</h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -128,7 +128,7 @@ export default function AuditHistory() {
       )}
 
       {rows.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900 flex flex-col items-center justify-center py-20 gap-4">
+        <div className="border border-slate-800 bg-slate-900 flex flex-col items-center justify-center py-16 gap-4">
           <Inbox className="h-12 w-12 opacity-20 text-slate-500" />
           <div className="text-center">
             <p className="text-base font-medium text-slate-400">No audit entries yet</p>
@@ -142,7 +142,7 @@ export default function AuditHistory() {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-800 bg-slate-900 shadow-none overflow-hidden">
+        <div className="border border-slate-800 bg-slate-900 overflow-hidden">
           <div className="border-b border-slate-800 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-slate-500" />

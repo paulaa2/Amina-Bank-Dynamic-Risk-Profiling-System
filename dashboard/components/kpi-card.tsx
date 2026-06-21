@@ -31,7 +31,7 @@ const ACCENT_MAP = {
   },
   slate: {
     icon: "text-slate-400",
-    bg:   "bg-slate-800",
+    bg:   "bg-slate-800/40",
     border: "border-slate-800",
     value: "text-slate-200",
   },
@@ -46,16 +46,16 @@ export function KpiCard({
 }: KpiCardProps) {
   const colors = ACCENT_MAP[accent];
   return (
-    <Card className={cn("border shadow-none bg-slate-900", colors.border)}>
-      <CardContent className="flex items-start gap-4 p-5">
-        <div className={cn("rounded-lg p-2.5", colors.bg)}>
+    <Card className={cn("border bg-slate-900", colors.border)}>
+      <CardContent className="flex items-start gap-3 p-4">
+        <div className={cn("p-2", colors.bg)}>
           <Icon className={cn("h-5 w-5", colors.icon)} strokeWidth={1.75} />
         </div>
         <div className="flex flex-col gap-0.5">
           <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
             {title}
           </p>
-          <p className={cn("text-2xl font-semibold tabular-nums", colors.value)}>
+          <p className={cn("text-xl font-semibold tabular-nums", colors.value)}>
             {value}
           </p>
           {subtitle && (

@@ -207,7 +207,7 @@ export default function ControlRoom() {
       </div>
 
       {/* KPI cards */}
-      <div className="mb-8 grid grid-cols-3 gap-4">
+      <div className="mb-5 grid grid-cols-3 gap-3">
         <KpiCard
           title="Critical Alerts"
           value={backendOnline === false ? "—" : criticalCount}
@@ -228,7 +228,7 @@ export default function ControlRoom() {
         />
         <KpiCard
           title="Analyses Running"
-          value={analyzingCount || (doneReports.length > 0 ? "✓ All done" : "—")}
+          value={analyzingCount || (doneReports.length > 0 ? "Complete" : "—")}
           subtitle={
             doneReports.length > 0
               ? `${doneReports.length} / ${companies.length} complete`
@@ -241,7 +241,7 @@ export default function ControlRoom() {
 
       {/* Scheduled monitoring panel */}
       {backendOnline && scheduler && (
-        <div className="mb-6 flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 px-5 py-4">
+        <div className="mb-5 flex items-center justify-between border border-slate-800 bg-slate-900 px-5 py-3">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-800 border border-slate-700">
               <CalendarClock className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
@@ -310,7 +310,7 @@ export default function ControlRoom() {
       )}
 
       {/* Alert inbox table */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900 shadow-none">
+      <div className="border border-slate-800 bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
           <div>
             <h2 className="text-sm font-semibold text-slate-200">
@@ -437,7 +437,7 @@ export default function ControlRoom() {
                             variant="outline"
                             className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs"
                           >
-                            ✓ Clear
+                            Clear
                           </Badge>
                         )}
                       </TableCell>
