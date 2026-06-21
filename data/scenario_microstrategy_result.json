@@ -1,0 +1,208 @@
+{
+  "scenario_id": "ftx_rapid_deterioration",
+  "client": "FTX Trading Ltd",
+  "description": "Evidence-backed rapid deterioration replay: not slow KYC drift, but a multi-day liquidity and governance collapse before bankruptcy.",
+  "reference_model": "Centralised crypto-asset exchange and custody.",
+  "threshold": 0.5,
+  "bonferroni_scale": 2.0986,
+  "alarm_event_index": null,
+  "alarm_date": null,
+  "alarm_title": null,
+  "events": [
+    {
+      "index": 1,
+      "date": "2022-11-02",
+      "title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
+      "source": "Reuters / CoinDesk timeline",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+      "evidence": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns.",
+      "semantic_signal": 0.377,
+      "topology_signal": 0.0,
+      "behavioral_signal": 0.0,
+      "semantic_stat": 0.03547597000933794,
+      "topology_stat": 0.0,
+      "behavioral_stat": 0.0,
+      "semantic_ratio": 0.04548532687194936,
+      "topology_ratio": 0.0,
+      "behavioral_ratio": 0.0,
+      "combined_risk": 0.0455,
+      "alarms": {
+        "semantic": false,
+        "topology": false,
+        "behavioral_tx": false
+      },
+      "trigger": false,
+      "triaged_in": true,
+      "extracted_fact": "Alameda Research's balance sheet is heavily reliant on the FTX token (FTT).",
+      "new_graph_nodes": [
+        {
+          "node_id": "DYN_COMPANY_001",
+          "name": "Alameda Research",
+          "type": "COMPANY",
+          "intrinsic_risk": 0.0,
+          "relation": "ASSOCIATED_WITH",
+          "control_weight": 0.1
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "date": "2022-11-06",
+      "title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+      "evidence": "Public counterparty action accelerates market pressure and begins a bank-run dynamic.",
+      "semantic_signal": 0.4067,
+      "topology_signal": 0.0,
+      "behavioral_signal": 0.0,
+      "semantic_stat": 0.07009716059608573,
+      "topology_stat": 0.0,
+      "behavioral_stat": 0.0,
+      "semantic_ratio": 0.08987470283882987,
+      "topology_ratio": 0.0,
+      "behavioral_ratio": 0.0,
+      "combined_risk": 0.0899,
+      "alarms": {
+        "semantic": false,
+        "topology": false,
+        "behavioral_tx": false
+      },
+      "trigger": false,
+      "triaged_in": true,
+      "extracted_fact": "Binance plans to liquidate its remaining FTT holdings linked to FTX following revelations by CoinDesk.",
+      "new_graph_nodes": [
+        {
+          "node_id": "DYN_COMPANY_002",
+          "name": "Binance",
+          "type": "COMPANY",
+          "intrinsic_risk": 0.0,
+          "relation": "ASSOCIATED_WITH",
+          "control_weight": 0.1
+        },
+        {
+          "node_id": "DYN_COMPANY_003",
+          "name": "CoinDesk",
+          "type": "COMPANY",
+          "intrinsic_risk": 0.0,
+          "relation": "ASSOCIATED_WITH",
+          "control_weight": 0.1
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "date": "2022-11-08",
+      "title": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal",
+      "source": "CoinDesk timeline",
+      "url": "https://www.coindesk.com/markets/2022/11/12/the-epic-collapse-of-sam-bankman-frieds-ftx-exchange-a-crypto-markets-timeline",
+      "evidence": "FTX withdrawal stress and bailout discussions show acute liquidity deterioration.",
+      "semantic_signal": 0.4866,
+      "topology_signal": 0.0,
+      "behavioral_signal": 0.0,
+      "semantic_stat": 0.15166057898122767,
+      "topology_stat": 0.0,
+      "behavioral_stat": 0.0,
+      "semantic_ratio": 0.19445080731363973,
+      "topology_ratio": 0.0,
+      "behavioral_ratio": 0.0,
+      "combined_risk": 0.1945,
+      "alarms": {
+        "semantic": false,
+        "topology": false,
+        "behavioral_tx": false
+      },
+      "trigger": false,
+      "triaged_in": true,
+      "extracted_fact": "FTX is facing pressure to withdraw from its non-binding rescue deal with MASKED_COMPANY_007.",
+      "new_graph_nodes": []
+    },
+    {
+      "index": 4,
+      "date": "2022-11-09",
+      "title": "Binance walks away from FTX rescue after due diligence",
+      "source": "Reuters / CoinDesk",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+      "evidence": "Failed acquisition removes last-resort support and exposes severe financial issues.",
+      "semantic_signal": 0.5033,
+      "topology_signal": 0.0,
+      "behavioral_signal": 0.0,
+      "semantic_stat": 0.2225157833651884,
+      "topology_stat": 0.0,
+      "behavioral_stat": 0.0,
+      "semantic_ratio": 0.28529743197633145,
+      "topology_ratio": 0.0,
+      "behavioral_ratio": 0.0,
+      "combined_risk": 0.2853,
+      "alarms": {
+        "semantic": false,
+        "topology": false,
+        "behavioral_tx": false
+      },
+      "trigger": false,
+      "triaged_in": true,
+      "extracted_fact": "MASKED_COMPANY_007 decided to withdraw from participating in the rescue of FTX after completing due diligence.",
+      "new_graph_nodes": []
+    },
+    {
+      "index": 5,
+      "date": "2022-11-10",
+      "title": "FTX halts withdrawals and faces severe liquidity crisis",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+      "evidence": "Withdrawal halt is the material pre-bankruptcy failure event.",
+      "semantic_signal": 0.4287,
+      "topology_signal": 0.0,
+      "behavioral_signal": 0.0,
+      "semantic_stat": 0.20425677507783033,
+      "topology_stat": 0.0,
+      "behavioral_stat": 0.0,
+      "semantic_ratio": 0.26188674130065703,
+      "topology_ratio": 0.0,
+      "behavioral_ratio": 0.0,
+      "combined_risk": 0.2619,
+      "alarms": {
+        "semantic": false,
+        "topology": false,
+        "behavioral_tx": false
+      },
+      "trigger": false,
+      "triaged_in": true,
+      "extracted_fact": "FTX has halted withdrawals due to a severe liquidity crisis.",
+      "new_graph_nodes": []
+    },
+    {
+      "index": 6,
+      "date": "2022-11-11",
+      "title": "FTX files for Chapter 11 bankruptcy and Sam Bankman-Fried resigns",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
+      "evidence": "Formal bankruptcy filing confirms the collapse.",
+      "semantic_signal": 0.5082,
+      "topology_signal": 0.0,
+      "behavioral_signal": 0.6129,
+      "semantic_stat": 0.24646267555153623,
+      "topology_stat": 0.0,
+      "behavioral_stat": 0.0,
+      "semantic_ratio": 0.3160008128388323,
+      "topology_ratio": 0.0,
+      "behavioral_ratio": 0.0,
+      "combined_risk": 0.316,
+      "alarms": {
+        "semantic": false,
+        "topology": false,
+        "behavioral_tx": false
+      },
+      "trigger": false,
+      "triaged_in": true,
+      "extracted_fact": "FTX has initiated Chapter 11 bankruptcy proceedings.",
+      "new_graph_nodes": []
+    }
+  ],
+  "decision": {
+    "alarm_fired": false,
+    "max_combined_risk": 0.316,
+    "threshold": 0.5,
+    "triggering_event": "FTX files for Chapter 11 bankruptcy and Sam Bankman-Fried resigns"
+  },
+  "warnings": []
+}

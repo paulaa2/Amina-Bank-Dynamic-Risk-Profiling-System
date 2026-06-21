@@ -1,0 +1,50 @@
+{
+  "reference_model": "Large private/state-linked commercial bank.",
+  "description": "Energy-payment exposure replay showing Gazprombank's sanctions risk rising despite initial exemptions.",
+  "events": [
+    {
+      "evidence": "Gazprombank appears under Ukraine/Russia-related sanctions directives as a Russian financial institution.",
+      "title": "Gazprombank is subject to Ukraine/Russia-related sectoral sanctions directives",
+      "date": "2014-09-12",
+      "source": "OFAC sanctions list search",
+      "url": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=17016"
+    },
+    {
+      "evidence": "Directive 3 restrictions apply to new debt/equity after effective date.",
+      "title": "Gazprombank becomes subject to EO 14024 Directive 3 restrictions on new debt and equity",
+      "date": "2022-02-24",
+      "source": "OFAC sanctions list search",
+      "url": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=17016"
+    },
+    {
+      "evidence": "Gazprombank is spared because it processes Russian oil and gas payments, creating continuing sanctions exposure.",
+      "title": "EU removes several Russian banks from SWIFT but spares Gazprombank for energy payments",
+      "date": "2022-03-02",
+      "source": "Davis Polk / Global News",
+      "url": "https://www.davispolk.com/insights/client-update/russia-sanctions-update-march-4-2022"
+    },
+    {
+      "evidence": "Putin decree makes Gazprombank central to foreign gas settlement and sanctions compliance risk.",
+      "title": "Russia requires foreign gas payments through Gazprombank rouble-conversion mechanism",
+      "date": "2022-03-31",
+      "source": "Reuters UK Gazprombank payments coverage",
+      "url": "https://www.reuters.com/world/uk/britain-permits-gas-payments-gazprombank-until-may-31-2022-04-22/"
+    },
+    {
+      "evidence": "Exception management shows Gazprombank remains a high-risk energy-payment channel.",
+      "title": "UK extends licence allowing EU gas payments to Gazprombank despite sanctions wind-down",
+      "date": "2022-04-22",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/world/uk/britain-permits-gas-payments-gazprombank-until-may-31-2022-04-22/"
+    },
+    {
+      "evidence": "Gazprombank's long-running exemption risk culminates in full blocking restrictions.",
+      "title": "US imposes full blocking sanctions on Gazprombank",
+      "date": "2024-11-21",
+      "source": "OFAC sanctions list / public sanctions coverage",
+      "url": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=17016"
+    }
+  ],
+  "client": "Gazprombank",
+  "scenario_id": "gazprombank_sanctions_escalation"
+}

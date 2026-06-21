@@ -1,0 +1,50 @@
+{
+  "reference_model": "Licensed payment processing and merchant acquiring.",
+  "description": "Evidence-backed replay showing accounting-risk drift before Wirecard's insolvency shock.",
+  "events": [
+    {
+      "evidence": "FT timeline records early investigative reporting questioning Wirecard's accounting years before insolvency.",
+      "title": "Financial Times begins questioning inconsistencies in Wirecard's accounts",
+      "date": "2015-04-27",
+      "source": "Financial Times timeline",
+      "url": "https://www.ft.com/content/284fb1ad-ddc0-45df-a075-0709b36868db"
+    },
+    {
+      "evidence": "Reuters timeline notes a January 2019 FT report on suspicious transactions and accounting-practice integrity.",
+      "title": "FT reports suspicious transactions and alleged forged/backdated contracts in Wirecard's Singapore operations",
+      "date": "2019-01-30",
+      "source": "Reuters Wirecard timeline",
+      "url": "https://www.reuters.com/business/finance/rise-fall-wirecard-2022-12-06/"
+    },
+    {
+      "evidence": "Independent audit commissioned to address allegations that finance team inflated reported sales and profits.",
+      "title": "Wirecard hires KPMG to conduct an independent special audit under investor pressure",
+      "date": "2019-10-21",
+      "source": "Reuters Wirecard timeline",
+      "url": "https://www.reuters.com/business/finance/rise-fall-wirecard-2022-12-06/"
+    },
+    {
+      "evidence": "KPMG was unable to verify cash balances and could not trace transactions underpinning major reported profits.",
+      "title": "KPMG special audit cannot verify key Wirecard profit arrangements and cash balances",
+      "date": "2020-04-28",
+      "source": "Reuters / FT timeline",
+      "url": "https://www.reuters.com/article/technology/the-moneys-gone-wirecard-collapses-owing-4-billion-idUSKBN23W176/"
+    },
+    {
+      "evidence": "Wirecard says cash balances may be intended to deceive the auditor; this is the material pre-insolvency break.",
+      "title": "Wirecard announces €1.9B cash is missing after auditor EY refuses to sign accounts",
+      "date": "2020-06-18",
+      "source": "Financial Times",
+      "url": "https://www.ft.com/content/1e753e2b-f576-4f32-aa19-d240be26e773"
+    },
+    {
+      "evidence": "Wirecard collapses owing creditors almost $4B after auditor points to sophisticated global fraud.",
+      "title": "Wirecard files for insolvency after the missing-cash fraud becomes undeniable",
+      "date": "2020-06-25",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/article/technology/the-moneys-gone-wirecard-collapses-owing-4-billion-idUSKBN23W176/"
+    }
+  ],
+  "client": "Wirecard AG",
+  "scenario_id": "wirecard_drift"
+}

@@ -12,6 +12,8 @@ env/
 # Generated data / databases / caches
 *.sqlite
 *.sqlite3
+data/api_cache/
+/package-lock.json
 
 # OS
 .DS_Store

@@ -1,0 +1,50 @@
+{
+  "reference_model": "Centralised crypto-asset exchange and custody.",
+  "description": "Evidence-backed rapid deterioration replay: not slow KYC drift, but a multi-day liquidity and governance collapse before bankruptcy.",
+  "events": [
+    {
+      "evidence": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns.",
+      "title": "CoinDesk reports Alameda Research balance sheet heavily depends on FTX's FTT token",
+      "date": "2022-11-02",
+      "source": "Reuters / CoinDesk timeline",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
+    },
+    {
+      "evidence": "Public counterparty action accelerates market pressure and begins a bank-run dynamic.",
+      "title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
+      "date": "2022-11-06",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
+    },
+    {
+      "evidence": "FTX withdrawal stress and bailout discussions show acute liquidity deterioration.",
+      "title": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal",
+      "date": "2022-11-08",
+      "source": "CoinDesk timeline",
+      "url": "https://www.coindesk.com/markets/2022/11/12/the-epic-collapse-of-sam-bankman-frieds-ftx-exchange-a-crypto-markets-timeline"
+    },
+    {
+      "evidence": "Failed acquisition removes last-resort support and exposes severe financial issues.",
+      "title": "Binance walks away from FTX rescue after due diligence",
+      "date": "2022-11-09",
+      "source": "Reuters / CoinDesk",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
+    },
+    {
+      "evidence": "Withdrawal halt is the material pre-bankruptcy failure event.",
+      "title": "FTX halts withdrawals and faces severe liquidity crisis",
+      "date": "2022-11-10",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
+    },
+    {
+      "evidence": "Formal bankruptcy filing confirms the collapse.",
+      "title": "FTX files for Chapter 11 bankruptcy and Sam Bankman-Fried resigns",
+      "date": "2022-11-11",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/"
+    }
+  ],
+  "client": "FTX Trading Ltd",
+  "scenario_id": "ftx_rapid_deterioration"
+}

@@ -1,0 +1,50 @@
+{
+  "reference_model": "State-owned commercial and investment bank.",
+  "description": "Sanctions escalation replay from 2014 sectoral restrictions to 2022 full blocking sanctions.",
+  "events": [
+    {
+      "evidence": "Council Decision 2014/512 introduced sectoral restrictions after Russia's destabilisation of Ukraine.",
+      "title": "EU introduces targeted restrictive measures on Russian capital markets and sensitive sectors",
+      "date": "2014-07-31",
+      "source": "Court of Justice / Council Decision 2014/512 context",
+      "url": "http://www.fast.bailii.org/eu/cases/EUECJ/2020/C72918P.html"
+    },
+    {
+      "evidence": "VTB listing date under EU Russia sectoral restrictive measures.",
+      "title": "VTB appears under EU sectoral restrictive measures linked to Russia's actions in Ukraine",
+      "date": "2014-09-12",
+      "source": "Sanctions Finder",
+      "url": "https://sanctions-finder.com/sanction/5a3798bc-7ec9-43aa-887f-0da7771277b1/VTB%20BANK"
+    },
+    {
+      "evidence": "New executive actions follow Russia's continued efforts to undermine Ukraine sovereignty.",
+      "title": "US issues new Russia-related blocking measures as Ukraine crisis escalates",
+      "date": "2022-02-21",
+      "source": "OFAC Ukraine/Russia sanctions program",
+      "url": "https://ofac.treasury.gov/sanctions-programs-and-country-information/ukraine-russia-related-sanctions"
+    },
+    {
+      "evidence": "Full blocking sanctions freeze VTB assets touching the US financial system.",
+      "title": "US announces full blocking sanctions on VTB, Russia's second largest financial institution",
+      "date": "2022-02-24",
+      "source": "White House fact sheet",
+      "url": "https://www.presidency.ucsb.edu/documents/fact-sheet-joined-allies-and-partners-the-united-states-imposes-devastating-costs-russia"
+    },
+    {
+      "evidence": "SWIFT disconnection further limits access to global financial infrastructure.",
+      "title": "EU orders VTB and six other Russian banks disconnected from SWIFT",
+      "date": "2022-03-02",
+      "source": "Davis Polk sanctions update",
+      "url": "https://www.davispolk.com/insights/client-update/russia-sanctions-update-march-4-2022"
+    },
+    {
+      "evidence": "SWIFT said it would disconnect the seven Russian banks as required by EU regulations.",
+      "title": "SWIFT disconnection becomes operational for selected Russian banks including VTB",
+      "date": "2022-03-12",
+      "source": "Global News / EU SWIFT coverage",
+      "url": "https://globalnews.ca/news/8655321/russia-ukraine-war-eu-swift-ban/"
+    }
+  ],
+  "client": "VTB Bank",
+  "scenario_id": "vtb_sanctions_escalation"
+}

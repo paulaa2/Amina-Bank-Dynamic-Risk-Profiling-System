@@ -1,0 +1,58 @@
+{
+  "scenario_id": "openai_regulatory_drift",
+  "client": "OpenAI",
+  "description": "Chronological watchlist example (6 stream events): one commercial burn-in, then Sequoia/FTX cap-table stress, EU privacy action, US scrutiny and governance/litigation — combined risk climbs gradually without crossing 0.5. Cross-client Sequoia contagion at scale: run_global_demo --companies FTX OpenAI.",
+  "reference_model": "AI research lab monetising via API and subscriptions.",
+  "events": [
+    {
+      "date": "2023-03-01",
+      "title": "OpenAI launches ChatGPT API for enterprise developers",
+      "source": "OpenAI",
+      "url": "https://openai.com/index/introducing-chatgpt-and-whisper-apis/",
+      "evidence": "OpenAI opens its ChatGPT and Whisper APIs to businesses.",
+      "burn_in": true
+    },
+    {
+      "date": "2022-11-10",
+      "title": "OpenAI investor Sequoia Capital writes down entire FTX stake to zero",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/technology/what-are-ftxs-investors-saying-2022-11-11/",
+      "evidence": "Sequoia, also an early backer of OpenAI, marks $213M FTX exposure to zero after the exchange collapse."
+    },
+    {
+      "date": "2023-03-31",
+      "title": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/technology/italy-data-protection-agency-opens-chatgpt-probe-privacy-concerns-2023-03-31/",
+      "evidence": "Italy's Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection."
+    },
+    {
+      "date": "2023-07-13",
+      "title": "US FTC opens investigation into OpenAI over consumer harm, reputational risk and data practices",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/technology/us-ftc-opens-investigation-into-openai-washington-post-2023-07-13/",
+      "evidence": "FTC sends a civil investigative demand on data security and risks of false or harmful statements about individuals."
+    },
+    {
+      "date": "2023-11-17",
+      "title": "OpenAI board fires CEO Sam Altman; governance crisis begins",
+      "source": "Reuters/Yahoo timeline",
+      "url": "https://finance.yahoo.com/news/timeline-altmans-departure-musks-lawsuit-004141057.html",
+      "evidence": "Board removes Altman; communication breakdown and board-control questions create governance risk."
+    },
+    {
+      "date": "2023-11-20",
+      "title": "Nearly all OpenAI staff threaten to quit and join Microsoft unless board resigns",
+      "source": "Reuters/Yahoo timeline",
+      "url": "https://finance.yahoo.com/news/timeline-altmans-departure-musks-lawsuit-004141057.html",
+      "evidence": "Staff revolt and Microsoft intervention reveal extreme governance fragility."
+    },
+    {
+      "date": "2023-12-27",
+      "title": "New York Times sues OpenAI and Microsoft over copyrighted works used to train AI systems",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/legal/transactional/ny-times-sues-openai-microsoft-infringing-copyrighted-work-2023-12-27/",
+      "evidence": "Major copyright litigation seeks billions of dollars and destruction of infringing models/data."
+    }
+  ]
+}
