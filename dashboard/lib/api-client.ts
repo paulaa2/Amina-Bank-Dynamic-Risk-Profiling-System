@@ -2,8 +2,8 @@
  * Typed API client for the pKYC FastAPI backend.
  * Base URL is configured via NEXT_PUBLIC_API_URL (defaults to localhost:8000).
  *
- * A module-level session cache prevents repeated Ollama calls when navigating
- * between pages within the same browser session.
+ * A module-level cache plus localStorage persistence prevents repeated Ollama
+ * calls when navigating, refreshing, or reopening the dashboard.
  */
 
 const API_BASE =
@@ -175,18 +175,114 @@ export interface GlobalDemoResult {
 
 // ── Session cache ─────────────────────────────────────────────────────────────
 
+const STORAGE_PREFIX = "amina-risk-cache:v2";
+
 const _cache = new Map<string, LiveReport>();
+const _globalScenarioCache = new Map<string, GlobalDemoResult>();
+
+function storageAvailable(): boolean {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
 
 function cacheKey(id: number, simulateTx: boolean) {
   return `${id}_${simulateTx}`;
 }
 
+function storageKey(kind: string, key: string): string {
+  return `${STORAGE_PREFIX}:${kind}:${key}`;
+}
+
+function readStorage<T>(kind: string, key: string): T | null {
+  if (!storageAvailable()) return null;
+  try {
+    const raw = window.localStorage.getItem(storageKey(kind, key));
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage<T>(kind: string, key: string, value: T): void {
+  if (!storageAvailable()) return;
+  try {
+    window.localStorage.setItem(storageKey(kind, key), JSON.stringify(value));
+  } catch {
+    /* localStorage quota/private-mode failures should not break analysis */
+  }
+}
+
+function deleteStorage(kind: string, key: string): void {
+  if (!storageAvailable()) return;
+  try {
+    window.localStorage.removeItem(storageKey(kind, key));
+  } catch {
+    /* ignore */
+  }
+}
+
+function readStoredReports(): LiveReport[] {
+  if (!storageAvailable()) return [];
+  const reports: LiveReport[] = [];
+  for (let i = 0; i < window.localStorage.length; i++) {
+    const key = window.localStorage.key(i);
+    if (!key?.startsWith(`${STORAGE_PREFIX}:report:`)) continue;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw) reports.push(JSON.parse(raw) as LiveReport);
+    } catch {
+      /* skip malformed persisted entries */
+    }
+  }
+  return reports;
+}
+
+function putReport(id: number, simulateTx: boolean, report: LiveReport): void {
+  const key = cacheKey(id, simulateTx);
+  _cache.set(key, report);
+  writeStorage("report", key, report);
+}
+
+function getStoredReport(id: number, simulateTx = false): LiveReport | null {
+  const key = cacheKey(id, simulateTx);
+  const inMemory = _cache.get(key);
+  if (inMemory) return inMemory;
+  const stored = readStorage<LiveReport>("report", key);
+  if (stored) _cache.set(key, stored);
+  return stored;
+}
+
+function putScenarioReport(scenarioId: string, report: LiveReport): void {
+  writeStorage("scenario", scenarioId, report);
+}
+
+function getStoredScenarioReport(scenarioId: string): LiveReport | null {
+  return readStorage<LiveReport>("scenario", scenarioId);
+}
+
+function putGlobalScenario(scenarioId: string, result: GlobalDemoResult): void {
+  _globalScenarioCache.set(scenarioId, result);
+  writeStorage("global", scenarioId, result);
+}
+
+function getStoredGlobalScenario(scenarioId: string): GlobalDemoResult | null {
+  const inMemory = _globalScenarioCache.get(scenarioId);
+  if (inMemory) return inMemory;
+  const stored = readStorage<GlobalDemoResult>("global", scenarioId);
+  if (stored) _globalScenarioCache.set(scenarioId, stored);
+  return stored;
+}
+
 export function getCachedReport(id: number): LiveReport | null {
-  return _cache.get(cacheKey(id, false)) ?? null;
+  return getStoredReport(id, false);
 }
 
 export function getAllCachedReports(): LiveReport[] {
-  return Array.from(_cache.values());
+  const byId = new Map<string, LiveReport>();
+  for (const [key, report] of _cache.entries()) byId.set(key, report);
+  for (const report of readStoredReports()) {
+    if (report.id) byId.set(cacheKey(Number(report.id), false), report);
+  }
+  return Array.from(byId.values());
 }
 
 export type GovernanceAction =
@@ -214,7 +310,7 @@ export async function takeGovernanceAction(
   }
   const updated: LiveReport = await res.json();
   // Update session cache so the dossier page reflects the new status immediately
-  _cache.set(cacheKey(id, false), updated);
+  putReport(id, false, updated);
   return updated;
 }
 
@@ -309,6 +405,12 @@ export async function analyzeCompanyStream(
   forceRefresh = false,
   simulateTx = false,
 ): Promise<void> {
+  const cached = getStoredReport(id, simulateTx);
+  if (cached && !forceRefresh) {
+    onEvent({ event: "complete", data: cached });
+    return;
+  }
+
   const params = new URLSearchParams();
   if (forceRefresh) params.set("force_refresh", "true");
   if (simulateTx) params.set("simulate_tx_anomaly", "true");
@@ -344,7 +446,7 @@ export async function analyzeCompanyStream(
         try {
           const parsed = JSON.parse(jsonStr) as StreamEvent;
           if (parsed.event === "complete") {
-            _cache.set(cacheKey(id, false), parsed.data);
+            putReport(id, simulateTx, parsed.data);
           }
           onEvent(parsed);
         } catch {
@@ -361,8 +463,19 @@ export function invalidateCache(id?: number): void {
   if (id !== undefined) {
     _cache.delete(cacheKey(id, false));
     _cache.delete(cacheKey(id, true));
+    deleteStorage("report", cacheKey(id, false));
+    deleteStorage("report", cacheKey(id, true));
   } else {
     _cache.clear();
+    _globalScenarioCache.clear();
+    if (storageAvailable()) {
+      const keys: string[] = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i);
+        if (key?.startsWith(STORAGE_PREFIX)) keys.push(key);
+      }
+      for (const key of keys) window.localStorage.removeItem(key);
+    }
   }
 }
 
@@ -401,12 +514,18 @@ export async function analyzeCompany(
   id: number,
   opts: AnalyzeOptions = {}
 ): Promise<LiveReport> {
+  const simulateTx = opts.simulate_tx_anomaly ?? false;
+  const cached = getStoredReport(id, simulateTx);
+  if (cached && !opts.force_refresh) {
+    return cached;
+  }
+
   const res = await fetch(`${API_BASE}/api/analyze/${id}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       max_events: opts.max_events ?? 5,
-      simulate_tx_anomaly: opts.simulate_tx_anomaly ?? false,
+      simulate_tx_anomaly: simulateTx,
       force_refresh: opts.force_refresh ?? false,
     }),
   });
@@ -415,7 +534,7 @@ export async function analyzeCompany(
     throw new Error(body.detail ?? "Analysis failed");
   }
   const report: LiveReport = await res.json();
-  _cache.set(cacheKey(id, opts.simulate_tx_anomaly ?? false), report);
+  putReport(id, simulateTx, report);
   return report;
 }
 
@@ -427,15 +546,18 @@ export async function analyzeCompanyCached(
   id: number,
   opts: AnalyzeOptions = {}
 ): Promise<LiveReport> {
-  const key = cacheKey(id, opts.simulate_tx_anomaly ?? false);
-  if (_cache.has(key) && !opts.force_refresh) {
-    return _cache.get(key)!;
+  const cached = getStoredReport(id, opts.simulate_tx_anomaly ?? false);
+  if (cached && !opts.force_refresh) {
+    return cached;
   }
   return analyzeCompany(id, opts);
 }
 
 /** Return a cached LiveReport if the API has one (404 → null). */
 export async function getCachedAnalysis(id: number): Promise<LiveReport | null> {
+  const cached = getStoredReport(id, false);
+  if (cached) return cached;
+
   const res = await fetch(`${API_BASE}/api/analyze/${id}`);
   if (res.status === 404) return null;
   if (!res.ok) {
@@ -443,7 +565,7 @@ export async function getCachedAnalysis(id: number): Promise<LiveReport | null> 
     throw new Error(body.detail ?? `getCachedAnalysis: ${res.status}`);
   }
   const report: LiveReport = await res.json();
-  _cache.set(cacheKey(id, false), report);
+  putReport(id, false, report);
   return report;
 }
 
@@ -462,6 +584,12 @@ export async function replayScenario(
   scenarioId: string,
   opts: { force_refresh?: boolean } = {},
 ): Promise<LiveReport> {
+  const cached = getStoredScenarioReport(scenarioId);
+  if (cached && !opts.force_refresh) {
+    if (cached.id) putReport(Number(cached.id), false, cached);
+    return cached;
+  }
+
   const qs = opts.force_refresh ? "?force_refresh=true" : "";
   const res = await fetch(`${API_BASE}/api/scenario-replay/${scenarioId}${qs}`, {
     method: "POST",
@@ -471,8 +599,9 @@ export async function replayScenario(
     throw new Error(body.detail ?? "Scenario replay failed");
   }
   const report: LiveReport = await res.json();
+  putScenarioReport(scenarioId, report);
   if (report.id) {
-    _cache.set(cacheKey(Number(report.id), false), report);
+    putReport(Number(report.id), false, report);
   }
   return report;
 }
@@ -489,6 +618,11 @@ export async function runGlobalScenario(
   scenarioId: string,
   opts: { force_refresh?: boolean; max_events?: number } = {},
 ): Promise<GlobalDemoResult> {
+  const cached = getStoredGlobalScenario(scenarioId);
+  if (cached && !opts.force_refresh && opts.max_events === undefined) {
+    return cached;
+  }
+
   const res = await fetch(`${API_BASE}/api/global-demo/scenario/${scenarioId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -501,5 +635,13 @@ export async function runGlobalScenario(
     const body = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(body.detail ?? "Global demo failed");
   }
-  return res.json();
+  const result: GlobalDemoResult = await res.json();
+  if (opts.max_events === undefined) {
+    putGlobalScenario(scenarioId, result);
+  }
+  for (const [name, report] of Object.entries(result.clients)) {
+    const id = result.company_ids[name] ?? Number(report.id);
+    if (id) putReport(id, false, report);
+  }
+  return result;
 }

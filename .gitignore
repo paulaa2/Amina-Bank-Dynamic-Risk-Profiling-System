@@ -12,6 +12,7 @@ env/
 # Generated data / databases / caches
 *.sqlite
 *.sqlite3
+data/api_cache/
 
 # OS
 .DS_Store

@@ -253,6 +253,28 @@ html.light .app-shell {
   background-color: var(--surface-muted) !important;
 }
 
+.evidence-modal-backdrop {
+  background: rgb(8 8 8 / 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.evidence-modal-panel {
+  background: rgb(18 18 19 / 0.97);
+  border-color: rgb(112 112 112 / 0.45);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.44);
+  backdrop-filter: blur(18px);
+}
+
+html.light .evidence-modal-backdrop {
+  background: rgb(24 27 31 / 0.3);
+}
+
+html.light .evidence-modal-panel {
+  background: rgb(255 255 255 / 0.97);
+  border-color: rgb(120 128 138 / 0.38);
+  box-shadow: 0 24px 80px rgb(28 34 44 / 0.18);
+}
+
 .app-shell .border-slate-800,
 .app-shell .border-slate-700 {
   border-color: var(--surface-border) !important;

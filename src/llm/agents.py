@@ -92,7 +92,8 @@ class AMLSynthesizer:
     def synthesize(self, anomaly_trace: dict) -> str:
         """Draft the Markdown EDD report from a de-anonymised anomaly trace."""
         user_prompt = (
-            "JSON de anomalias unificado (des-enmascarado) para el reporte EDD:\n\n"
+            "De-anonymised unified anomaly JSON for the EDD report. "
+            "Write the final report in English only:\n\n"
             + json.dumps(anomaly_trace, ensure_ascii=False, indent=2)
         )
         return self.client.generate_report(AML_SYNTHESIZER_SYSTEM_PROMPT, user_prompt)

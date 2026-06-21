@@ -19,6 +19,7 @@ import re
 import sys
 import threading
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Generator, Optional
 
 import uvicorn
@@ -45,7 +46,35 @@ logger = logging.getLogger(__name__)
 # ── Shared state ──────────────────────────────────────────────────────────────
 
 _config = load_config()
-_cache:  dict[str, dict]  = {}   # str(company_id) → full report dict
+_PERSISTENT_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "api_cache"
+
+
+def _persistent_cache_path(name: str) -> Path:
+    return _PERSISTENT_CACHE_DIR / f"{name}.json"
+
+
+def _load_persistent_cache(name: str) -> dict[str, dict]:
+    path = _persistent_cache_path(name)
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception as exc:
+        logger.warning("Could not load persistent API cache %s: %s", path, exc)
+        return {}
+
+
+def _save_persistent_cache(name: str, cache: dict[str, dict]) -> None:
+    try:
+        _PERSISTENT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        _persistent_cache_path(name).write_text(
+            json.dumps(cache, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        logger.warning("Could not write persistent API cache %s: %s", name, exc)
+_cache:  dict[str, dict]  = _load_persistent_cache("analysis")   # str(company_id) → full report dict
 _lock = threading.Lock()
 
 # Scheduler bookkeeping
@@ -400,6 +429,7 @@ def _analyze_company_streaming(
 
     with _lock:
         _cache[str(company_id)] = result_dict
+        _save_persistent_cache("analysis", _cache)
 
     # ── Event 5: complete ─────────────────────────────────────────────────────
     yield {"event": "complete", "data": result_dict}
@@ -440,6 +470,7 @@ def _scheduled_analyses() -> None:
                 result["_scheduled_refresh"] = True
                 with _lock:
                     _cache[key] = result
+                    _save_persistent_cache("analysis", _cache)
                 logger.info("Scheduled analysis complete for company %s", cid)
             except Exception as exc:
                 logger.error("Scheduled analysis failed for company %s: %s", cid, exc)
@@ -494,7 +525,7 @@ SCENARIOS: dict[str, dict[str, Any]] = {
 }
 
 # Cache for global demo results (keyed by scenario_id)
-_global_cache: dict[str, dict] = {}
+_global_cache: dict[str, dict] = _load_persistent_cache("global")
 
 
 def _parse_contagion_log(log: str) -> list[dict[str, Any]]:
@@ -679,6 +710,7 @@ def analyze_company(company_id: int, req: AnalyzeRequest = AnalyzeRequest()):
         if not req.simulate_tx_anomaly:
             with _lock:
                 _cache[cache_key] = result
+                _save_persistent_cache("analysis", _cache)
         return result
 
     except LookupError as exc:
@@ -815,6 +847,7 @@ def take_governance_action(company_id: int, req: ActionRequest):
 
     with _lock:
         _cache[cache_key] = result
+        _save_persistent_cache("analysis", _cache)
 
     return result
 
@@ -824,12 +857,13 @@ def invalidate_cache(company_id: int):
     """Evict a single company from the cache so it will be re-analysed on next call."""
     with _lock:
         evicted = _cache.pop(str(company_id), None)
+        _save_persistent_cache("analysis", _cache)
     return {"evicted": evicted is not None, "company_id": company_id}
 
 
 # ── Curated scenario replay (historical timelines for dashboard) ───────────────
 
-_scenario_cache: dict[str, dict] = {}
+_scenario_cache: dict[str, dict] = _load_persistent_cache("scenario")
 
 
 @app.get("/api/scenarios/replay")
@@ -874,6 +908,8 @@ def run_curated_scenario(scenario_id: str, force_refresh: bool = False):
         _scenario_cache[scenario_id] = result
         if result.get("id"):
             _cache[str(result["id"])] = result
+        _save_persistent_cache("scenario", _scenario_cache)
+        _save_persistent_cache("analysis", _cache)
     return result
 
 
@@ -959,6 +995,12 @@ def run_scenario(scenario_id: str, req: ScenarioRunRequest = ScenarioRunRequest(
 
     with _lock:
         _global_cache[scenario_id] = result
+        for name, report in raw["clients"].items():
+            company_id = company_ids.get(name)
+            if company_id:
+                _cache[str(company_id)] = report
+        _save_persistent_cache("global", _global_cache)
+        _save_persistent_cache("analysis", _cache)
 
     return result
 

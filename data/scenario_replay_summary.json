@@ -6,9 +6,9 @@
     "reference_model": "Centralised crypto-asset exchange and custody.",
     "threshold": 0.5,
     "bonferroni_scale": 2.0986,
-    "alarm_event_index": 2,
-    "alarm_date": "2022-11-06",
-    "alarm_title": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations",
+    "alarm_event_index": 3,
+    "alarm_date": "2022-11-08",
+    "alarm_title": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal",
     "events": [
       {
         "index": 1,
@@ -17,16 +17,16 @@
         "source": "Reuters / CoinDesk timeline",
         "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
         "evidence": "Leaked Alameda balance sheet shows dependency on FTT and raises solvency concerns.",
-        "semantic_signal": 0.4572,
+        "semantic_signal": 0.3722,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.18091312383245262,
+        "semantic_stat": 0.11012086807243193,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.40341464635496843,
+        "semantic_ratio": 0.24555637594807433,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.4034,
+        "combined_risk": 0.2456,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -34,7 +34,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Alameda Research depende significativamente de los activos relacionados con el token FTT de FTX en su balance sheet",
+        "extracted_fact": "Alameda Research's balance sheet is heavily reliant on FTX's FTT token.",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_001",
@@ -54,24 +54,24 @@
         "source": "Reuters",
         "url": "https://www.reuters.com/markets/currencies/rise-fall-crypto-exchange-ftx-2022-11-10/",
         "evidence": "Public counterparty action accelerates market pressure and begins a bank-run dynamic.",
-        "semantic_signal": 0.3991,
+        "semantic_signal": 0.3287,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.27401966939466826,
+        "semantic_stat": 0.1550226644443747,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.6110311163801037,
+        "semantic_ratio": 0.34568201592577924,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.611,
+        "combined_risk": 0.3457,
         "alarms": {
           "semantic": false,
           "topology": false,
           "behavioral_tx": false
         },
-        "trigger": true,
+        "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Binance anunció que liquidará sus activos restantes de FTT relacionados con FTX tras revelaciones de CoinDesk",
+        "extracted_fact": "Binance plans to liquidate its remaining FTT holdings linked to FTX following revelations by CoinDesk.",
         "new_graph_nodes": [
           {
             "node_id": "DYN_COMPANY_002",
@@ -92,15 +92,54 @@
             "is_new": true
           }
         ]
+      },
+      {
+        "index": 3,
+        "date": "2022-11-08",
+        "title": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal",
+        "source": "CoinDesk timeline",
+        "url": "https://www.coindesk.com/markets/2022/11/12/the-epic-collapse-of-sam-bankman-frieds-ftx-exchange-a-crypto-markets-timeline",
+        "evidence": "FTX withdrawal stress and bailout discussions show acute liquidity deterioration.",
+        "semantic_signal": 0.4197,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.26321467830268663,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.5869372774816211,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.5869,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": true,
+        "triaged_in": true,
+        "extracted_fact": "FTX is facing pressure to withdraw from a non-binding rescue deal with MASKED_COMPANY_007.",
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_002",
+            "name": "Binance",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": false
+          }
+        ]
       }
     ],
     "decision": {
       "alarm_fired": true,
-      "max_combined_risk": 0.611,
+      "max_combined_risk": 0.5869,
       "threshold": 0.5,
-      "triggering_event": "Binance says it will liquidate remaining FTT holdings tied to FTX after CoinDesk revelations"
+      "triggering_event": "FTX faces withdrawal pressure and announces non-binding Binance rescue deal"
     },
-    "warnings": []
+    "warnings": [
+      "Groq report generation failed (Connection error.); using local fallback."
+    ]
   },
   {
     "scenario_id": "gazprombank_sanctions_escalation",
@@ -109,9 +148,9 @@
     "reference_model": "Large private/state-linked commercial bank.",
     "threshold": 0.5,
     "bonferroni_scale": 2.0986,
-    "alarm_event_index": 2,
-    "alarm_date": "2022-02-24",
-    "alarm_title": "Gazprombank becomes subject to EO 14024 Directive 3 restrictions on new debt and equity",
+    "alarm_event_index": 3,
+    "alarm_date": "2022-03-02",
+    "alarm_title": "EU removes several Russian banks from SWIFT but spares Gazprombank for energy payments",
     "events": [
       {
         "index": 1,
@@ -120,16 +159,16 @@
         "source": "OFAC sanctions list search",
         "url": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=17016",
         "evidence": "Gazprombank appears under Ukraine/Russia-related sanctions directives as a Russian financial institution.",
-        "semantic_signal": 0.4631,
+        "semantic_signal": 0.3894,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.16943021472802117,
+        "semantic_stat": 0.1079948515981839,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.36701063650541127,
+        "semantic_ratio": 0.23393265060769491,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.367,
+        "combined_risk": 0.2339,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -137,7 +176,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa fue sometida a directivas de sanciones sectoriales relacionadas con Ucrania/Rusia",
+        "extracted_fact": "MASKED_COMPANY_001 is subject to sanctions directives related to Ukraine/Russia-related sectors.",
         "new_graph_nodes": []
       },
       {
@@ -147,16 +186,43 @@
         "source": "OFAC sanctions list search",
         "url": "https://sanctionssearch.ofac.treas.gov/Details.aspx?id=17016",
         "evidence": "Directive 3 restrictions apply to new debt/equity after effective date.",
-        "semantic_signal": 0.5118,
+        "semantic_signal": 0.4093,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.34386336338579804,
+        "semantic_stat": 0.20510610590968745,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.7448583599430537,
+        "semantic_ratio": 0.44428983698036456,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.7449,
+        "combined_risk": 0.4443,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "MASKED_COMPANY_001 is subject to restrictions under EO 14024 Directive 3 on new debt and equity.",
+        "new_graph_nodes": []
+      },
+      {
+        "index": 3,
+        "date": "2022-03-02",
+        "title": "EU removes several Russian banks from SWIFT but spares Gazprombank for energy payments",
+        "source": "Davis Polk / Global News",
+        "url": "https://www.davispolk.com/insights/client-update/russia-sanctions-update-march-4-2022",
+        "evidence": "Gazprombank is spared because it processes Russian oil and gas payments, creating continuing sanctions exposure.",
+        "semantic_signal": 0.4088,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.27857405798994245,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.603432171179768,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.6034,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -164,17 +230,19 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "La empresa se somete a restricciones de la Directiva 3 de la EO 14024 sobre nuevos préstamos y acciones",
+        "extracted_fact": "MASKED_COMPANY_001 was excluded from the SWIFT network by the EU but was allowed to remain for processing energy-related payments.",
         "new_graph_nodes": []
       }
     ],
     "decision": {
       "alarm_fired": true,
-      "max_combined_risk": 0.7449,
+      "max_combined_risk": 0.6034,
       "threshold": 0.5,
-      "triggering_event": "Gazprombank becomes subject to EO 14024 Directive 3 restrictions on new debt and equity"
+      "triggering_event": "EU removes several Russian banks from SWIFT but spares Gazprombank for energy payments"
     },
-    "warnings": []
+    "warnings": [
+      "Groq report generation failed (Connection error.); using local fallback."
+    ]
   },
   {
     "scenario_id": "microstrategy_drift",
@@ -183,9 +251,9 @@
     "reference_model": "Enterprise Business Intelligence software and cloud analytics.",
     "threshold": 0.5,
     "bonferroni_scale": 2.0986,
-    "alarm_event_index": 2,
-    "alarm_date": "2020-08-11",
-    "alarm_title": "MicroStrategy adopts Bitcoin as primary treasury reserve asset with a $250M purchase",
+    "alarm_event_index": 5,
+    "alarm_date": "2022-03-29",
+    "alarm_title": "MacroStrategy closes $205M Bitcoin-collateralized Silvergate loan to acquire additional Bitcoin",
     "events": [
       {
         "index": 1,
@@ -194,16 +262,16 @@
         "source": "SEC 8-K / Q2 2020 earnings release",
         "url": "https://www.sec.gov/Archives/edgar/data/1050446/000156459020033897/mstr-ex991_10.htm",
         "evidence": "Company says it may invest up to $250M in alternative assets including digital assets such as bitcoin.",
-        "semantic_signal": 0.3417,
+        "semantic_signal": 0.2748,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.09021536655409673,
+        "semantic_stat": 0.03449489619300572,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.19271475266831212,
+        "semantic_ratio": 0.07368673034397069,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.1927,
+        "combined_risk": 0.0737,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -211,7 +279,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "MicroStrategy anunció una estrategia de asignación de capital que incluye compras de acciones y activos alternativos, entre ellos activos digitales como el bitcoin",
+        "extracted_fact": "MicroStrategy plans to allocate capital through buybacks and investments in alternative assets, including digital assets like bitcoin.",
         "new_graph_nodes": []
       },
       {
@@ -221,16 +289,97 @@
         "source": "SEC 8-K / press release",
         "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312520215604/d921849dex991.htm",
         "evidence": "Company purchases 21,454 bitcoins and states Bitcoin is now the principal holding in treasury reserve strategy.",
-        "semantic_signal": 0.4411,
+        "semantic_signal": 0.2931,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.23999193086644358,
+        "semantic_stat": 0.06699944376441996,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.5126619484673267,
+        "semantic_ratio": 0.14312175106257824,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.5127,
+        "combined_risk": 0.1431,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "MicroStrategy has adopted Bitcoin as its primary treasury reserve asset and has allocated $250 million for its purchase.",
+        "new_graph_nodes": []
+      },
+      {
+        "index": 3,
+        "date": "2020-12-11",
+        "title": "MicroStrategy closes $650M convertible note offering and intends to invest proceeds in Bitcoin",
+        "source": "Strategy press release / SEC 8-K",
+        "url": "https://www.strategy.com/press/microstrategy-completes-650m-offering-of-convertible-senior-notes-due-2025",
+        "evidence": "Net proceeds from convertible senior notes are intended for Bitcoin purchases under the Treasury Reserve Policy.",
+        "semantic_signal": 0.3361,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.12186680107387349,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.26032738461852906,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.2603,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "MicroStrategy has closed a $650 million convertible note offering and plans to invest the proceeds in Bitcoin.",
+        "new_graph_nodes": []
+      },
+      {
+        "index": 4,
+        "date": "2021-02-24",
+        "title": "MicroStrategy buys an additional 19,452 bitcoins for $1.026B after issuing more convertible debt",
+        "source": "Strategy press release",
+        "url": "https://www.strategy.com/press/microstrategy-acquires-additional-19452-bitcoins-for-1-026-billion_02-24-2021",
+        "evidence": "Company now holds over 90,000 BTC and says it will continue acquiring Bitcoin with excess cash and possible debt/equity issuance.",
+        "semantic_signal": 0.369,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.18997287841791852,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.40581308569026686,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.4058,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "MicroStrategy has purchased an additional 19,452 bitcoins for $1.026 billion using newly issued convertible debt.",
+        "new_graph_nodes": []
+      },
+      {
+        "index": 5,
+        "date": "2022-03-29",
+        "title": "MacroStrategy closes $205M Bitcoin-collateralized Silvergate loan to acquire additional Bitcoin",
+        "source": "SEC 8-K / Strategy press release",
+        "url": "https://www.sec.gov/Archives/edgar/data/1050446/000119312522087494/d312252d8k.htm",
+        "evidence": "Subsidiary borrows against Bitcoin collateral; proceeds may be used to purchase more Bitcoin or for corporate purposes.",
+        "semantic_signal": 0.4094,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.2787171722538573,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.5953853868465417,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.5954,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -238,17 +387,29 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "MicroStrategy adquiere Bitcoin como activo principal de reserva de tesorería con un monto de $250M",
-        "new_graph_nodes": []
+        "extracted_fact": "MacroStrategy secured a $205M Bitcoin-collateralized loan from Silvergate to acquire additional Bitcoin.",
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_001",
+            "name": "Silvergate",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "OWNS_MAJORITY",
+            "control_weight": 1.0,
+            "is_new": true
+          }
+        ]
       }
     ],
     "decision": {
       "alarm_fired": true,
-      "max_combined_risk": 0.5127,
+      "max_combined_risk": 0.5954,
       "threshold": 0.5,
-      "triggering_event": "MicroStrategy adopts Bitcoin as primary treasury reserve asset with a $250M purchase"
+      "triggering_event": "MacroStrategy closes $205M Bitcoin-collateralized Silvergate loan to acquire additional Bitcoin"
     },
-    "warnings": []
+    "warnings": [
+      "Groq report generation failed (Connection error.); using local fallback."
+    ]
   },
   {
     "scenario_id": "openai_regulatory_drift",
@@ -257,9 +418,9 @@
     "reference_model": "AI research lab monetising via API and subscriptions.",
     "threshold": 0.5,
     "bonferroni_scale": 2.0986,
-    "alarm_event_index": null,
-    "alarm_date": null,
-    "alarm_title": null,
+    "alarm_event_index": 1,
+    "alarm_date": "2023-03-31",
+    "alarm_title": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection",
     "events": [
       {
         "index": 1,
@@ -268,300 +429,36 @@
         "source": "Reuters",
         "url": "https://www.reuters.com/technology/italy-data-protection-agency-opens-chatgpt-probe-privacy-concerns-2023-03-31/",
         "evidence": "Garante Privacy restricts ChatGPT processing in Italy, citing missing legal basis for training data collection.",
-        "semantic_signal": 0.493,
+        "semantic_signal": 0.5076,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.0,
+        "semantic_stat": 0.05797969629882643,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
+        "semantic_ratio": 0.5542190648417584,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
+        "combined_risk": 0.5542,
         "alarms": {
           "semantic": false,
           "topology": false,
           "behavioral_tx": false
         },
-        "trigger": false,
+        "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "La autoridad de privacidad italiana ordena una prohibición temporal de ChatGPT por recopilación ilegal de datos.",
-        "new_graph_nodes": []
-      },
-      {
-        "index": 2,
-        "date": "2023-04-28",
-        "title": "ChatGPT returns to Italy after OpenAI implements privacy safeguards requested by regulator",
-        "source": "The Verge",
-        "url": "https://www.theverge.com/2023/4/28/23702883/chatgpt-italy-ban-lifted-gpdp-data-protection-age-verification",
-        "evidence": "OpenAI restores ChatGPT access in Italy after meeting regulator demands on transparency and age controls.",
-        "semantic_signal": 0.5114,
-        "topology_signal": 0.0,
-        "behavioral_signal": 0.0,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "La empresa implementó medidas de protección de privacidad solicitadas por la autoridad reguladora.",
-        "new_graph_nodes": []
-      },
-      {
-        "index": 3,
-        "date": "2023-07-13",
-        "title": "US FTC opens investigation into OpenAI over consumer harm, reputational risk and data practices",
-        "source": "Reuters",
-        "url": "https://www.reuters.com/technology/us-ftc-opens-investigation-into-openai-washington-post-2023-07-13/",
-        "evidence": "FTC sends a civil investigative demand on data security and risks of false or harmful statements about individuals.",
-        "semantic_signal": 0.5088,
-        "topology_signal": 0.0,
-        "behavioral_signal": 0.0,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "La FTC de EE.UU. inicia una investigación sobre prácticas de datos, riesgo reputacional y daño al consumidor",
-        "new_graph_nodes": []
-      },
-      {
-        "index": 4,
-        "date": "2023-11-17",
-        "title": "OpenAI board fires CEO Sam Altman; governance crisis begins",
-        "source": "Reuters/Yahoo timeline",
-        "url": "https://finance.yahoo.com/news/timeline-altmans-departure-musks-lawsuit-004141057.html",
-        "evidence": "Board removes Altman; communication breakdown and board-control questions create governance risk.",
-        "semantic_signal": 0.546,
-        "topology_signal": 0.0,
-        "behavioral_signal": 0.0,
-        "semantic_stat": 0.0134156184402267,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.07813908402950234,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0781,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "El consejo de administración de la empresa destituyó al CEO.",
-        "new_graph_nodes": [
-          {
-            "node_id": "0dbc81e2da51b074",
-            "name": "Sam Altman",
-            "type": "PERSON",
-            "intrinsic_risk": 0.0,
-            "relation": "DIRECTS",
-            "control_weight": 1.0,
-            "is_new": false
-          }
-        ]
-      },
-      {
-        "index": 5,
-        "date": "2023-11-20",
-        "title": "Nearly all OpenAI staff threaten to quit and join Microsoft unless board resigns",
-        "source": "Reuters/Yahoo timeline",
-        "url": "https://finance.yahoo.com/news/timeline-altmans-departure-musks-lawsuit-004141057.html",
-        "evidence": "Staff revolt and Microsoft intervention reveal extreme governance fragility.",
-        "semantic_signal": 0.5451,
-        "topology_signal": 0.0,
-        "behavioral_signal": 0.0,
-        "semantic_stat": 0.020876594881938035,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.12159543810803766,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.1216,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "El personal de la empresa amenaza con dejarla y unirse a otra empresa si el consejo de administración renuncia",
-        "new_graph_nodes": [
-          {
-            "node_id": "9a8dc15cdae9a553",
-            "name": "Microsoft",
-            "type": "COMPANY",
-            "intrinsic_risk": 0.0,
-            "relation": "DIRECTS",
-            "control_weight": 1.0,
-            "is_new": false
-          }
-        ]
-      },
-      {
-        "index": 6,
-        "date": "2023-12-27",
-        "title": "New York Times sues OpenAI and Microsoft over copyrighted works used to train AI systems",
-        "source": "Reuters",
-        "url": "https://www.reuters.com/legal/transactional/ny-times-sues-openai-microsoft-infringing-copyrighted-work-2023-12-27/",
-        "evidence": "Major copyright litigation seeks billions of dollars and destruction of infringing models/data.",
-        "semantic_signal": 0.4709,
-        "topology_signal": 0.0,
-        "behavioral_signal": 1.0112,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "La empresa fue demandada por el New York Times por uso no autorizado de obras protegidas para entrenamiento de sistemas de inteligencia artificial",
-        "new_graph_nodes": [
-          {
-            "node_id": "9a8dc15cdae9a553",
-            "name": "Microsoft",
-            "type": "COMPANY",
-            "intrinsic_risk": 0.0,
-            "relation": "LEGAL_PROCEEDING",
-            "control_weight": 0.75,
-            "is_new": false
-          }
-        ]
-      },
-      {
-        "index": 7,
-        "date": "2024-05-26",
-        "title": "Former OpenAI board members accuse Altman of lying and call the governance experiment failed",
-        "source": "TIME timeline",
-        "url": "https://time.com/6986711/openai-sam-altman-accusations-controversies-timeline/",
-        "evidence": "Former board members publicly question governance and safety oversight.",
-        "semantic_signal": 0.5434,
-        "topology_signal": 0.0,
-        "behavioral_signal": 0.8355,
-        "semantic_stat": 0.005431634528106077,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.03163648017422707,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0316,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "Antiguos miembros del consejo de MASKED_COMPANY_001 acusan a Altman de mentir y declaran que el experimento de gobernanza falló",
-        "new_graph_nodes": [
-          {
-            "node_id": "DYN_PERSON_001",
-            "name": "Altman",
-            "type": "PERSON",
-            "intrinsic_risk": 0.35,
-            "relation": "DIRECTS",
-            "control_weight": 1.0,
-            "is_new": true
-          }
-        ]
-      },
-      {
-        "index": 8,
-        "date": "2024-06-06",
-        "title": "US regulators clear antitrust probes into Microsoft OpenAI and Nvidia",
-        "source": "Reuters",
-        "url": "https://www.reuters.com/technology/us-regulators-open-antitrust-inquiries-microsoft-openai-nvidia-nyt-reports-2024-06-06/",
-        "evidence": "DOJ and FTC divide antitrust work; FTC leads the Microsoft-OpenAI conduct review.",
-        "semantic_signal": 0.4556,
-        "topology_signal": 0.0,
-        "behavioral_signal": 1.1184,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "Las autoridades estadounidenses han autorizado las investigaciones antimonopolio sobre Nvidia",
-        "new_graph_nodes": [
-          {
-            "node_id": "DYN_COMPANY_001",
-            "name": "Nvidia",
-            "type": "COMPANY",
-            "intrinsic_risk": 0.367,
-            "relation": "ASSOCIATED_WITH",
-            "control_weight": 0.1,
-            "is_new": true
-          }
-        ]
-      },
-      {
-        "index": 9,
-        "date": "2024-12-20",
-        "title": "Italian privacy regulator fines OpenAI €15M over EU data privacy breaches",
-        "source": "Reuters",
-        "url": "https://www.reuters.com/technology/italy-fines-openai-15-million-euros-over-data-privacy-2024-12-20/",
-        "evidence": "Garante Privacy confirms material privacy enforcement with a €15M fine.",
-        "semantic_signal": 0.4842,
-        "topology_signal": 0.0,
-        "behavioral_signal": 1.1683,
-        "semantic_stat": 0.0,
-        "topology_stat": 0.0,
-        "behavioral_stat": 0.0,
-        "semantic_ratio": 0.0,
-        "topology_ratio": 0.0,
-        "behavioral_ratio": 0.0,
-        "combined_risk": 0.0,
-        "alarms": {
-          "semantic": false,
-          "topology": false,
-          "behavioral_tx": false
-        },
-        "trigger": false,
-        "triaged_in": true,
-        "extracted_fact": "La empresa fue sancionada con una multa de €15M por incumplimiento de normas de privacidad de datos en la UE",
+        "extracted_fact": "The Italian privacy regulator has ordered a temporary ban on MASKED_COMPANY_001's ChatGPT service due to unlawful data collection practices.",
         "new_graph_nodes": []
       }
     ],
     "decision": {
-      "alarm_fired": false,
-      "max_combined_risk": 0.1216,
+      "alarm_fired": true,
+      "max_combined_risk": 0.5542,
       "threshold": 0.5,
-      "triggering_event": "Nearly all OpenAI staff threaten to quit and join Microsoft unless board resigns"
+      "triggering_event": "Italian privacy regulator orders temporary ban on OpenAI ChatGPT over unlawful data collection"
     },
-    "warnings": []
+    "warnings": [
+      "Groq report generation failed (Connection error.); using local fallback."
+    ]
   },
   {
     "scenario_id": "surgutneftegas_sanctions_escalation",
@@ -570,9 +467,9 @@
     "reference_model": "Vertically integrated Russian oil and gas producer.",
     "threshold": 0.5,
     "bonferroni_scale": 2.0986,
-    "alarm_event_index": 4,
-    "alarm_date": "2023-02-05",
-    "alarm_title": "EU refined oil products ban adds revenue pressure on Surgutneftegas and Russian energy sector",
+    "alarm_event_index": 6,
+    "alarm_date": "2025-01-10",
+    "alarm_title": "UK sanctions notice lists PJSC Surgutneftegas with asset-freeze and trust-services restrictions",
     "events": [
       {
         "index": 1,
@@ -581,16 +478,16 @@
         "source": "OpenSanctions / sanctions summaries",
         "url": "https://www.opensanctions.org/entities/NK-gyXAZAjfijNDV3fHyi8HTR/adjacent/sanctions/",
         "evidence": "OpenSanctions records US sanctions entries for Surgutneftegas starting 2014-09-12.",
-        "semantic_signal": 0.4382,
+        "semantic_signal": 0.3004,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.1316639162050578,
+        "semantic_stat": 0.016827823039297016,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.2134480390412777,
+        "semantic_ratio": 0.02728056351808258,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.2134,
+        "combined_risk": 0.0273,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -598,7 +495,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa fue sometida a restricciones sectoriales en el sector de petróleo por parte de Estados Unidos.",
+        "extracted_fact": "US sectoral restrictions have been imposed on Russian oil companies including MASKED_COMPANY_001.",
         "new_graph_nodes": []
       },
       {
@@ -608,16 +505,16 @@
         "source": "OpenSanctions",
         "url": "https://www.opensanctions.org/entities/NK-gyXAZAjfijNDV3fHyi8HTR/adjacent/sanctions/",
         "evidence": "BIS Entity List entry appears in sanctions adjacency data.",
-        "semantic_signal": 0.4526,
+        "semantic_signal": 0.3366,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.24007692817943355,
+        "semantic_stat": 0.045527177702744476,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.38920268374172245,
+        "semantic_ratio": 0.07380675802320766,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.3892,
+        "combined_risk": 0.0738,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -625,7 +522,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa está sujeta a restricciones de la BIS Entity List debido a su exposición a tecnología energética rusa.",
+        "extracted_fact": "MASKED_COMPANY_001 is subject to BIS Entity List restrictions due to its association with Russian energy technology.",
         "new_graph_nodes": []
       },
       {
@@ -635,16 +532,16 @@
         "source": "International sanctions summary",
         "url": "https://en.wikipedia.org/wiki/International_sanctions_during_the_Russo-Ukrainian_war",
         "evidence": "Oil price cap comes into effect to reduce Russia's ability to finance the war.",
-        "semantic_signal": 0.3943,
+        "semantic_signal": 0.2793,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.269235773771358,
+        "semantic_stat": 0.005816651199034642,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.43647378573910167,
+        "semantic_ratio": 0.00942971186036579,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.4365,
+        "combined_risk": 0.0094,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -652,7 +549,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "La empresa enfrenta sanciones por exportar petróleo ruso bajo el precio máximo establecido por el G7/EU.",
+        "extracted_fact": "MASKED_COMPANY_001's involvement in Russian oil exports has increased its sanctions exposure due to the G7/EU oil price cap.",
         "new_graph_nodes": []
       },
       {
@@ -662,16 +559,80 @@
         "source": "International sanctions summary",
         "url": "https://en.wikipedia.org/wiki/International_sanctions_during_the_Russo-Ukrainian_war",
         "evidence": "Refined oil product restrictions add sectoral pressure to Russian oil producers.",
-        "semantic_signal": 0.4701,
+        "semantic_signal": 0.319,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.3494710676418613,
+        "semantic_stat": 0.0,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.566547891326899,
+        "semantic_ratio": 0.0,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.5665,
+        "combined_risk": 0.0,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "The EU refined oil products ban has increased revenue pressure on MASKED_COMPANY_001 and the Russian energy sector.",
+        "new_graph_nodes": []
+      },
+      {
+        "index": 5,
+        "date": "2025-01-10",
+        "title": "US and UK designate Surgutneftegas and Gazprom Neft as major Russian oil sanctions targets",
+        "source": "GOV.UK / Baker McKenzie sanctions update",
+        "url": "https://www.gov.uk/government/news/support-for-ukraine-is-unwavering-as-uk-announces-new-sanctions-on-russian-oil-giants",
+        "evidence": "UK and US directly sanction two major Russian oil companies, including PJSC Surgutneftegas.",
+        "semantic_signal": 0.2993,
+        "topology_signal": 0.05,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.0,
+        "topology_stat": 0.030083592135001266,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.0,
+        "topology_ratio": 0.42738691267223566,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.4274,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "MASKED_COMPANY_001 has been designated as a major Russian oil sanctions target by the US and UK.",
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_001",
+            "name": "Gazprom Neft",
+            "type": "COMPANY",
+            "intrinsic_risk": 1.0,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": true
+          }
+        ]
+      },
+      {
+        "index": 6,
+        "date": "2025-01-10",
+        "title": "UK sanctions notice lists PJSC Surgutneftegas with asset-freeze and trust-services restrictions",
+        "source": "UK sanctions notice PDF",
+        "url": "https://assets.publishing.service.gov.uk/media/678123d261e7988536018435/Notice_Russia_100125.pdf",
+        "evidence": "Official notice lists PJSC SURGUTNEFTEGAS with date designated 10/01/2025.",
+        "semantic_signal": 0.5117,
+        "topology_signal": 0.05,
+        "behavioral_signal": 1.9506,
+        "semantic_stat": 0.14488790700482307,
+        "topology_stat": 0.05621263881545708,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.2348862203278933,
+        "topology_ratio": 0.7985930020818861,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.8459,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -679,17 +640,19 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "La prohibición de productos de aceite refinado en la UE genera presión sobre los ingresos de la empresa.",
+        "extracted_fact": "UK sanctions have imposed asset-freeze and trust-services restrictions on PJSC MASKED_COMPANY_001.",
         "new_graph_nodes": []
       }
     ],
     "decision": {
       "alarm_fired": true,
-      "max_combined_risk": 0.5665,
+      "max_combined_risk": 0.8459,
       "threshold": 0.5,
-      "triggering_event": "EU refined oil products ban adds revenue pressure on Surgutneftegas and Russian energy sector"
+      "triggering_event": "UK sanctions notice lists PJSC Surgutneftegas with asset-freeze and trust-services restrictions"
     },
-    "warnings": []
+    "warnings": [
+      "Groq report generation failed (Connection error.); using local fallback."
+    ]
   },
   {
     "scenario_id": "vtb_sanctions_escalation",
@@ -698,9 +661,9 @@
     "reference_model": "State-owned commercial and investment bank.",
     "threshold": 0.5,
     "bonferroni_scale": 2.0986,
-    "alarm_event_index": 4,
-    "alarm_date": "2022-02-24",
-    "alarm_title": "US announces full blocking sanctions on VTB, Russia's second largest financial institution",
+    "alarm_event_index": null,
+    "alarm_date": null,
+    "alarm_title": null,
     "events": [
       {
         "index": 1,
@@ -732,16 +695,16 @@
         "source": "Sanctions Finder",
         "url": "https://sanctions-finder.com/sanction/5a3798bc-7ec9-43aa-887f-0da7771277b1/VTB%20BANK",
         "evidence": "VTB listing date under EU Russia sectoral restrictive measures.",
-        "semantic_signal": 0.4185,
+        "semantic_signal": 0.3615,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.12092293277928538,
+        "semantic_stat": 0.07345870338116949,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.23757774040680033,
+        "semantic_ratio": 0.1443245905585682,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.2376,
+        "combined_risk": 0.1443,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -749,7 +712,7 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "VTB fue incluido en medidas restrictivas sectoriales de la UE relacionadas con las acciones de Rusia en Ucrania",
+        "extracted_fact": "VTB is subject to EU sectoral restrictive measures due to its association with Russia's actions in Ukraine.",
         "new_graph_nodes": []
       },
       {
@@ -782,32 +745,86 @@
         "source": "White House fact sheet",
         "url": "https://www.presidency.ucsb.edu/documents/fact-sheet-joined-allies-and-partners-the-united-states-imposes-devastating-costs-russia",
         "evidence": "Full blocking sanctions freeze VTB assets touching the US financial system.",
-        "semantic_signal": 0.4701,
+        "semantic_signal": 0.3474,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.2549717485066655,
+        "semantic_stat": 0.110494402575223,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.5009439523630328,
+        "semantic_ratio": 0.21708876792903695,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.5009,
+        "combined_risk": 0.2171,
         "alarms": {
           "semantic": false,
           "topology": false,
           "behavioral_tx": false
         },
-        "trigger": true,
+        "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Estados Unidos impone sanciones completas contra VTB",
+        "extracted_fact": "The United States has imposed full blocking sanctions on VTB, Russia's second largest financial institution.",
+        "new_graph_nodes": []
+      },
+      {
+        "index": 5,
+        "date": "2022-03-02",
+        "title": "EU orders VTB and six other Russian banks disconnected from SWIFT",
+        "source": "Davis Polk sanctions update",
+        "url": "https://www.davispolk.com/insights/client-update/russia-sanctions-update-march-4-2022",
+        "evidence": "SWIFT disconnection further limits access to global financial infrastructure.",
+        "semantic_signal": 0.3754,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.1552612406516582,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.3050423429119496,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.305,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "The European Union has ordered VTB and six other Russian banks to be disconnected from SWIFT.",
+        "new_graph_nodes": []
+      },
+      {
+        "index": 6,
+        "date": "2022-03-12",
+        "title": "SWIFT disconnection becomes operational for selected Russian banks including VTB",
+        "source": "Global News / EU SWIFT coverage",
+        "url": "https://globalnews.ca/news/8655321/russia-ukraine-war-eu-swift-ban/",
+        "evidence": "SWIFT said it would disconnect the seven Russian banks as required by EU regulations.",
+        "semantic_signal": 0.3553,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.16638656028840232,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.3269003002063319,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.3269,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "SWIFT disconnection has become operational for selected Russian banks including VTB.",
         "new_graph_nodes": []
       }
     ],
     "decision": {
-      "alarm_fired": true,
-      "max_combined_risk": 0.5009,
+      "alarm_fired": false,
+      "max_combined_risk": 0.3269,
       "threshold": 0.5,
-      "triggering_event": "US announces full blocking sanctions on VTB, Russia's second largest financial institution"
+      "triggering_event": "SWIFT disconnection becomes operational for selected Russian banks including VTB"
     },
     "warnings": []
   },
@@ -818,9 +835,9 @@
     "reference_model": "Licensed payment processing and merchant acquiring.",
     "threshold": 0.5,
     "bonferroni_scale": 2.0986,
-    "alarm_event_index": 2,
-    "alarm_date": "2019-01-30",
-    "alarm_title": "FT reports suspicious transactions and alleged forged/backdated contracts in Wirecard's Singapore operations",
+    "alarm_event_index": 4,
+    "alarm_date": "2020-04-28",
+    "alarm_title": "KPMG special audit cannot verify key Wirecard profit arrangements and cash balances",
     "events": [
       {
         "index": 1,
@@ -829,16 +846,16 @@
         "source": "Financial Times timeline",
         "url": "https://www.ft.com/content/284fb1ad-ddc0-45df-a075-0709b36868db",
         "evidence": "FT timeline records early investigative reporting questioning Wirecard's accounting years before insolvency.",
-        "semantic_signal": 0.4912,
+        "semantic_signal": 0.3955,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.19211053472999445,
+        "semantic_stat": 0.1124105845860376,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.40543103535937147,
+        "semantic_ratio": 0.23723186111643146,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.4054,
+        "combined_risk": 0.2372,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -846,8 +863,18 @@
         },
         "trigger": false,
         "triaged_in": true,
-        "extracted_fact": "Financial Times inicia la revisión de inconsistencias en los estados financieros de Wirecard",
-        "new_graph_nodes": []
+        "extracted_fact": "Financial Times has raised concerns about inconsistencies in Wirecard's financial accounts.",
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_001",
+            "name": "Financial Times",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": true
+          }
+        ]
       },
       {
         "index": 2,
@@ -856,16 +883,80 @@
         "source": "Reuters Wirecard timeline",
         "url": "https://www.reuters.com/business/finance/rise-fall-wirecard-2022-12-06/",
         "evidence": "Reuters timeline notes a January 2019 FT report on suspicious transactions and accounting-practice integrity.",
-        "semantic_signal": 0.4003,
+        "semantic_signal": 0.3254,
         "topology_signal": 0.0,
         "behavioral_signal": 0.0,
-        "semantic_stat": 0.26595934800209964,
+        "semantic_stat": 0.13576098092222885,
         "topology_stat": 0.0,
         "behavioral_stat": 0.0,
-        "semantic_ratio": 0.5612819410218387,
+        "semantic_ratio": 0.28651065457738994,
         "topology_ratio": 0.0,
         "behavioral_ratio": 0.0,
-        "combined_risk": 0.5613,
+        "combined_risk": 0.2865,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "Suspicious transactions and alleged forged or backdated contracts were reported in Wirecard's Singapore operations.",
+        "new_graph_nodes": []
+      },
+      {
+        "index": 3,
+        "date": "2019-10-21",
+        "title": "Wirecard hires KPMG to conduct an independent special audit under investor pressure",
+        "source": "Reuters Wirecard timeline",
+        "url": "https://www.reuters.com/business/finance/rise-fall-wirecard-2022-12-06/",
+        "evidence": "Independent audit commissioned to address allegations that finance team inflated reported sales and profits.",
+        "semantic_signal": 0.3723,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.18594308087825945,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.39241520983916034,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.3924,
+        "alarms": {
+          "semantic": false,
+          "topology": false,
+          "behavioral_tx": false
+        },
+        "trigger": false,
+        "triaged_in": true,
+        "extracted_fact": "Wirecard has engaged KPMG to perform an independent special audit due to investor pressure.",
+        "new_graph_nodes": [
+          {
+            "node_id": "DYN_COMPANY_002",
+            "name": "KPMG",
+            "type": "COMPANY",
+            "intrinsic_risk": 0.35,
+            "relation": "ASSOCIATED_WITH",
+            "control_weight": 0.1,
+            "is_new": true
+          }
+        ]
+      },
+      {
+        "index": 4,
+        "date": "2020-04-28",
+        "title": "KPMG special audit cannot verify key Wirecard profit arrangements and cash balances",
+        "source": "Reuters / FT timeline",
+        "url": "https://www.reuters.com/article/technology/the-moneys-gone-wirecard-collapses-owing-4-billion-idUSKBN23W176/",
+        "evidence": "KPMG was unable to verify cash balances and could not trace transactions underpinning major reported profits.",
+        "semantic_signal": 0.536,
+        "topology_signal": 0.0,
+        "behavioral_signal": 0.0,
+        "semantic_stat": 0.365992393207238,
+        "topology_stat": 0.0,
+        "behavioral_stat": 0.0,
+        "semantic_ratio": 0.7723921809921296,
+        "topology_ratio": 0.0,
+        "behavioral_ratio": 0.0,
+        "combined_risk": 0.7724,
         "alarms": {
           "semantic": false,
           "topology": false,
@@ -873,18 +964,18 @@
         },
         "trigger": true,
         "triaged_in": true,
-        "extracted_fact": "FT reporta transacciones sospechosas y contratos falsos/fechados en retroceso en las operaciones de Wirecard en Singapur",
+        "extracted_fact": "A special audit of MASKED_COMPANY_007 cannot verify key profit arrangements and cash balances.",
         "new_graph_nodes": []
       }
     ],
     "decision": {
       "alarm_fired": true,
-      "max_combined_risk": 0.5613,
+      "max_combined_risk": 0.7724,
       "threshold": 0.5,
-      "triggering_event": "FT reports suspicious transactions and alleged forged/backdated contracts in Wirecard's Singapore operations"
+      "triggering_event": "KPMG special audit cannot verify key Wirecard profit arrangements and cash balances"
     },
     "warnings": [
-      "Groq report generation failed (Error code: 429 - {'error': {'message': 'Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01jca6mrsde7ma26rpj6j2y27q` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99991, Requested 1690. Please try again in 24m12.383999999s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}); using local fallback."
+      "Groq report generation failed (Connection error.); using local fallback."
     ]
   }
 ]

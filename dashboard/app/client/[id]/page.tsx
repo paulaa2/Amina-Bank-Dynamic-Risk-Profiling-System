@@ -447,8 +447,8 @@ function EventReviewPanel({
         </section>
       </div>
       {event && evidenceOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-6 backdrop-blur-[2px]">
-          <div className="max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-lg border border-slate-700/80 bg-slate-950/90 shadow-2xl backdrop-blur-xl">
+        <div className="evidence-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-6">
+          <div className="evidence-modal-panel max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-lg border">
             <div className="flex items-start justify-between gap-4 border-b border-slate-800 px-6 py-5">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">

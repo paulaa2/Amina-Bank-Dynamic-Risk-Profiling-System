@@ -938,32 +938,32 @@ class PerpetualKYCPipeline:
         m = trace["metrics"]
         driver = trace.get("topology_driver")
         driver_line = (
-            f"- Contagio Topologico: exposicion {m['topological_exposure']} impulsada por "
-            f"{driver['name']} ({driver['relation']}, riesgo {driver['intrinsic_risk']})."
+            f"- Control-Graph Topology Contagion: exposure {m['topological_exposure']} driven by "
+            f"{driver['name']} ({driver['relation']}, intrinsic risk {driver['intrinsic_risk']})."
             if driver
-            else "- Contagio Topologico: sin contribuidor dominante."
+            else "- Control-Graph Topology Contagion: no dominant contributor."
         )
         return (
-            f"# REPORTE DE CUMPLIMIENTO AML - REGISTRO DE ALERTA {trace['alert_id']}\n\n"
-            "## 1. RESUMEN EJECUTIVO\n"
-            f"Se ha detectado una desviacion de KYC estadisticamente significativa para "
-            f"{trace['client_profile']['legal_name']} (riesgo combinado "
-            f"{m['combined_risk']}). Evento disparador: {trace['triggering_event']['headline']}.\n\n"
-            "## 2. EXPLICACION OPERATIVA PARA COMITE DE RIESGO\n"
-            f"- Que cambio en el perfil del cliente: el evento publico indica "
+            f"# AML COMPLIANCE REPORT - ALERT RECORD {trace['alert_id']}\n\n"
+            "## 1. EXECUTIVE SUMMARY\n"
+            f"A statistically significant KYC drift event has been detected for "
+            f"{trace['client_profile']['legal_name']} (combined risk "
+            f"{m['combined_risk']}). Triggering event: {trace['triggering_event']['headline']}.\n\n"
+            "## 2. OPERATIONAL EXPLANATION FOR THE RISK COMMITTEE\n"
+            f"- What changed in the client profile: the public event indicates "
             f"{trace['triggering_event']['extracted_fact']}.\n"
-            "- Por que importa para KYC/AML: el hecho altera el perfil esperado y "
-            "genera una senal adversa que debe revisarse antes de seguir operando.\n"
-            f"- Cual fue el trigger principal: alarmas activas {m['alarms']}.\n\n"
-            "## 3. ANALISIS DE DERIVA DE KYC (KYC DRIFT) MULTICORRIENTE\n"
-            f"- Desviacion Semantica: distancia de coseno {m['semantic_cosine_distance']} "
-            f"respecto al modelo de negocio declarado.\n"
+            "- Why it matters for KYC/AML: the fact changes the expected profile "
+            "and creates an adverse signal requiring review before continued operation.\n"
+            f"- Primary trigger: active alarms {m['alarms']}.\n\n"
+            "## 3. MULTI-STREAM KYC DRIFT ANALYSIS\n"
+            f"- Semantic Drift: cosine distance {m['semantic_cosine_distance']} "
+            f"against the declared business model.\n"
             f"{driver_line}\n"
-            f"- Anomalia Transaccional: alarmas activas {m['alarms']}.\n\n"
-            "## 4. TRAZA DE METRICAS AUDITABLES\n"
+            f"- Transaction Anomaly: active alarms {m['alarms']}.\n\n"
+            "## 4. AUDITABLE METRIC TRACE\n"
             f"```json\n{trace['metrics']}\n```\n\n"
-            "## 5. ACCION DE GOBERNANZA RECOMENDADA\n"
-            f"- {trace['proposed_action']}: justificada por la deriva multicorriente detectada.\n"
+            "## 5. RECOMMENDED GOVERNANCE ACTION\n"
+            f"- {trace['proposed_action']}: justified by the detected multi-stream drift.\n"
         )
 
     def _run_governance(self, profile, peak_outcome, max_risk) -> ComplianceAlert:
