@@ -20,6 +20,8 @@ import { Separator } from "@/components/ui/separator";
 import { AlertBadge } from "@/components/alert-badge";
 import {
   listCompanies,
+  listReplayScenarios,
+  loadCuratedScenarioReport,
   getCachedReport,
   getCachedAnalysis,
   checkHealth,
@@ -49,37 +51,44 @@ export default function ClientDossiers() {
 
       try {
         const list = await listCompanies();
+        const scenarios = await listReplayScenarios();
         const sorted = [...list].sort((a, b) =>
           a.legal_name.localeCompare(b.legal_name)
         );
         setCompanies(sorted);
 
-        // Pick up any reports already analyzed in this session
         const cached: Record<number, LiveReport> = {};
-        for (const c of sorted) {
-          const r = getCachedReport(c.id);
-          if (r) cached[c.id] = r;
-        }
-        setCachedReports(cached);
-
-        // Automatically fetch already-calculated reports from backend or static cache in background
         await Promise.all(
-          sorted.map(async (c) => {
-            if (!cached[c.id]) {
+          sorted.map(async (company) => {
+            const scenario = scenarios.find((item) => item.company_id === company.id);
+            if (scenario) {
               try {
-                const report = await getCachedAnalysis(c.id);
-                if (report) {
-                  setCachedReports((prev) => ({
-                    ...prev,
-                    [c.id]: report,
-                  }));
-                }
+                const report = await loadCuratedScenarioReport(
+                  scenario.scenario_id,
+                  company.id,
+                );
+                cached[company.id] = report;
+                return;
               } catch (err) {
-                console.debug(`No cached analysis for client ${c.id}:`, err);
+                console.debug(`Curated scenario load failed for client ${company.id}:`, err);
               }
             }
-          })
+
+            const sessionReport = getCachedReport(company.id);
+            if (sessionReport) {
+              cached[company.id] = sessionReport;
+              return;
+            }
+
+            try {
+              const report = await getCachedAnalysis(company.id);
+              if (report) cached[company.id] = report;
+            } catch (err) {
+              console.debug(`No cached analysis for client ${company.id}:`, err);
+            }
+          }),
         );
+        setCachedReports(cached);
       } catch (err) {
         console.error("Failed to load dossiers:", err);
       } finally {

@@ -45,7 +45,7 @@ import {
   analyzeCompanyStream,
   takeGovernanceAction,
   listReplayScenarios,
-  getCachedAnalysis,
+  loadCuratedScenarioReport,
   replayScenario,
   type LiveReport,
   type LiveEvent,
@@ -732,7 +732,7 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
 
     setGraph(buildGraphFromReport(report));
     setReport(report);
-    applyScenarioStep(animate ? Math.max(0, report.events.length - 1) : -1, report);
+    applyScenarioStep(Math.max(0, report.events.length - 1), report);
     setPhase("complete");
     setFeedEntries((prev) => [
       ...prev,
@@ -979,18 +979,8 @@ export default function ClientDossierPage({ params }: { params: Promise<{ id: st
         setCuratedScenario(match);
 
         if (match) {
-          // Companies with a curated scenario (FTX, Wirecard, …) load the
-          // replay pushed by ``run_scenario_demo --all --push-to-api``.
           setPhase("streaming");
-          const cached = await getCachedAnalysis(companyId);
-          if (cancelled) return;
-
-          if (cached?.scenario?.scenario_id === match.scenario_id) {
-            await displayScenarioReport(cached, match, false);
-            return;
-          }
-
-          const report = await replayScenario(match.scenario_id, {
+          const report = await loadCuratedScenarioReport(match.scenario_id, companyId, {
             force_refresh: false,
           });
           if (cancelled) return;

@@ -177,10 +177,54 @@ export interface GlobalDemoResult {
 
 // ── Session cache ─────────────────────────────────────────────────────────────
 
-const STORAGE_PREFIX = "amina-risk-cache:v2";
+const STORAGE_PREFIX = "amina-risk-cache:v4";
+/** Bust browser HTTP cache when pinned scenario scores are re-exported. */
+const CURATED_STATIC_VERSION = "golden-pinned-20250621";
 
 const _cache = new Map<string, LiveReport>();
 const _globalScenarioCache = new Map<string, GlobalDemoResult>();
+let _staticScenarioCache: Record<string, LiveReport> | null = null;
+
+function staticBasePath(): string {
+  if (typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")) {
+    return "/Amina-Bank-Dynamic-Risk-Profiling-System";
+  }
+  return "";
+}
+
+function isValidCuratedReport(report: LiveReport | null | undefined, scenarioId: string): report is LiveReport {
+  if (!report?.scenario?.scenario_id || report.scenario.scenario_id !== scenarioId) return false;
+  const processed = report.scenario.processed_event_count ?? report.events.length;
+  return report.events.length > 0 && report.events.length === processed;
+}
+
+function storeCuratedReport(report: LiveReport): void {
+  putScenarioReport(report.scenario!.scenario_id!, report);
+  if (report.id) {
+    putReport(Number(report.id), false, report);
+  }
+}
+
+async function loadStaticScenarioCache(): Promise<Record<string, LiveReport>> {
+  if (_staticScenarioCache) return _staticScenarioCache;
+  try {
+    const res = await fetch(
+      `${staticBasePath()}/api_cache/scenario.json?v=${CURATED_STATIC_VERSION}`,
+    );
+    if (!res.ok) throw new Error("Static scenario cache not found");
+    _staticScenarioCache = (await res.json()) as Record<string, LiveReport>;
+    return _staticScenarioCache;
+  } catch {
+    _staticScenarioCache = {};
+    return _staticScenarioCache;
+  }
+}
+
+async function getCuratedStaticReport(scenarioId: string): Promise<LiveReport | null> {
+  const staticCache = await loadStaticScenarioCache();
+  const report = staticCache[scenarioId];
+  return isValidCuratedReport(report, scenarioId) ? report : null;
+}
 
 function storageAvailable(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -259,6 +303,38 @@ function putScenarioReport(scenarioId: string, report: LiveReport): void {
 
 export function getStoredScenarioReport(scenarioId: string): LiveReport | null {
   return readStorage<LiveReport>("scenario", scenarioId);
+}
+
+/** Load the curated scenario LiveReport for a dossier (shared by Demos + Client pages). */
+export async function loadCuratedScenarioReport(
+  scenarioId: string,
+  companyId?: number,
+  opts: { force_refresh?: boolean } = {},
+): Promise<LiveReport> {
+  if (!opts.force_refresh) {
+    // Static export is the source of truth (same pinned scores as Metrics / notebook).
+    const staticReport = await getCuratedStaticReport(scenarioId);
+    if (staticReport) {
+      storeCuratedReport(staticReport);
+      return staticReport;
+    }
+
+    const cachedScenario = getStoredScenarioReport(scenarioId);
+    if (isValidCuratedReport(cachedScenario, scenarioId)) {
+      storeCuratedReport(cachedScenario);
+      return cachedScenario;
+    }
+
+    if (companyId !== undefined) {
+      const cachedCompany = getStoredReport(companyId, false);
+      if (isValidCuratedReport(cachedCompany, scenarioId)) {
+        storeCuratedReport(cachedCompany);
+        return cachedCompany;
+      }
+    }
+  }
+
+  return replayScenario(scenarioId, opts);
 }
 
 function putGlobalScenario(scenarioId: string, result: GlobalDemoResult): void {
@@ -737,9 +813,10 @@ export async function listReplayScenarios(): Promise<ReplayScenarioItem[]> {
       {
         scenario_id: "openai_regulatory_drift",
         client: "OpenAI",
-        description: "Drift regulatorio y de gobernanza con alto crecimiento y escrutinio.",
+        description:
+          "Chronological watchlist (6 stream events): Sequoia/FTX cap-table stress, EU privacy, US scrutiny and governance/litigation without crossing 0.5.",
         reference_model: "AI research lab monetising via API and subscriptions.",
-        event_count: 9,
+        event_count: 6,
         company_id: 4,
       },
       {
@@ -778,10 +855,18 @@ export async function replayScenario(
   scenarioId: string,
   opts: { force_refresh?: boolean } = {},
 ): Promise<LiveReport> {
-  const cached = getStoredScenarioReport(scenarioId);
-  if (cached && !opts.force_refresh) {
-    if (cached.id) putReport(Number(cached.id), false, cached);
-    return cached;
+  if (!opts.force_refresh) {
+    const staticReport = await getCuratedStaticReport(scenarioId);
+    if (staticReport) {
+      storeCuratedReport(staticReport);
+      return staticReport;
+    }
+
+    const cachedScenario = getStoredScenarioReport(scenarioId);
+    if (isValidCuratedReport(cachedScenario, scenarioId)) {
+      storeCuratedReport(cachedScenario);
+      return cachedScenario;
+    }
   }
 
   const qs = opts.force_refresh ? "?force_refresh=true" : "";
@@ -794,33 +879,16 @@ export async function replayScenario(
       throw new Error(body.detail ?? "Scenario replay failed");
     }
     const report: LiveReport = await res.json();
-    putScenarioReport(scenarioId, report);
-    if (report.id) {
-      putReport(Number(report.id), false, report);
-    }
+    storeCuratedReport(report);
     return report;
   } catch (err) {
     console.warn(`API replayScenario for ${scenarioId} failed, attempting static file fallback:`, err);
-    try {
-      const basePath = typeof window !== "undefined" && window.location.pathname.startsWith("/Amina-Bank-Dynamic-Risk-Profiling-System")
-        ? "/Amina-Bank-Dynamic-Risk-Profiling-System"
-        : "";
-      const staticRes = await fetch(`${basePath}/api_cache/scenario.json`);
-      if (!staticRes.ok) throw new Error("Static scenario cache not found");
-      const data = await staticRes.json();
-      const report = data[scenarioId] as LiveReport | undefined;
-      if (!report) {
-        throw new Error(`Scenario ID ${scenarioId} not found in static scenario cache`);
-      }
-      putScenarioReport(scenarioId, report);
-      if (report.id) {
-        putReport(Number(report.id), false, report);
-      }
-      return report;
-    } catch (staticErr) {
-      console.error("Static scenario replay fallback failed:", staticErr);
-      throw err;
+    const report = await getCuratedStaticReport(scenarioId);
+    if (!report) {
+      throw new Error(`Scenario ID ${scenarioId} not found in static scenario cache`);
     }
+    storeCuratedReport(report);
+    return report;
   }
 }
 

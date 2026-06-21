@@ -97,13 +97,14 @@ def list_replay_scenarios(scenario_dir: Path | None = None) -> list[dict[str, An
     scenarios: list[dict[str, Any]] = []
     for path in sorted(root.glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
+        stream_events = [event for event in data.get("events") or [] if not event.get("burn_in")]
         scenarios.append(
             {
                 "scenario_id": str(data.get("scenario_id") or path.stem),
                 "client": str(data.get("client") or ""),
                 "description": str(data.get("description") or ""),
                 "reference_model": str(data.get("reference_model") or ""),
-                "event_count": len(data.get("events") or []),
+                "event_count": len(stream_events),
             }
         )
     return scenarios
@@ -177,6 +178,7 @@ def replay_scenario_for_api(
 
 def replay_scenario(path: Path) -> dict[str, Any]:
     scenario, report = run_scenario_engine(path)
+    replay_order = str(scenario.get("replay_order") or "chronological")
     threshold = float(report.decision["threshold"])
     rows: list[dict[str, Any]] = []
     alarm_row: dict[str, Any] | None = None
@@ -380,13 +382,22 @@ def main() -> None:
         default=DATA_DIR.as_posix(),
         help="Directory for --all aggregate outputs.",
     )
+    parser.add_argument(
+        "--export-dashboard",
+        action="store_true",
+        help="After --all, refresh dashboard/public/api_cache static files.",
+    )
     args = parser.parse_args()
 
     if args.all:
         scenario_paths = sorted(Path(args.scenario_dir).glob("*.json"))
         results = [replay_scenario(path) for path in scenario_paths]
         summary_path, events_path = _write_all_results(results, Path(args.output_dir))
-        if args.json:
+        if args.export_dashboard:
+            from scripts.export_dashboard_cache import export_dashboard_cache
+
+            export_dashboard_cache(live_reports_only=True, pin_scores=True)
+        elif args.json:
             print(json.dumps(results, ensure_ascii=False, indent=2))
             return
         print(f"Replayed {len(results)} scenarios.")
